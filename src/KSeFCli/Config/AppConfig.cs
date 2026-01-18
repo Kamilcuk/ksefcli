@@ -14,6 +14,7 @@ namespace KSeFCli.Config
         public string Environment { get; set; } = "prod"; // e.g., "prod", "test"
         public string CertificatePath { get; set; } = string.Empty; // Path to client certificate
         public string CertificatePassword { get; set; } = string.Empty; // Password for the certificate
+        public string Nip { get; set; } = string.Empty; // Tax Identification Number (NIP)
     }
 
     public class TokenStoreSettings
