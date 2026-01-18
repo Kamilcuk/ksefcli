@@ -1,6 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KSeFCli.Commands.Faktura
@@ -22,11 +23,11 @@ namespace KSeFCli.Commands.Faktura
             public string? Nazwa { get; set; }
         }
 
-        public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+        public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
             AnsiConsole.MarkupLine($"[green]Listing invoices: Przed='{settings.Przed ?? "N/A"}', Po='{settings.Po ?? "N/A"}', Nazwa='{settings.Nazwa ?? "N/A"}'[/]");
             // TODO: call InvoiceService to query invoices
-            return 0; // Success
+            return 0;
         }
     }
 }

@@ -1,6 +1,7 @@
 using Spectre.Console;
 using Spectre.Console.Cli;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KSeFCli.Commands.Faktura
@@ -11,7 +12,7 @@ namespace KSeFCli.Commands.Faktura
         {
             [CommandArgument(0, "<FILES>")]
             [Description("XML invoice files to upload.")]
-            public string[] Files { get; set; } = null!; // Using null-forgiving operator
+            public string[] Files { get; set; } = null!;
 
             public override ValidationResult Validate()
             {
@@ -19,16 +20,15 @@ namespace KSeFCli.Commands.Faktura
                 {
                     return ValidationResult.Error("At least one file must be specified.");
                 }
-                // TODO: Add file existence and format validation here
                 return ValidationResult.Success();
             }
         }
 
-        public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
+        public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
         {
             AnsiConsole.MarkupLine($"[green]Sending invoices: {string.Join(", ", settings.Files)}[/]");
             // TODO: call InvoiceService to upload invoices
-            return 0; // Success
+            return 0;
         }
     }
 }

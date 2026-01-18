@@ -10,6 +10,7 @@ Jako agent odpowiedzialny za rozwój tego projektu, będę przestrzegał następ
 *   **Generuję listę TODO**: Dla złożonych zadań, najpierw tworzę szczegółową, techniczną listę kroków (`TODO`) przy użyciu narzędzia `write_todos`.
 *   **Realizuję punkty TODO jeden po jednym**: Pracuję metodycznie, wykonując zadania z listy `TODO` sekwencyjnie.
 *   **Format listy TODO**: Lista zadań będzie zwięzła, wykorzystując tylko słowa kluczowe i nie będzie zawierać pełnych zdań. Wszystkie podzadania zostaną spłaszczone i przedstawione jako niezależne zadania.
+*   **Minimalizm w komunikacji**: Bądź tak zwięzły, jak to tylko możliwe, i wypisuj minimalną ilość informacji, bez gramatyki.
 
 ## Inicjalizacja repozytorium
 
@@ -26,53 +27,8 @@ Kluczowe komponenty do interakcji z KSeF, dostarczane przez bibliotekę, to:
 
 Szczegóły dotyczące wymaganych konfiguracji (certyfikaty, zmienne środowiskowe) zostaną doprecyzowane na etapie implementacji obsługi konfiguracji (TODO 04).
 
-## Struktura Projektu CLI (ksefcli)
 
-Projekt `ksefcli` będzie miał następującą strukturę katalogów, zgodnie z `prompt2.md`:
 
-```
-ksefcli/
-├── src/
-│   ├── KSeFCli/
-│   │   ├── Program.cs           # Bootstrap aplikacji
-│   │   ├── Cli/                 # Definicje głównych komend i opcji CLI
-│   │   │   ├── RootCommand.cs
-│   │   │   └── CommonOptions.cs
-│   │   ├── Commands/            # Implementacje logiki dla konkretnych komend
-│   │   │   ├── Auth/
-│   │   │   │   ├── AuthCommand.cs
-│   │   │   │   └── TokenRefreshCommand.cs
-│   │   │   ├── Faktura/
-│   │   │   │   ├── FakturaCommand.cs
-│   │   │   │   ├── UploadCommand.cs
-│   │   │   │   └── ListCommand.cs
-│   │   ├── Services/            # Logika biznesowa i integracja z API KSeF
-│   │   │   ├── AuthService.cs
-│   │   │   ├── InvoiceService.cs
-│   │   │   └── TokenStore.cs
-│   │   ├── Config/              # Obsługa konfiguracji aplikacji
-│   │   │   ├── AppConfig.cs
-│   │   │   └── ConfigLoader.cs
-│   │   ├── Output/              # Formatowanie i prezentacja wyników
-│   │   │   ├── TablePrinter.cs
-│   │   │   └── ErrorPrinter.cs
-│   │   └── ExitCodes.cs         # Definicje kodów wyjścia aplikacji
-│   └── KSeFCli.Tests/           # Projekt z testami jednostkowymi i integracyjnymi
-│       ├── Cli/
-│       ├── Commands/
-│       └── Services/
-├── doc/                         # Dodatkowa dokumentacja (np. architektury, auth flow)
-│   ├── architecture.md
-│   ├── auth.md
-│   └── faktura.md
-├── AGENTS.md                    # Dokument sterujący projektem
-├── GEMINI.md -> AGENTS.md       # Symlink do AGENTS.md
-├── Dockerfile                   # Definicja środowiska Docker (build, test, runtime)
-├── .editorconfig                # Zasady formatowania kodu
-├── Directory.Build.props        # Globalne ustawienia kompilacji i analizy
-├── Directory.Build.targets      # Dodatkowe cele kompilacji (np. dla formatowania)
-└── ksefcli.sln                  # Plik rozwiązania Visual Studio
-```
 
 ## Zasady Architektoniczne
 
@@ -114,5 +70,29 @@ Mechanizm przechowywania tokenów jest realizowany przez klasę `TokenStore` (zd
 *   **Obsługa ścieżki użytkownika**: Klasa `TokenStore` automatycznie rozwija `~` do katalogu domowego użytkownika, co pozwala na przechowywanie tokenów w standardowej lokalizacji systemowej (`~/.config/ksefcli/`).
 *   **Walidacja wygaśnięcia**: Przy ładowaniu tokenu, `TokenStore` sprawdza, czy token nie wygasł, zwracając `null` dla nieprawidłowych lub wygasłych tokenów.
 *   **Usuwanie tokenów**: Zapewnia metodę do usuwania przechowywanego pliku tokenu.
+
+## Autoryzacja i tokeny (Auth Flow)
+
+Proces autoryzacji z KSeF wykorzystuje cyfrowy podpis XML (XAdES) przy użyciu certyfikatu klienckiego. Oto kroki:
+1.  **Wczytanie certyfikatu**: Aplikacja ładuje certyfikat kliencki (plik `P12` lub `PFX`) z podanej ścieżki (`AppConfig.KsefApi.CertificatePath`) i hasła.
+2.  **Pobranie wyzwania (Challenge)**: Aplikacja wysyła żądanie do API KSeF, aby uzyskać unikalne wyzwanie uwierzytelniające (`AuthenticationChallengeResponse`).
+3.  **Budowa żądania tokena**: Tworzone jest żądanie tokena (`AuthenticationTokenRequest`) zawierające wyzwanie, typ kontekstu (np. NIP) i typ identyfikatora podmiotu (np. z certyfikatu).
+4.  **Serializacja i podpisanie XML**: Żądanie tokena jest serializowane do postaci XML, a następnie podpisywane cyfrowo przy użyciu wczytanego certyfikatu klienckiego i `SignatureService`.
+5.  **Wysłanie podpisanego żądania**: Podpisany XML jest przesyłany do API KSeF (`SubmitXadesAuthRequestAsync`), co zwraca `SignatureResponse` zawierające token sesji i numer referencyjny.
+6.  **Przechowywanie tokena**: Otrzymany token sesji (`AuthenticationToken.Token`), datę wygaśnięcia (`ValidUntil` z `TokenInfo`) i numer referencyjny operacji (`ReferenceNumber`) są zapisywane lokalnie za pomocą `TokenStore`.
+
+Proces odświeżania tokena działa podobnie:
+1.  **Weryfikacja istniejącego tokena**: Aplikacja sprawdza, czy istnieje ważny, nieprzeterminowany token. Jeśli nie, próbuje wygenerować nowy.
+2.  **Odświeżenie**: Jeśli token istnieje, ale jest przeterminowany, aplikacja wysyła żądanie odświeżenia tokena (`RefreshAccessTokenAsync`) do API KSeF.
+3.  **Przechowywanie nowego tokena**: Nowy token dostępowy (`AccessToken.Token`), jego datę wygaśnięcia (`AccessToken.ValidUntil`) i numer referencyjny operacji są zapisywane lokalnie.
+
+## Dokumentacja
+
+*   **Klonowanie dokumentacji**: Repozytorium `ksef-docs` zostało sklonowane do katalogu `ksef-docs/` w celu zapewnienia dostępu do dodatkowej dokumentacji.
+
+## Zależności zewnętrzne (thirdparty)
+
+*   **`ksef-client-csharp`**: Oficjalny klient KSeF w C#, dodany jako submoduł Git do `thirdparty/ksef-client-csharp/`.
+*   **`ksef-docs`**: Oficjalna dokumentacja KSeF, dodana jako submoduł Git do `thirdparty/ksef-docs/`.
 
 Wnioski z analizy `ksef-client-csharp` i jego integracji, wraz z dalszymi decyzjami architektonicznymi, będą rozwijane w kolejnych sekcjach tego dokumentu.

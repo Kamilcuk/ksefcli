@@ -10,7 +10,7 @@ run: build
 	dotnet run --project src/KSeFCli --
 
 clean:
-	dotnet clean
+	dotnet clean ksefcli.sln
 
 solution:
 	dotnet new sln -o ksefcli.sln
