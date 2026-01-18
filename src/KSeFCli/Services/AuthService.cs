@@ -10,7 +10,6 @@ using KSeF.Client.Api.Services;
 using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Api.Builders.Auth;
-using System.Security.Cryptography; // Added for CryptographicException and X509CertificateLoader
 
 namespace KSeFCli.Services
 {
@@ -38,16 +37,11 @@ namespace KSeFCli.Services
             X509Certificate2 clientCertificate;
             try
             {
-                // Use X509CertificateLoader for loading certificates to avoid SYSLIB0057 warning
-                var certificateLoader = new X509Certificate2Loader();
-                clientCertificate = certificateLoader.LoadCertificate(_appConfig.KsefApi.CertificatePath, _appConfig.KsefApi.CertificatePassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+#pragma warning disable SYSLIB0057 // Type or member is obsolete
+                clientCertificate = new X509Certificate2(_appConfig.KsefApi.CertificatePath, _appConfig.KsefApi.CertificatePassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+#pragma warning restore SYSLIB0057 // Type or member is obsolete
             }
-            catch (CryptographicException ex)
-            {
-                AnsiConsole.MarkupLine(string.Format(StringResources.CertificateLoadError, ex.Message));
-                return null;
-            }
-            catch (Exception ex) // Catch other potential exceptions during certificate loading
+            catch (Exception ex)
             {
                 AnsiConsole.MarkupLine(string.Format(StringResources.CertificateLoadError, ex.Message));
                 return null;
