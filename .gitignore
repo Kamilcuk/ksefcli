@@ -68,10 +68,5 @@ Desktop.ini
 .fuse_hidden*
 .nfs*
 
-# Ksef
-# Not sure about this
-ksefcli/
-ksefcli.sln
-
 # Prompt file
 prompt.md

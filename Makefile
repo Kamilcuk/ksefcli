@@ -1,9 +1,13 @@
-.PHONY: all build clean
+.PHONY: all build clean run
 
 all: build
 
 build:
-	dotnet build
+	dotnet restore ksefcli.sln
+	dotnet build ksefcli.sln
+
+run: build
+	dotnet run --project src/KsefCli --
 
 clean:
 	dotnet clean

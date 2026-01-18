@@ -1,12 +1,33 @@
-using System;
+using Spectre.Console;
+using Spectre.Console.Cli;
+using KsefCli.Commands.Auth;
+using KsefCli.Commands.Faktura;
+using System.Threading.Tasks;
 
 namespace KsefCli
 {
-    public class Program
+    public static class Program
     {
-        public static void Main(string[] args)
+        public static async Task<int> Main(string[] args)
         {
-            Console.WriteLine("Hello from KsefCli!");
+            var app = new CommandApp();
+
+            app.Configure(config =>
+            {
+                config.AddBranch("auth", auth =>
+                {
+                    auth.SetDescription("Manage KSeF authorization and tokens.");
+                    auth.AddCommand<TokenRefreshCommand>("token").WithDescription("Refresh authentication token.");
+                });
+
+                config.AddBranch("faktura", faktura =>
+                {
+                    faktura.SetDescription("Manage KSeF invoices (upload, download, search).");
+                    // Add wyslij and ls commands here later
+                });
+            });
+
+            return await app.RunAsync(args);
         }
     }
 }

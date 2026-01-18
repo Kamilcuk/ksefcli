@@ -89,4 +89,10 @@ ksefcli/
 *   Domyślny modyfikator dostępu `internal`, `public` tylko, gdy jest to niezbędne.
 *   Brak logiki w konstruktorach, aby ułatwić testowanie i zarządzanie cyklem życia obiektów.
 
+## Parser Argumentów CLI: Spectre.Console.Cli
+
+Dla parsowania argumentów CLI wybrano bibliotekę **Spectre.Console.Cli**. Jest to nowoczesna i rozbudowana biblioteka, która oferuje intuicyjny sposób definiowania komend, argumentów i opcji, a także zapewnia eleganckie formatowanie wyjścia w terminalu.
+
+Struktura CLI została zaimplementowana w `Program.cs` przy użyciu `CommandApp` i metody `AddBranch` dla zagnieżdżonych komend `auth` i `faktura`. Konkretne podkomendy (`token refresh`, `faktura wyslij`, `faktura ls`) są implementowane jako klasy dziedziczące z `AsyncCommand<TSettings>`, co zapewnia modularność i łatwość rozbudowy.
+
 Wnioski z analizy `ksef-client-csharp` i jego integracji, wraz z dalszymi decyzjami architektonicznymi, będą rozwijane w kolejnych sekcjach tego dokumentu.
