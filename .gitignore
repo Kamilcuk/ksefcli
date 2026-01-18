@@ -1,0 +1,77 @@
+# JetBrains Rider
+.idea/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+build/
+*.log
+*.pid
+*.user
+*.bak
+*.cache
+*.local
+*.json.user
+*.json.bak
+*.suo
+*.userprefs
+*.sync
+*.log.*
+*.stackdump
+
+# VS Code
+.vscode/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.dll
+*.exe
+*.pdb
+*.tmp
+*.vsix
+*.vsixmanifest
+packages/
+*.lock.json
+project.lock.json
+
+# Rider
+.idea/
+*.sln.DotSettings
+*.sln.DotSettings.user
+
+# Git
+.git/
+
+# OS generated files
+.DS_Store
+.localized
+Thumbs.db
+Desktop.ini
+
+# Linux
+*.so
+*.dylib
+*.o
+*.ko
+*.mod
+*.a
+*.la
+*.lo
+*.rej
+*.bak
+*.swp
+*.core
+.fuse_hidden*
+.nfs*
+
+# Ksef
+# Not sure about this
+ksefcli/
+ksefcli.sln
+
+# Prompt file
+prompt.md
