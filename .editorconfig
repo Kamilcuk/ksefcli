@@ -21,6 +21,9 @@ csharp_new_line_before_open_brace = none
 # Optional: keep single-line statements compact
 csharp_preserve_single_line_statements = true
 
+# organise using
+dotnet_diagnostic.IDE0005.severity = warning
+
 # --- Zakaz 'var' ---
 csharp_style_var_for_built_in_types = false
 csharp_style_var_when_type_is_apparent = false

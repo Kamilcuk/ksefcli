@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.2"/>
     <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="10.0.2"/>
     <PackageReference Include="Spectre.Console.Cli" Version="0.49.1" />
-    <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client/KSeF.Client.csproj" NoWarn="CS9107;CA1305;CA1816;CA1852;CS8002;CA1305;CA1852"/>
+    <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client/KSeF.Client.csproj" NoWarn="CS9107;CA1305;CA1816;CA1852;CS8002;CA1305;CA1852;CA1816;CA1852;CA1305;CS9107;CA1805"/>
     <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client.Core/KSeF.Client.Core.csproj" NoWarn="CA1805"/>
   </ItemGroup>
 </Project>
