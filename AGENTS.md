@@ -21,7 +21,6 @@ Repozytorium zostało zainicjalizowane ze strukturą projektu, `.gitignore` dla 
 Biblioteka kliencka `ksef-client-csharp` będzie integrowana z projektem `ksefcli` poprzez pakiety NuGet hostowane na GitHub Packages organizacji CIRFMF. Wymaga to konfiguracji NuGet do dostępu do GitHub Packages oraz użycia Personal Access Token (PAT) z uprawnieniami `read:packages`.
 
 Kluczowe komponenty do interakcji z KSeF, dostarczane przez bibliotekę, to:
-*   **Autoryzacja i tokeny**: Zarządzanie procesem autoryzacji, generowaniem i odświeżaniem tokenów (prawdopodobnie przez klasy `KSeFClient`, `CertificateFetcherServices`, `CryptographyServices`).
 *   **Wysyłanie faktur XML**: Funkcjonalność do przesyłania plików XML faktur do KSeF.
 *   **Pobieranie i wyszukiwanie faktur**: Możliwość pobierania faktur oraz ich wyszukiwania z użyciem filtrów.
 
