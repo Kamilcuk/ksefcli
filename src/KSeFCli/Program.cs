@@ -32,7 +32,7 @@ namespace KSeFCli
         [Description("KSeF API token")]
         public string Token { get; set; } = Environment.GetEnvironmentVariable("KSEF_TOKEN") ?? string.Empty;
 
-        [CommandOption("--base-url")]
+        [CommandOption("--base-url", EnvVar = "KSEF_URL")]
         [Description("KSeF base URL")]
         [DefaultValue("https://api-test.ksef.mf.gov.pl/v2")]
         public string BaseUrl { get; set; } = string.Empty;
