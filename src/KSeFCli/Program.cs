@@ -44,10 +44,13 @@ namespace KSeFCli
         public string KsefNumber { get; set; } = null!;
     }
 
-    public class QueryMetadataSettings : GlobalSettings
-    {
         [CommandOption("-s|--subject-type")]
-        [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
+        [Description("Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.\n" +
+                     "Dostępne wartości:\n" +
+                     "  \"Subject1\" - Podmiot 1 (sprzedawca)\n" +
+                     "  \"Subject2\" - Podmiot 2 (nabywca)\n" +
+                     "  \"Subject3\" - Podmiot 3\n" +
+                     "  \"SubjectAuthorized\" - Podmiot upoważniony")]
         public string SubjectType { get; set; } = null!;
 
         [CommandOption("--from")]
@@ -90,7 +93,12 @@ namespace KSeFCli
         public string DateType { get; set; } = "Issue";
 
         [CommandOption("-s|--subject-type")]
-        [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
+        [Description("Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.\n" +
+                     "Dostępne wartości:\n" +
+                     "  \"Subject1\" - Podmiot 1 (sprzedawca)\n" +
+                     "  \"Subject2\" - Podmiot 2 (nabywca)\n" +
+                     "  \"Subject3\" - Podmiot 3\n" +
+                     "  \"SubjectAuthorized\" - Podmiot upoważniony")]
         public string SubjectType { get; set; } = null!;
 
         [CommandOption("--certificate-path")]
