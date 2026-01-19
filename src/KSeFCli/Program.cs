@@ -1,53 +1,39 @@
-using System;
 using System.ComponentModel;
-using System.IO;
-using System.Net.Http;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using KSeF.Client.Api.Services;
-using KSeF.Client.Clients;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Invoices;
 using KSeF.Client.Core.Models.Sessions;
-using KSeF.Client.Http;
 using Spectre.Console.Cli;
 
-namespace KSeFCli
-{
-    public class DummyCertificateFetcher : ICertificateFetcher
-    {
-        public Task<ICollection<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>> GetCertificatesAsync(CancellationToken cancellationToken)
-        {
+namespace KSeFCli {
+    public class DummyCertificateFetcher : ICertificateFetcher {
+        public Task<ICollection<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>> GetCertificatesAsync(CancellationToken cancellationToken) {
             return Task.FromResult<ICollection<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>>(new List<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>());
         }
     }
 
-    public class GlobalSettings : CommandSettings
-    {
-        [CommandOption("--token")]
-        [Description("KSeF API token")]
-        public string Token { get; set; } = Environment.GetEnvironmentVariable("KSEF_TOKEN") ?? string.Empty;
-
-        [CommandOption("--base-url")]
-        [Description("KSeF base URL")]
-        public string BaseUrl { get; set; } = Environment.GetEnvironmentVariable("KSEF_URL") ?? string.Empty;
+    public class GetInvoiceCommand : AsyncCommand<GetInvoiceCommand.Settings> {
+        public class Settings : GlobalSettings {
+            [CommandOption("-k|--ksef-number")]
+            [Description("KSeF invoice number")]
+            public string KsefNumber { get; set; } = null!;
+        }
+        public override async Task<int> ExecuteAsync(CommandContext context, GetInvoiceCommand.Settings settings) {
+            IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
+            string invoice = await ksefClient.GetInvoiceAsync(settings.KsefNumber, settings.Token, CancellationToken.None).ConfigureAwait(false);
+            Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", Invoice = invoice }));
+            return 0;
+        }
     }
 
-    public class GetInvoiceSettings : GlobalSettings
-    {
-        [CommandOption("-k|--ksef-number")]
-        [Description("KSeF invoice number")]
-        public string KsefNumber { get; set; } = null!;
-    }
-
-    public class QueryMetadataSettings : GlobalSettings
-    {
-        [CommandOption("-s|--subject-type")]
-        [Description("""
+    public class QueryMetadataCommand : AsyncCommand<QueryMetadataCommand.QueryMetadataSettings> {
+        public class QueryMetadataSettings : GlobalSettings {
+            [CommandOption("-s|--subject-type")]
+            [Description("""
                 Enum: "Subject1" "Subject2" "Subject3" "SubjectAuthorized"
 
                 Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.
@@ -57,126 +43,58 @@ namespace KSeFCli
                 Subject3 	Podmiot 3
                 SubjectAuthorized 	Podmiot upoważniony
                 """)]
-        public string SubjectType { get; set; } = null!;
+            public string SubjectType { get; set; } = null!;
 
-        [CommandOption("--from")]
-        [Description("Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
-        public DateTime From { get; set; }
+            [CommandOption("--from")]
+            [Description("Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
+            public DateTime From { get; set; }
 
-        [CommandOption("--to")]
-        [Description("Data końcowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
-        public DateTime To { get; set; }
+            [CommandOption("--to")]
+            [Description("Data końcowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
+            public DateTime To { get; set; }
 
-        [CommandOption("--date-type")]
-        [Description("""
-             Enum: "Issue" "Invoicing" "PermanentStorage"
+            [CommandOption("--date-type")]
+            [Description("Typ daty, według której ma być zastosowany zakres.\n" +
+                         "Dostępne wartości:\n" +
+                         "  \"Issue\" - Data wystawienia faktury.\n" +
+                         "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
+                         "  \"PermanentStorage\" - Data trwałego zapisu faktury w repozytorium systemu KSeF.")]
+            [DefaultValue("Issue")]
+            public string DateType { get; set; } = "Issue";
 
-            Typ daty, według której ma być zastosowany zakres.
-            Wartość 	Opis
-            Issue 	Data wystawienia faktury.
-            Invoicing 	Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).
-            PermanentStorage 	Data trwałego zapisu faktury w repozytorium systemu KSeF.
-            """)]
-        [DefaultValue("Issue")]
-        public string DateType { get; set; } = "Issue";
+            [CommandOption("--page-offset")]
+            [Description("Page offset for pagination")]
+            [DefaultValue(0)]
+            public int PageOffset { get; set; }
 
-        [CommandOption("--page-offset")]
-        [Description("Page offset for pagination")]
-        [DefaultValue(0)]
-        public int PageOffset { get; set; }
-
-        [CommandOption("--page-size")]
-        [Description("Page size for pagination")]
-        [DefaultValue(10)]
-        public int PageSize { get; set; }
-    }
-
-    public class ExportInvoicesSettings : GlobalSettings
-    {
-        [CommandOption("--from")]
-        [Description("Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
-        public DateTime From { get; set; }
-
-        [CommandOption("--to")]
-        [Description("Data końcowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
-        public DateTime To { get; set; }
-
-        [CommandOption("--date-type")]
-        [Description("Date type for the query (Issue, Invoicing, Acquisition)")]
-        [DefaultValue("Issue")]
-        public string DateType { get; set; } = "Issue";
-
-        [CommandOption("-s|--subject-type")]
-        [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
-        public string SubjectType { get; set; } = null!;
-
-        [CommandOption("--certificate-path")]
-        [Description("Path to the certificate file (.pfx)")]
-        public string CertificatePath { get; set; } = null!;
-
-        [CommandOption("--certificate-password")]
-        [Description("Password for the certificate file")]
-        public string? CertificatePassword { get; set; }
-    }
-
-    public class GetExportStatusSettings : GlobalSettings
-    {
-        [CommandOption("-r|--reference-number")]
-        [Description("Reference number of the asynchronous export operation")]
-        public string ReferenceNumber { get; set; } = null!;
-    }
-
-    public static class KSeFClientFactory
-    {
-        public static IKSeFClient CreateKSeFClient(string baseUrl)
-        {
-            var httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
-            var restClient = new RestClient(httpClient);
-            return new KSeFClient(restClient);
+            [CommandOption("--page-size")]
+            [Description("Page size for pagination")]
+            [DefaultValue(10)]
+            public int PageSize { get; set; }
         }
-    }
+        public override async Task<int> ExecuteAsync(CommandContext context, QueryMetadataSettings settings) {
+            IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
 
-    public class GetInvoiceCommand : AsyncCommand<GetInvoiceSettings>
-    {
-        public override async Task<int> ExecuteAsync(CommandContext context, GetInvoiceSettings settings)
-        {
-            var ksefClient = KSeFClientFactory.CreateKSeFClient(settings.BaseUrl);
-            var invoice = await ksefClient.GetInvoiceAsync(settings.KsefNumber, settings.Token, CancellationToken.None).ConfigureAwait(false);
-            Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", Invoice = invoice }));
-            return 0;
-        }
-    }
-
-    public class QueryMetadataCommand : AsyncCommand<QueryMetadataSettings>
-    {
-        public override async Task<int> ExecuteAsync(CommandContext context, QueryMetadataSettings settings)
-        {
-            var ksefClient = KSeFClientFactory.CreateKSeFClient(settings.BaseUrl);
-
-            if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
-            {
+            if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType)) {
                 Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid SubjectType: {settings.SubjectType}" }));
                 return 1;
             }
 
-            if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
-            {
+            if (!Enum.TryParse(settings.DateType, true, out DateType dateType)) {
                 Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid DateType: {settings.DateType}" }));
                 return 1;
             }
 
-            var invoiceQueryFilters = new InvoiceQueryFilters
-            {
+            InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters {
                 SubjectType = subjectType,
-                DateRange = new DateRange
-                {
+                DateRange = new DateRange {
                     From = settings.From,
                     To = settings.To,
                     DateType = dateType
                 }
             };
 
-            var pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
+            PagedInvoiceResponse pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
                 invoiceQueryFilters,
                 settings.Token,
                 pageOffset: settings.PageOffset,
@@ -188,43 +106,67 @@ namespace KSeFCli
         }
     }
 
-    public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesSettings>
-    {
-        public override async Task<int> ExecuteAsync(CommandContext context, ExportInvoicesSettings settings)
-        {
-            var ksefClient = KSeFClientFactory.CreateKSeFClient(settings.BaseUrl);
+    public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportInvoicesSettings> {
 
-            if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
-            {
+        public class ExportInvoicesSettings : GlobalSettings {
+            [CommandOption("--from")]
+            [Description("Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
+            public DateTime From { get; set; }
+
+            [CommandOption("--to")]
+            [Description("Data końcowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
+            public DateTime To { get; set; }
+
+            [CommandOption("--date-type")]
+            [Description("Typ daty, według której ma być zastosowany zakres.\n" +
+                         "Dostępne wartości:\n" +
+                         "  \"Issue\" - Data wystawienia faktury.\n" +
+                         "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
+                         "  \"PermanentStorage\" - Data trwałego zapisu faktury w repozytorium systemu KSeF.")]
+            [DefaultValue("Issue")]
+            public string DateType { get; set; } = "Issue";
+
+            [CommandOption("-s|--subject-type")]
+            [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
+            public string SubjectType { get; set; } = null!;
+
+            [CommandOption("--certificate-path")]
+            [Description("Path to the certificate file (.pfx)")]
+            public string CertificatePath { get; set; } = null!;
+
+            [CommandOption("--certificate-password")]
+            [Description("Password for the certificate file")]
+            public string? CertificatePassword { get; set; }
+        }
+
+        public override async Task<int> ExecuteAsync(CommandContext context, ExportInvoicesSettings settings) {
+            IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
+
+            if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType)) {
                 Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid SubjectType: {settings.SubjectType}" }));
                 return 1;
             }
 
-            if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
-            {
+            if (!Enum.TryParse(settings.DateType, true, out DateType dateType)) {
                 Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid DateType: {settings.DateType}" }));
                 return 1;
             }
 
             X509Certificate2 certificate;
-            try
-            {
+            try {
                 certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Failed to load certificate: {ex.Message}" }));
                 return 1;
             }
 
-            var cryptographyService = new CryptographyService(new DummyCertificateFetcher());
+            CryptographyService cryptographyService = new CryptographyService(new DummyCertificateFetcher());
             ((CryptographyService)cryptographyService).SetExternalMaterials(certificate, certificate);
-            var encryptionData = cryptographyService.GetEncryptionData();
+            EncryptionData encryptionData = cryptographyService.GetEncryptionData();
 
-            var queryFilters = new InvoiceQueryFilters
-            {
-                DateRange = new DateRange
-                {
+            InvoiceQueryFilters queryFilters = new InvoiceQueryFilters {
+                DateRange = new DateRange {
                     From = settings.From,
                     To = settings.To,
                     DateType = dateType
@@ -232,13 +174,12 @@ namespace KSeFCli
                 SubjectType = subjectType
             };
 
-            var invoiceExportRequest = new InvoiceExportRequest
-            {
+            InvoiceExportRequest invoiceExportRequest = new InvoiceExportRequest {
                 Encryption = encryptionData.EncryptionInfo,
                 Filters = queryFilters
             };
 
-            var exportInvoicesResponse = await ksefClient.ExportInvoicesAsync(
+            OperationResponse exportInvoicesResponse = await ksefClient.ExportInvoicesAsync(
                 invoiceExportRequest,
                 settings.Token,
                 CancellationToken.None).ConfigureAwait(false);
@@ -248,21 +189,23 @@ namespace KSeFCli
         }
     }
 
-    public class GetExportStatusCommand : AsyncCommand<GetExportStatusSettings>
-    {
-        public override async Task<int> ExecuteAsync(CommandContext context, GetExportStatusSettings settings)
-        {
-            var ksefClient = KSeFClientFactory.CreateKSeFClient(settings.BaseUrl);
-            try
-            {
-                var exportStatus = await ksefClient.GetInvoiceExportStatusAsync(
+    public class GetExportStatusCommand : AsyncCommand<GetExportStatusCommand.GetExportStatusSettings> {
+
+        public class GetExportStatusSettings : GlobalSettings {
+            [CommandOption("-r|--reference-number")]
+            [Description("Reference number of the asynchronous export operation")]
+            public string ReferenceNumber { get; set; } = null!;
+        }
+        public override async Task<int> ExecuteAsync(CommandContext context, GetExportStatusSettings settings) {
+            IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
+            try {
+                InvoiceExportStatusResponse exportStatus = await ksefClient.GetInvoiceExportStatusAsync(
                     settings.ReferenceNumber,
                     settings.Token).ConfigureAwait(false);
 
                 Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", ExportStatus = exportStatus }));
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = ex.Message }));
                 return 1;
             }
@@ -270,13 +213,10 @@ namespace KSeFCli
         }
     }
 
-    internal class Program
-    {
-        public static int Main(string[] args)
-        {
-            var app = new CommandApp();
-            app.Configure(config =>
-            {
+    internal class Program {
+        public static int Main(string[] args) {
+            CommandApp app = new CommandApp();
+            app.Configure(config => {
                 config.AddCommand<GetInvoiceCommand>("pobierz-fakture")
                     .WithDescription("Get a single invoice by KSeF number");
                 config.AddCommand<QueryMetadataCommand>("szukaj-faktury")
