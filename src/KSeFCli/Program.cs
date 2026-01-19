@@ -34,7 +34,7 @@ namespace KSeFCli
 
         [CommandOption("--base-url")]
         [Description("KSeF base URL")]
-        public string BaseUrl { get; set; } = Environment.GetEnvironmentVariable("KSEF_URL") ?? "https://api-test.ksef.mf.gov.pl/v2";
+        public string BaseUrl { get; set; } = Environment.GetEnvironmentVariable("KSEF_URL") ?? string.Empty;
     }
 
     public class GetInvoiceSettings : GlobalSettings
@@ -44,13 +44,10 @@ namespace KSeFCli
         public string KsefNumber { get; set; } = null!;
     }
 
+    public class QueryMetadataSettings : GlobalSettings
+    {
         [CommandOption("-s|--subject-type")]
-        [Description("Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.\n" +
-                     "Dostępne wartości:\n" +
-                     "  \"Subject1\" - Podmiot 1 (sprzedawca)\n" +
-                     "  \"Subject2\" - Podmiot 2 (nabywca)\n" +
-                     "  \"Subject3\" - Podmiot 3\n" +
-                     "  \"SubjectAuthorized\" - Podmiot upoważniony")]
+        [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
         public string SubjectType { get; set; } = null!;
 
         [CommandOption("--from")]
@@ -62,11 +59,7 @@ namespace KSeFCli
         public DateTime To { get; set; }
 
         [CommandOption("--date-type")]
-        [Description("Typ daty, według której ma być zastosowany zakres.\n" +
-                     "Dostępne wartości:\n" +
-                     "  \"Issue\" - Data wystawienia faktury.\n" +
-                     "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
-                     "  \"PermanentStorage\" - Data trwałego zapisu faktury w repozytorium systemu KSeF.")]
+        [Description("Date type for the query (Issue, Invoicing, Acquisition)")]
         [DefaultValue("Issue")]
         public string DateType { get; set; } = "Issue";
 
@@ -92,21 +85,12 @@ namespace KSeFCli
         public DateTime To { get; set; }
 
         [CommandOption("--date-type")]
-        [Description("Typ daty, według której ma być zastosowany zakres.\n" +
-                     "Dostępne wartości:\n" +
-                     "  \"Issue\" - Data wystawienia faktury.\n" +
-                     "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
-                     "  \"PermanentStorage\" - Data trwałego zapisu faktury w repozytorium systemu KSeF.")]
+        [Description("Date type for the query (Issue, Invoicing, Acquisition)")]
         [DefaultValue("Issue")]
         public string DateType { get; set; } = "Issue";
 
         [CommandOption("-s|--subject-type")]
-        [Description("Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.\n" +
-                     "Dostępne wartości:\n" +
-                     "  \"Subject1\" - Podmiot 1 (sprzedawca)\n" +
-                     "  \"Subject2\" - Podmiot 2 (nabywca)\n" +
-                     "  \"Subject3\" - Podmiot 3\n" +
-                     "  \"SubjectAuthorized\" - Podmiot upoważniony")]
+        [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
         public string SubjectType { get; set; } = null!;
 
         [CommandOption("--certificate-path")]
@@ -252,11 +236,19 @@ namespace KSeFCli
         public override async Task<int> ExecuteAsync(CommandContext context, GetExportStatusSettings settings)
         {
             var ksefClient = KSeFClientFactory.CreateKSeFClient(settings.BaseUrl);
-            var exportStatus = await ksefClient.GetInvoiceExportStatusAsync(
-                settings.ReferenceNumber,
-                settings.Token).ConfigureAwait(false);
+            try
+            {
+                var exportStatus = await ksefClient.GetInvoiceExportStatusAsync(
+                    settings.ReferenceNumber,
+                    settings.Token).ConfigureAwait(false);
 
-            Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", ExportStatus = exportStatus }));
+                Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", ExportStatus = exportStatus }));
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = ex.Message }));
+                return 1;
+            }
             return 0;
         }
     }
@@ -268,8 +260,6 @@ namespace KSeFCli
             var app = new CommandApp();
             app.Configure(config =>
             {
-                config.PropagateExceptions();
-                
                 config.AddCommand<GetInvoiceCommand>("pobierz-fakture")
                     .WithDescription("Get a single invoice by KSeF number");
                 config.AddCommand<QueryMetadataCommand>("szukaj-faktury")
@@ -280,15 +270,7 @@ namespace KSeFCli
                     .WithDescription("Checks the status of an asynchronous export operation");
             });
 
-            try
-            {
-                return app.Run(args);
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine(ex.ToString());
-                return 1;
-            }
+            return app.Run(args);
         }
     }
 }
