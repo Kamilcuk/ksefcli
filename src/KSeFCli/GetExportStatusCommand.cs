@@ -9,7 +9,6 @@ namespace KSeFCli;
 
 [Description("Checks the status of an asynchronous export operation")]
 public class GetExportStatusCommand : AsyncCommand<GetExportStatusCommand.GetExportStatusSettings> {
-
     public class GetExportStatusSettings : GlobalSettings {
         [CommandOption("-r|--reference-number")]
         [Description("Reference number of the asynchronous export operation")]

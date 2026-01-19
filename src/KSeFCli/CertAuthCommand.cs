@@ -38,7 +38,7 @@ public class CertAuthCommand : AsyncCommand<CertAuthCommand.Settings> {
 
         X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
 
-        IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
+        IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings, false);
 
         // 1. Get Auth Challenge
         Console.WriteLine("[2] Pobieranie wyzwania (challenge) z KSeF...");

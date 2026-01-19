@@ -5,6 +5,12 @@ using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Authorization;
 using Spectre.Console.Cli;
+using System.ComponentModel;
+using KSeF.Client.Clients;
+using KSeF.Client.Core.Interfaces.Clients;
+using KSeF.Client.Http;
+using Spectre.Console.Cli;
+
 
 
 namespace KSeFCli;
@@ -16,10 +22,7 @@ public class TokenAuthCommand : AsyncCommand<TokenAuthCommand.Settings> {
     }
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings) {
-        IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
-
-        AuthenticationChallengeResponse challenge = await ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
-        long timestampMs = challenge.Timestamp.ToUnixTimeMilliseconds();
+        IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings, false);
 
 
         string ksefToken = settings.Token;
@@ -27,11 +30,17 @@ public class TokenAuthCommand : AsyncCommand<TokenAuthCommand.Settings> {
         // Przygotuj "token|timestamp" i zaszyfruj RSA-OAEP SHA-256 zgodnie z wymaganiem API
         string tokenWithTimestamp = $"{ksefToken}|{timestampMs}";
         byte[] tokenBytes = System.Text.Encoding.UTF8.GetBytes(tokenWithTimestamp);
-        CryptographyClient a = new CryptographyClient(KSeFClientFactory.CreateRestclient(settings));
+        RestClient r = KSeFClientFactory.CreateRestclient(settings, false);
+        CryptographyClient a = new CryptographyClient(r);
         DefaultCertificateFetcher i = new DefaultCertificateFetcher(a);
         CryptographyService crypto = new CryptographyService(i);
+        await crypto.WarmupAsync();
         byte[] encrypted = crypto.EncryptKsefTokenWithRSAUsingPublicKey(tokenBytes);
         string encryptedTokenB64 = Convert.ToBase64String(encrypted);
+
+        Console.WriteLine("1. Getting challenge");
+        AuthenticationChallengeResponse challenge = await ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
+        long timestampMs = challenge.Timestamp.ToUnixTimeMilliseconds();
 
         Console.WriteLine("2. Wysłanie żądania uwierzytelnienia tokenem KSeF");
         AuthenticationKsefTokenRequest request = new AuthenticationKsefTokenRequest {

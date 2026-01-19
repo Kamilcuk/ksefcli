@@ -17,9 +17,9 @@ public class GlobalSettings : CommandSettings {
 }
 
 public static class KSeFClientFactory {
-    public static RestClient CreateRestclient(GlobalSettings settings) {
+    public static RestClient CreateRestclient(GlobalSettings settings, bool usetoken = true) {
         HttpClient httpClient = new HttpClient { BaseAddress = new Uri(settings.BaseUrl) };
-        if (string.IsNullOrEmpty(settings.Token)) {
+        if (usetoken && string.IsNullOrEmpty(settings.Token)) {
             httpClient.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue(
                     "Bearer",
@@ -29,7 +29,7 @@ public static class KSeFClientFactory {
         RestClient restClient = new RestClient(httpClient);
         return restClient;
     }
-    public static IKSeFClient CreateKSeFClient(GlobalSettings settings) {
-        return new KSeFClient(CreateRestclient(settings));
+    public static IKSeFClient CreateKSeFClient(GlobalSettings settings, bool usetoken = true) {
+        return new KSeFClient(CreateRestclient(settings, usetoken));
     }
 }
