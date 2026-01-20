@@ -7,7 +7,6 @@ using KSeF.Client.DI;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console.Cli;
 using Spectre.Console.Cli.Extensions.DependencyInjection;
-using System.Reflection;
 
 namespace KSeFCli;
 

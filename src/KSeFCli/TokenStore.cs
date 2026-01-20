@@ -3,7 +3,8 @@ using System.Text.Json;
 
 namespace KSeFCli;
 
-public class TokenStore {
+public class TokenStore
+{
     public record Data(
         string AccessToken,
         DateTime AccessTokenValidUntil,
@@ -15,20 +16,24 @@ public class TokenStore {
 
     private readonly string _path;
 
-    public TokenStore(string path) {
+    public TokenStore(string path)
+    {
         _path = Environment.ExpandEnvironmentVariables(path);
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
     }
 
-    public static TokenStore Default() {
+    public static TokenStore Default()
+    {
         string defaultPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".cache", "ksefcli", "tokenstore.json");
         return new TokenStore(defaultPath);
     }
 
-    public Data? GetToken(string nip, string url) {
-        if (!File.Exists(_path)) {
+    public Data? GetToken(string nip, string url)
+    {
+        if (!File.Exists(_path))
+        {
             return null;
         }
 
@@ -42,17 +47,22 @@ public class TokenStore {
         return token;
     }
 
-    public void SetToken(string nip, string url, Data token) {
+    public void SetToken(string nip, string url, Data token)
+    {
         // wyłączny dostęp do pliku przy zapisie, aby chronić przed współbieżnym dostępem.
-        using (FileStream fs = new FileStream(this._path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)) {
+        using (FileStream fs = new FileStream(this._path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+        {
             Dictionary<Key, Data> tokens;
             // odczyt aktualnego stanu
-            if (fs.Length > 0) {
+            if (fs.Length > 0)
+            {
                 byte[] data = new byte[fs.Length];
                 fs.ReadExactly(data);
                 tokens = JsonSerializer.Deserialize<Dictionary<Key, Data>>(data)
                          ?? new Dictionary<Key, Data>();
-            } else {
+            }
+            else
+            {
                 tokens = new Dictionary<Key, Data>();
             }
 
@@ -69,20 +79,26 @@ public class TokenStore {
 
     }
 
-    public bool RemoveToken(string nip, string url) {
+    public bool RemoveToken(string nip, string url)
+    {
         // wyłączny dostęp do pliku przy zapisie, aby chronić przed współbieżnym dostępem.
-        using (FileStream fs = new FileStream(this._path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)) {
+        using (FileStream fs = new FileStream(this._path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+        {
             Dictionary<Key, Data> tokens;
-            if (fs.Length > 0) {
+            if (fs.Length > 0)
+            {
                 byte[] data = new byte[fs.Length];
                 fs.ReadExactly(data);
                 tokens = JsonSerializer.Deserialize<Dictionary<Key, Data>>(data)
                          ?? new Dictionary<Key, Data>();
-            } else {
+            }
+            else
+            {
                 return false; // File is empty, nothing to remove
             }
 
-            if (tokens.Remove(new Key(nip, url))) {
+            if (tokens.Remove(new Key(nip, url)))
+            {
                 // Zapisz zmieniony stan
                 fs.Seek(0, SeekOrigin.Begin);
                 fs.SetLength(0);
