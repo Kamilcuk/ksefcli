@@ -17,6 +17,12 @@ dotnet_sort_system_directives_first = true
 
 # Put braces on the same line for everything
 csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_members_in_anonymous_types = false
+csharp_new_line_between_query_expression_clauses = false
 
 # Optional: keep single-line statements compact
 csharp_preserve_single_line_statements = true
