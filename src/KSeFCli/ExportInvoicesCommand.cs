@@ -11,17 +11,20 @@ using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
-public class DummyCertificateFetcher : ICertificateFetcher {
-    public Task<ICollection<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>> GetCertificatesAsync(CancellationToken cancellationToken) {
-        return Task.FromResult<ICollection<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>>(new List<KSeF.Client.Core.Models.Certificates.PemCertificateInfo>());
-    }
-}
-
-
 [Description("Initialize an asynchronous invoice export")]
-public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportInvoicesSettings> {
+public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportInvoicesSettings>
+{
+    private readonly IKSeFClient _ksefClient;
+    private readonly ICryptographyService _cryptographyService;
 
-    public class ExportInvoicesSettings : GlobalSettings {
+    public ExportInvoicesCommand(IKSeFClient ksefClient, ICryptographyService cryptographyService)
+    {
+        _ksefClient = ksefClient;
+        _cryptographyService = cryptographyService;
+    }
+
+    public class ExportInvoicesSettings : GlobalSettings
+    {
         [CommandOption("--from")]
         [Description("Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
         public DateTime From { get; set; }
@@ -52,33 +55,28 @@ public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportIn
         public string? CertificatePassword { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ExportInvoicesSettings settings) {
-        IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
-
-        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType)) {
-            Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid SubjectType: {settings.SubjectType}" }));
+    public override async Task<int> ExecuteAsync(CommandContext context, ExportInvoicesSettings settings, CancellationToken cancellationToken = default)
+    {
+        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
+        {
+            Console.Error.WriteLine($"Invalid SubjectType: {settings.SubjectType}");
             return 1;
         }
 
-        if (!Enum.TryParse(settings.DateType, true, out DateType dateType)) {
-            Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid DateType: {settings.DateType}" }));
+        if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
+        {
+            Console.Error.WriteLine($"Invalid DateType: {settings.DateType}");
             return 1;
         }
 
-        X509Certificate2 certificate;
-        try {
-            certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
-        } catch (Exception ex) {
-            Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Failed to load certificate: {ex.Message}" }));
-            return 1;
-        }
+        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
 
-        CryptographyService cryptographyService = new CryptographyService(new DummyCertificateFetcher());
-        ((CryptographyService)cryptographyService).SetExternalMaterials(certificate, certificate);
-        EncryptionData encryptionData = cryptographyService.GetEncryptionData();
+        EncryptionData encryptionData = _cryptographyService.GetEncryptionData();
 
-        InvoiceQueryFilters queryFilters = new InvoiceQueryFilters {
-            DateRange = new DateRange {
+        InvoiceQueryFilters queryFilters = new InvoiceQueryFilters
+        {
+            DateRange = new DateRange
+            {
                 From = settings.From,
                 To = settings.To,
                 DateType = dateType
@@ -86,17 +84,18 @@ public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportIn
             SubjectType = subjectType
         };
 
-        InvoiceExportRequest invoiceExportRequest = new InvoiceExportRequest {
+        InvoiceExportRequest invoiceExportRequest = new InvoiceExportRequest
+        {
             Encryption = encryptionData.EncryptionInfo,
             Filters = queryFilters
         };
 
-        OperationResponse exportInvoicesResponse = await ksefClient.ExportInvoicesAsync(
+        OperationResponse exportInvoicesResponse = await _ksefClient.ExportInvoicesAsync(
             invoiceExportRequest,
             settings.Token,
             CancellationToken.None).ConfigureAwait(false);
 
-        Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", ReferenceNumber = exportInvoicesResponse.ReferenceNumber }));
+        Console.WriteLine(JsonSerializer.Serialize(new { ReferenceNumber = exportInvoicesResponse.ReferenceNumber }));
         return 0;
     }
 }

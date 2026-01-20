@@ -13,6 +13,8 @@ Jako agent odpowiedzialny za rozwój tego projektu, będę przestrzegał następ
 *   **Minimalizm w komunikacji**: Bądź tak zwięzły, jak to tylko możliwe, i wypisuj minimalną ilość informacji, bez gramatyki.
 *   **Commit often**: Commituj zmiany często, po każdej znaczącej zmianie.
 *   **Brak pustych linii**: Pisząc kod, nie twórz linii bez zawartości.
+*   **Nie łap excpetion**: Nie łap exception, tylko po to żeby print. Daj exception raise.
+
 
 W thirdparty/ksef-client-csharp jest zależność.
 

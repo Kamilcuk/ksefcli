@@ -7,18 +7,27 @@ using Spectre.Console.Cli;
 namespace KSeFCli;
 
 [Description("Query invoice metadata")]
-public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadataSettings> {
-    public class QueryMetadataSettings : GlobalSettings {
+public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadataSettings>
+{
+    private readonly IKSeFClient _ksefClient;
+
+    public SzukajFakturCommand(IKSeFClient ksefClient)
+    {
+        _ksefClient = ksefClient;
+    }
+
+    public class QueryMetadataSettings : GlobalSettings
+    {
         [CommandOption("-s|--subject-type")]
         [Description(@"
                 Enum: ""Subject1"" ""Subject2"" ""Subject3"" ""SubjectAuthorized""
 
                 Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.
-                Wartość 	Opis
-                Subject1 	Podmiot 1 - sprzedawca
-                Subject2 	Podmiot 2 - nabywca
-                Subject3 	Podmiot 3
-                SubjectAuthorized 	Podmiot upoważniony
+                Wartość \tOpis
+                Subject1 \tPodmiot 1 - sprzedawca
+                Subject2 \tPodmiot 2 - nabywca
+                Subject3 \tPodmiot 3
+                SubjectAuthorized \tPodmiot upoważniony
             ")]
         public string SubjectType { get; set; } = null!;
 
@@ -49,36 +58,39 @@ public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadat
         [DefaultValue(10)]
         public int PageSize { get; set; }
     }
-    public override async Task<int> ExecuteAsync(CommandContext context, QueryMetadataSettings settings) {
-        IKSeFClient ksefClient = KSeFClientFactory.CreateKSeFClient(settings);
-
-        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType)) {
-            Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid SubjectType: {settings.SubjectType}" }));
+    public override async Task<int> ExecuteAsync(CommandContext context, QueryMetadataSettings settings, CancellationToken cancellationToken = default)
+    {
+        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
+        {
+            Console.Error.WriteLine($"Invalid SubjectType: {settings.SubjectType}");
             return 1;
         }
 
-        if (!Enum.TryParse(settings.DateType, true, out DateType dateType)) {
-            Console.Error.WriteLine(JsonSerializer.Serialize(new { Status = "Error", Message = $"Invalid DateType: {settings.DateType}" }));
+        if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
+        {
+            Console.Error.WriteLine($"Invalid DateType: {settings.DateType}");
             return 1;
         }
 
-        InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters {
+        InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters
+        {
             SubjectType = subjectType,
-            DateRange = new DateRange {
+            DateRange = new DateRange
+            {
                 From = settings.From,
                 To = settings.To,
                 DateType = dateType
             }
         };
 
-        PagedInvoiceResponse pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
+        PagedInvoiceResponse pagedInvoicesResponse = await _ksefClient.QueryInvoiceMetadataAsync(
             invoiceQueryFilters,
             settings.Token,
             pageOffset: settings.PageOffset,
             pageSize: settings.PageSize,
             cancellationToken: CancellationToken.None).ConfigureAwait(false);
 
-        Console.WriteLine(JsonSerializer.Serialize(new { Status = "Success", Metadata = pagedInvoicesResponse }));
+        Console.WriteLine(JsonSerializer.Serialize(pagedInvoicesResponse));
         return 0;
     }
 }
