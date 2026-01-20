@@ -15,8 +15,8 @@ public class GlobalSettings : CommandSettings {
     [Description("KSeF base URL")]
     public string BaseUrl { get; set; } = Environment.GetEnvironmentVariable("KSEF_URL") ?? "https://api-test.ksef.mf.gov.pl/v2";
 
-        [CommandOption("--nip")]
-        public string Nip { get; set; } = Environment.GetEnvironmentVariable("KSEF_NIP") ?? string.Empty;
+    [CommandOption("--nip")]
+    public string Nip { get; set; } = Environment.GetEnvironmentVariable("KSEF_NIP") ?? string.Empty;
 }
 
 public static class KSeFClientFactory {

@@ -10,56 +10,36 @@ default:
   interruptible: true
   timeout: 5
 
-stages:
-  - build
-  - release
-
-variables:
-  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-  IMAGE_LATEST_TAG: $CI_REGISTRY_IMAGE:latest
-
-build:
-  stage: build
-  image: docker:latest
-  services:
-    - docker:dind
-  before_script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-  script:
-    - docker build -t $IMAGE_TAG -t $IMAGE_LATEST_TAG .
-    - docker push $IMAGE_TAG
-    - docker push $IMAGE_LATEST_TAG
-    
-    # Extract artifact from build stage
-    - docker build --target build -t ksefcli-build-stage-for-artifact .
-    - mkdir -p bin
-    - |
-      CONTAINER_ID=$(docker create ksefcli-build-stage-for-artifact)
-      docker cp $CONTAINER_ID:/app/publish/KSeFCli bin/KSeFCli
-      docker rm $CONTAINER_ID
-  artifacts:
-    paths:
-      - bin/KSeFCli
-    expire_in: 1 week
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-build-rootless:
+.build:
   image:
     name: moby/buildkit:rootless
     entrypoint: [""]
   stage: build
   variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    ARGS:
     BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
+    CACHE_IMAGE: $CI_REGISTRY_IMAGE:cache
   before_script:
     - mkdir -p ~/.docker
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > ~/.docker/config.json
   script:
-    - |-
-      buildctl-daemonless.sh build \
-        --frontend dockerfile.v0 \
-        --local context=. \
-        --local dockerfile=. \
+    - buildctl-daemonless.sh build
+        --frontend dockerfile.v0
+        --local context=.
+        --local dockerfile=.
+        --export-cache type=registry,ref=$CACHE_IMAGE
+        --import-cache type=registry,ref=$CACHE_IMAGE
         --output type=image,name=$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA,push=true
+        ${ARGS}
 
-release:
+build-release:
+  variables:
+    ARGS: --output type=image,name=$CI_REGISTRY_IMAGE:latest,push=true
+  extends: [.build]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+build-test:
+  extends: [.build]
+  rules:
+    - if: $CI_MERGE_REQUEST_IID

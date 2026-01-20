@@ -1,0 +1,46 @@
+# Binaries and object files
+**/bin/
+**/obj/
+
+# Project-specific temporary files
+**/*.user
+**/*.suo
+**/*.config
+**/*.pdb
+**/*.resharper
+
+# Test results
+TestResults/
+
+# Git
+.git
+.gitattributes
+.gitignore
+.gitmodules
+
+# Docker
+.dockerignore
+Dockerfile
+
+# VS Code
+.vscode/
+
+# Package Manager files
+packages/
+node_modules/
+
+# Logs
+logs/
+*.log
+*.tmp
+*.temp
+
+# IDE specific files
+*.swp
+*.bak
+*.orig
+*.rej
+*.swo
+
+# Documentation
+thirdparty/ksef-docs/

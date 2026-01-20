@@ -69,4 +69,4 @@ Desktop.ini
 .nfs*
 
 # Prompt file
-prompt.md
+prompt.md.env

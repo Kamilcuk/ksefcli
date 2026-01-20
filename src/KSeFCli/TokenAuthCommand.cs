@@ -1,16 +1,12 @@
+using System.Diagnostics;
 using KSeF.Client.Api.Services;
 using KSeF.Client.Api.Services.Internal;
 using KSeF.Client.Clients;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Authorization;
-using Spectre.Console.Cli;
-using System.ComponentModel;
-using KSeF.Client.Clients;
-using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Http;
 using Spectre.Console.Cli;
-using System.Diagnostics;
 
 
 namespace KSeFCli;
