@@ -1,28 +1,38 @@
-using System.Text.Json;
-using KSeF.Client.Core.Interfaces.Clients;
+using CommandLine;
+using KSeF.Client.Clients;
 using KSeF.Client.Core.Models.Authorization;
-using Spectre.Console.Cli;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Threading.Tasks;
+using KSeF.Client.Api.Builders.Certificates;
+using KSeF.Client.Core.Interfaces.Clients;
+using KSeF.Client.Core.Interfaces.Services;
+using KSeF.Client.Extensions;
+using KSeF.Client.Core.Models.Certificates;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+
 
 namespace KSeFCli;
 
-public class TokenRefreshCommand : AsyncCommand<TokenRefreshCommand.Settings>
+[Verb("TokenRefresh", HelpText = "Refresh an existing session token")]
+public class TokenRefreshCommand : GlobalCommand
 {
-    private readonly IKSeFClient _ksefClient;
-
-    public TokenRefreshCommand(IKSeFClient ksefClient)
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        _ksefClient = ksefClient;
-    }
-
-    public class Settings : GlobalSettings
-    {
-        [CommandOption("--refresh-token")]
-        public string RefreshToken { get; set; } = null!;
-    }
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
-    {
-        RefreshTokenResponse refreshedAccessTokenResponse = await _ksefClient.RefreshAccessTokenAsync(settings.RefreshToken).ConfigureAwait(false);
-        Console.WriteLine(JsonSerializer.Serialize(refreshedAccessTokenResponse));
+        var serviceProvider = GetServiceProvider();
+        IKSeFClient ksefClient = serviceProvider.GetRequiredService<IKSeFClient>();
+        var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+        if (string.IsNullOrEmpty(Token))
+        {
+            Console.Error.WriteLine("No refresh token provided. Use --token to provide a refresh token.");
+            return 1;
+        }
+        logger.LogInformation("Refreshing token...");
+        var tokenResponse = await ksefClient.RefreshAccessTokenAsync(Token, cancellationToken).ConfigureAwait(false);
+        Console.Out.WriteLine(JsonSerializer.Serialize(tokenResponse));
+        logger.LogInformation("Token refreshed successfully.");
         return 0;
     }
 }

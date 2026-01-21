@@ -1,30 +1,24 @@
-using System.ComponentModel;
+using CommandLine;
+using KSeF.Client.Clients;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
-using KSeF.Client.Core.Interfaces.Clients;
-using Spectre.Console.Cli;
+using System.Threading.Tasks;
 
 namespace KSeFCli;
 
-[Description("Get a single invoice by KSeF number")]
-public class GetFakturaCommand : AsyncCommand<GetFakturaCommand.Settings>
+[Verb("GetFaktura", HelpText = "Get a single invoice by KSeF number")]
+public class GetFakturaCommand : GlobalCommand
 {
-    private readonly IKSeFClient _ksefClient;
+    [Option('k', "ksef-number", Required = true, HelpText = "KSeF invoice number")]
+    public string KsefNumber { get; set; }
 
-    public GetFakturaCommand(IKSeFClient ksefClient)
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        _ksefClient = ksefClient;
-    }
+        var serviceProvider = GetServiceProvider();
+        var ksefClient = serviceProvider.GetRequiredService<KSeFClient>();
 
-    public class Settings : GlobalSettings
-    {
-        [CommandOption("-k|--ksef-number")]
-        [Description("KSeF invoice number")]
-        public string KsefNumber { get; set; } = null!;
-    }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
-    {
-        string invoice = await _ksefClient.GetInvoiceAsync(settings.KsefNumber, settings.Token, CancellationToken.None).ConfigureAwait(false);
+        string invoice = await ksefClient.GetInvoiceAsync(KsefNumber, Token, cancellationToken).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(new { Invoice = invoice }));
         return 0;
     }

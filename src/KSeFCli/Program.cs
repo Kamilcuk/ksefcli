@@ -1,13 +1,4 @@
-using KSeF.Client.Api.Services;
-using KSeF.Client.Api.Services.Internal;
-using KSeF.Client.Clients;
-using KSeF.Client.Core.Interfaces.Clients;
-using KSeF.Client.Core.Interfaces.Services;
-using KSeF.Client.DI;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Spectre.Console.Cli;
-using Spectre.Console.Cli.Extensions.DependencyInjection;
+using CommandLine;
 
 namespace KSeFCli;
 
@@ -15,53 +6,20 @@ internal class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        IServiceCollection services = new ServiceCollection();
+        var parser = new Parser(with => with.HelpWriter = Console.Error);
 
-        services.AddLogging(builder =>
+        var result = parser.ParseArguments<GetFakturaCommand, SzukajFakturCommand, ExportInvoicesCommand, GetExportStatusCommand, TokenAuthCommand, TokenRefreshCommand, CertAuthCommand>(args);
+
+        var cts = new CancellationTokenSource();
+        Console.CancelKeyPress += (s, e) =>
         {
-            builder.AddFilter("KSeFCli", LogLevel.Information)
-                   .AddFilter("Microsoft", LogLevel.Warning)
-                   .AddFilter("System", LogLevel.Warning)
-                   .AddConsole(options =>
-                   {
-                       options.LogToStandardErrorThreshold = LogLevel.Trace;
-                   })
-                   .AddSimpleConsole(options =>
-                   {
-                       options.SingleLine = true;
-                       options.TimestampFormat = "HH:mm:ss ";
-                   });
-        });
+            Console.WriteLine("Canceling...");
+            cts.Cancel();
+            e.Cancel = true;
+        };
 
-        services.AddKSeFClient(options =>
-        {
-            options.BaseUrl = KsefEnvironmentsUris.TEST;
-        });
-
-
-        services.AddSingleton<ICryptographyClient, CryptographyClient>();
-        services.AddSingleton<ICertificateFetcher, DefaultCertificateFetcher>();
-        services.AddSingleton<ICryptographyService>(sp =>
-        {
-            ICertificateFetcher fetcher = sp.GetRequiredService<ICertificateFetcher>();
-            CryptographyService service = new CryptographyService(fetcher);
-            service.WarmupAsync().GetAwaiter().GetResult();
-            return service;
-        });
-
-        ITypeRegistrar registrar = new DependencyInjectionRegistrar(services);
-        CommandApp app = new CommandApp(registrar);
-
-        app.Configure(config =>
-        {
-            config.AddCommand<GetFakturaCommand>("GetFaktura");
-            config.AddCommand<SzukajFakturCommand>("SzukajFaktur");
-            config.AddCommand<ExportInvoicesCommand>("ExportInvoices");
-            config.AddCommand<GetExportStatusCommand>("GetExportStatus");
-            config.AddCommand<TokenAuthCommand>("TokenAuth");
-            config.AddCommand<TokenRefreshCommand>("TokenRefresh");
-            config.AddCommand<CertAuthCommand>("CertAuth");
-        });
-        return await app.RunAsync(args).ConfigureAwait(false);
+        return await result.MapResult(
+            async (GlobalCommand cmd) => await cmd.ExecuteAsync(cts.Token),
+            errs => Task.FromResult(1));
     }
 }

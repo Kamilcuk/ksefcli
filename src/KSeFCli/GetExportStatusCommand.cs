@@ -1,33 +1,24 @@
-using System.ComponentModel;
-using System.Text.Json;
-using KSeF.Client.Core.Interfaces.Clients;
+using CommandLine;
+using KSeF.Client.Clients;
 using KSeF.Client.Core.Models.Invoices;
-using Spectre.Console.Cli;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace KSeFCli;
 
-
-[Description("Checks the status of an asynchronous export operation")]
-public class GetExportStatusCommand : AsyncCommand<GetExportStatusCommand.GetExportStatusSettings>
+[Verb("GetExportStatus", HelpText = "Checks the status of an asynchronous export operation")]
+public class GetExportStatusCommand : GlobalCommand
 {
-    private readonly IKSeFClient _ksefClient;
+    [Option('r', "reference-number", Required = true, HelpText = "Reference number of the export operation")]
+    public string ReferenceNumber { get; set; }
 
-    public GetExportStatusCommand(IKSeFClient ksefClient)
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        _ksefClient = ksefClient;
-    }
+        var serviceProvider = GetServiceProvider();
+        var ksefClient = serviceProvider.GetRequiredService<KSeFClient>();
 
-    public class GetExportStatusSettings : GlobalSettings
-    {
-        [CommandOption("-r|--reference-number")]
-        [Description("Reference number of the asynchronous export operation")]
-        public string ReferenceNumber { get; set; } = null!;
-    }
-    public override async Task<int> ExecuteAsync(CommandContext context, GetExportStatusSettings settings, CancellationToken cancellationToken = default)
-    {
-        InvoiceExportStatusResponse exportStatus = await _ksefClient.GetInvoiceExportStatusAsync(
-            settings.ReferenceNumber,
-            settings.Token).ConfigureAwait(false);
+        InvoiceExportStatusResponse exportStatus = await ksefClient.GetInvoiceExportStatusAsync(ReferenceNumber, Token, cancellationToken).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(exportStatus));
         return 0;
     }

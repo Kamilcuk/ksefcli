@@ -1,83 +1,69 @@
-using System.ComponentModel;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.Json;
-using KSeF.Client.Core.Interfaces.Clients;
+using CommandLine;
+using KSeF.Client.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Invoices;
 using KSeF.Client.Core.Models.Sessions;
-using Spectre.Console.Cli;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.ComponentModel;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace KSeFCli;
 
-[Description("Initialize an asynchronous invoice export")]
-public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportInvoicesSettings>
+[Verb("ExportInvoices", HelpText = "Initialize an asynchronous invoice export")]
+public class ExportInvoicesCommand : GlobalCommand
 {
-    private readonly IKSeFClient _ksefClient;
-    private readonly ICryptographyService _cryptographyService;
+    [Option("from", Required = true, HelpText = "Start date in ISO-8601 format")]
+    public DateTime From { get; set; }
 
-    public ExportInvoicesCommand(IKSeFClient ksefClient, ICryptographyService cryptographyService)
+    [Option("to", Required = true, HelpText = "End date in ISO-8601 format")]
+    public DateTime To { get; set; }
+    
+    [Option("date-type", Default = "Issue", HelpText = "Date type (Issue, Invoicing, PermanentStorage)")]
+    public string DateType { get; set; }
+
+    [Option('s', "subject-type", Required = true, HelpText = "Invoice subject type")]
+    public string SubjectType { get; set; }
+
+    [Option("certificate-path", Required = true, HelpText = "Path to the certificate file (.pfx)")]
+    public string CertificatePath { get; set; }
+
+    [Option("certificate-password", HelpText = "Password for the certificate file")]
+    public string CertificatePassword { get; set; }
+
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        _ksefClient = ksefClient;
-        _cryptographyService = cryptographyService;
-    }
+        var serviceProvider = GetServiceProvider();
+        var ksefClient = serviceProvider.GetRequiredService<KSeFClient>();
+        var cryptographyService = serviceProvider.GetRequiredService<ICryptographyService>();
 
-    public class ExportInvoicesSettings : GlobalSettings
-    {
-        [CommandOption("--from")]
-        [Description("Data początkowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
-        public DateTime From { get; set; }
 
-        [CommandOption("--to")]
-        [Description("Data końcowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
-        public DateTime To { get; set; }
 
-        [CommandOption("--date-type")]
-        [Description("Typ daty, według której ma być zastosowany zakres.\n" +
-                     "Dostępne wartości:\n" +
-                     "  \"Issue\" - Data wystawienia faktury.\n" +
-                     "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
-                     "  \"PermanentStorage\" - Data trwałego zapisu faktury w repozytorium systemu KSeF.")]
-        [DefaultValue("Issue")]
-        public string DateType { get; set; } = "Issue";
-
-        [CommandOption("-s|--subject-type")]
-        [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
-        public string SubjectType { get; set; } = null!;
-
-        [CommandOption("--certificate-path")]
-        [Description("Path to the certificate file (.pfx)")]
-        public string CertificatePath { get; set; } = null!;
-
-        [CommandOption("--certificate-password")]
-        [Description("Password for the certificate file")]
-        public string? CertificatePassword { get; set; }
-    }
-
-    public override async Task<int> ExecuteAsync(CommandContext context, ExportInvoicesSettings settings, CancellationToken cancellationToken = default)
-    {
-        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
+        if (!Enum.TryParse(SubjectType, true, out InvoiceSubjectType subjectType))
         {
-            Console.Error.WriteLine($"Invalid SubjectType: {settings.SubjectType}");
+            Console.Error.WriteLine($"Invalid SubjectType: {SubjectType}");
             return 1;
         }
 
-        if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
+        if (!Enum.TryParse(DateType, true, out DateType dateType))
         {
-            Console.Error.WriteLine($"Invalid DateType: {settings.DateType}");
+            Console.Error.WriteLine($"Invalid DateType: {DateType}");
             return 1;
         }
 
-        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
+        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(CertificatePath, CertificatePassword);
 
-        EncryptionData encryptionData = _cryptographyService.GetEncryptionData();
+        EncryptionData encryptionData = cryptographyService.GetEncryptionData();
 
         InvoiceQueryFilters queryFilters = new InvoiceQueryFilters
         {
             DateRange = new DateRange
             {
-                From = settings.From,
-                To = settings.To,
+                From = From,
+                To = To,
                 DateType = dateType
             },
             SubjectType = subjectType
@@ -89,10 +75,10 @@ public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportIn
             Filters = queryFilters
         };
 
-        OperationResponse exportInvoicesResponse = await _ksefClient.ExportInvoicesAsync(
+        OperationResponse exportInvoicesResponse = await ksefClient.ExportInvoicesAsync(
             invoiceExportRequest,
-            settings.Token,
-            CancellationToken.None).ConfigureAwait(false);
+            Token,
+            cancellationToken).ConfigureAwait(false);
 
         Console.WriteLine(JsonSerializer.Serialize(new { ReferenceNumber = exportInvoicesResponse.ReferenceNumber }));
         return 0;

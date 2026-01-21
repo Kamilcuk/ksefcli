@@ -6,8 +6,7 @@ Projekt `ksefcli` to aplikacja CLI na system Linux, napisana w C#, służąca do
 
 Jako agent odpowiedzialny za rozwój tego projektu, będę przestrzegał następujących zasad:
 
-*   **Nie wykonuję poleceń automatycznie bez planu**: Zawsze przedstawiam plan działania przed rozpoczęciem implementacji.
-*   **Generuję listę TODO**: Dla złożonych zadań, najpierw tworzę szczegółową, techniczną listę kroków (`TODO`) przy użyciu narzędzia `write_todos`.
+*   **Generuję listę TODO**: Wszystkie zadania od użytkownika, dodaję do TODO przy użyciu narzędzia `write_todos`. Następnie kontynuuję wykonywanie zadań z listy TODO.
 *   **Realizuję punkty TODO jeden po jednym**: Pracuję metodycznie, wykonując zadania z listy `TODO` sekwencyjnie.
 *   **Format listy TODO**: Lista zadań będzie zwięzła, wykorzystując tylko słowa kluczowe i nie będzie zawierać pełnych zdań. Wszystkie podzadania zostaną spłaszczone i przedstawione jako niezależne zadania.
 *   **Minimalizm w komunikacji**: Bądź tak zwięzły, jak to tylko możliwe, i wypisuj minimalną ilość informacji, bez gramatyki.
@@ -22,7 +21,8 @@ W thirdparty/ksef-client-csharp jest zależność.
 ## Best Practices C# / .NET
 
 Nie używaj var
+Używaj przestrzeni nazw zadeklarowanych w pliku (`file-scoped namespaces`) zamiast w blokach.
 
-## Parser Argumentów CLI: Spectre.Console.Cli
+## Parser Argumentów CLI: CommandLineParser
 
 Struktura CLI została zaimplementowana w `Program.cs`
