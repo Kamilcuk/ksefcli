@@ -33,9 +33,12 @@ secret_detection:
       - .nuget/packages
   script:
     - dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
+    - mv -v src/KSeFCli/bin/Release/net10.0/linux-x64/publish/ksefcli .
+    - ldd ksefcli
+    - stat ksefcli
   artifacts:
     paths:
-      - "bin/Release/net10.0/linux-x64/publish/ksefcli"
+      - ksefcli
 
 build-main:
   extends: .build_base
