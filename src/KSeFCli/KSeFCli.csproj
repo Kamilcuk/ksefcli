@@ -20,5 +20,6 @@
     <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client/KSeF.Client.csproj" NoWarn="CS9107;CA1305;CA1816;CA1852;CS8002;CA1305;CA1852;CA1816;CA1852;CA1305;CS9107;CA1805" />
     <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client.Core/KSeF.Client.Core.csproj" NoWarn="CA1805" />
     <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client.ClientFactory/KSeF.Client.ClientFactory.csproj" NoWarn="CS9107;CA1305;CA1816;CA1852;CS8002;CA1305;CA1852;CA1816;CA1852;CA1305;CS9107;CA1805" />
+    <ProjectReference Include="../../thirdparty/ksef-client-csharp/KSeF.Client.Tests.Utils/KSeF.Client.Tests.Utils.csproj" NoWarn="CS9107;CA1305;CA1816;CA1852;CS8002;CA1305;CA1852;CA1816;CA1852;CA1305;CS9107;CA1805" />
   </ItemGroup>
 </Project>

@@ -1,12 +1,14 @@
+using System.Text.Json;
 using CommandLine;
-using System.IO.Compression;
-using KSeF.Client.Core.Interfaces;
-using KSeF.Client.Core.Models;
+using KSeF.Client.Core.Interfaces.Clients;
+using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Sessions;
-using KSeF.Client.Core.Models.Sessions.Batch;
+using KSeF.Client.Core.Models.Sessions.BatchSession;
+using KSeF.Client.Tests.Utils;
 using Microsoft.Extensions.DependencyInjection;
-using KSeF.Client.Core.Models.Builders.Sessions.Batch;
-using FileMetadata = KSeF.Client.Core.Models.FileMetadata;
+using Microsoft.Extensions.Logging;
+
+
 
 namespace KSeFCli;
 
@@ -16,135 +18,129 @@ public class PrzeslijFakturyCommand : GlobalCommand
     [Option('f', "files", Required = true, HelpText = "Paths to XML invoice files.")]
     public IEnumerable<string> Pliki { get; set; }
 
-    [Option("tmpdir", Default = "/tmp", HelpText = "Temporary directory for ZIP file.")]
-    public string TempDir { get; set; }
+    public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths)
+    {
+        return paths.Select(path => (
+            FileName: Path.GetFileName(path),
+            Content: File.ReadAllBytes(path)
+        ));
+    }
+
+    private sealed record OpenBatchSessionResult(
+        string ReferenceNumber,
+        OpenBatchSessionResponse OpenBatchSessionResponse,
+        List<BatchPartSendingInfo> EncryptedParts
+    );
+
+    private async Task<OpenBatchSessionResult> PrepareAndOpenBatchSessionAsync(
+            IEnumerable<(string FileName, byte[] Content)> invoices,
+            IKSeFClient ksefClient,
+        ILogger<Program> logger,
+        ICryptographyService cryptographyService,
+        string accessToken)
+    {
+        EncryptionData encryptionData = cryptographyService.GetEncryptionData();
+
+        logger.LogInformation("1. Przygotowanie paczki ZIP");
+        (byte[] zipBytes, FileMetadata zipMeta) =
+            BatchUtils.BuildZip(invoices, cryptographyService);
+
+        logger.LogInformation("2. Podział binarny paczki ZIP na części oraz 3. Zaszyfrowanie części paczki");
+        List<BatchPartSendingInfo> encryptedParts =
+            BatchUtils.EncryptAndSplit(zipBytes, encryptionData, cryptographyService);
+
+        logger.LogInformation("4. Otwarcie sesji wsadowej");
+        OpenBatchSessionRequest openBatchRequest =
+            BatchUtils.BuildOpenBatchRequest(zipMeta, encryptionData, encryptedParts);
+
+        OpenBatchSessionResponse openBatchSessionResponse =
+            await BatchUtils.OpenBatchAsync(ksefClient, openBatchRequest, accessToken).ConfigureAwait(false);
+
+        return new OpenBatchSessionResult(
+            openBatchSessionResponse.ReferenceNumber,
+            openBatchSessionResponse,
+            encryptedParts
+        );
+    }
+
+    static async Task PobranieInformacjiNaTematPrzeslanychFaktur(
+            IKSeFClient ksefClient,
+            string referenceNumber,
+            string accessToken,
+            CancellationToken cancellationToken)
+    {
+        const int pageSize = 50;
+        string? continuationtoken = null;
+        do
+        {
+            SessionInvoicesResponse sessionInvoices = await ksefClient
+                                        .GetSessionInvoicesAsync(
+                                        referenceNumber,
+                                        accessToken,
+                                        pageSize,
+                                        continuationtoken,
+                                        cancellationToken).ConfigureAwait(false);
+
+            foreach (SessionInvoice sessionInvoice in sessionInvoices.Invoices)
+            {
+                Console.Out.WriteLine(JsonSerializer.Serialize(sessionInvoice, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                }));
+            }
+
+            continuationtoken = sessionInvoices.ContinuationToken;
+        }
+        while (continuationtoken != null);
+    }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        string zipPath = Path.Combine(TempDir, $"ksef-invoices-{Path.GetRandomFileName()}.zip");
+        IEnumerable<(string FileName, byte[] Content)> invoices = GetFilesWithContent(Pliki);
 
-        try
-        {
-            if (!Pliki.Any())
-            {
-                Console.Error.WriteLine("No files to process.");
-                return 1;
-            }
+        string accessToken = await GetAccessToken(cancellationToken).ConfigureAwait(false);
+        using IServiceScope scope = GetScope();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+        ICryptographyService cryptographyService = scope.ServiceProvider.GetRequiredService<ICryptographyService>();
+        ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-            using (FileStream zipToOpen = new FileStream(zipPath, FileMode.Create))
-            {
-                using (ZipArchive archive = new ZipArchive(zipToOpen, ZipArchiveMode.Create))
-                {
-                    foreach (string file in Pliki)
-                    {
-                        if (File.Exists(file))
-                        {
-                            archive.CreateEntryFromFile(file, Path.GetFileName(file));
-                        }
-                        else
-                        {
-                            Console.Error.WriteLine($"File not found: {file}");
-                        }
-                    }
-                }
-            }
+        OpenBatchSessionResult result = await PrepareAndOpenBatchSessionAsync(invoices, ksefClient, logger, cryptographyService, accessToken).ConfigureAwait(false);
+        string referenceNumber = result.ReferenceNumber;
+        logger.LogInformation($"ReferenceNumber={result.ReferenceNumber}");
 
-            Console.WriteLine($"Created ZIP file: {zipPath}");
+        logger.LogInformation("5. Przesłanie zadeklarowanych części paczki");
+        await ksefClient.SendBatchPartsAsync(result.OpenBatchSessionResponse, result.EncryptedParts).ConfigureAwait(false);
 
-            using IServiceScope scope = GetScope();
-            IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
-            ICryptographyService cryptographyService = scope.ServiceProvider.GetRequiredService<ICryptographyService>();
-            
-            EncryptionData encryptionData = cryptographyService.GetEncryptionData();
-            
-            byte[] zipBytes = await File.ReadAllBytesAsync(zipPath, cancellationToken);
-            FileMetadata zipMetadata = cryptographyService.GetMetaData(zipBytes);
-            
-            byte[] encryptedZip = cryptographyService.EncryptBytesWithAES256(zipBytes, encryptionData.CipherKey, encryptionData.CipherIv);
-            FileMetadata encryptedZipMetadata = cryptographyService.GetMetaData(encryptedZip);
+        logger.LogInformation("6. Zamknięcie sesji wsadowej");
+        await ksefClient.CloseBatchSessionAsync(result.ReferenceNumber, accessToken).ConfigureAwait(false);
 
-            IOpenBatchSessionRequestBuilderBatchFile builder = OpenBatchSessionRequestBuilder
-                .Create()
-                .WithFormCode(systemCode: "FA", schemaVersion: "3", value: "FA")
-                .WithBatchFile(fileSize: zipMetadata.FileSize, fileHash: zipMetadata.HashSHA);
-            
-            builder = builder.AddBatchFilePart(
-                ordinalNumber: 1,
-                fileName: $"part_1.zip.aes",
-                fileSize: encryptedZipMetadata.FileSize,
-                fileHash: encryptedZipMetadata.HashSHA);
-            
-            OpenBatchSessionRequest openBatchRequest = builder
-                .EndBatchFile()
-                .WithEncryption(
-                    encryptedSymmetricKey: encryptionData.EncryptionInfo.EncryptedSymmetricKey,
-                    initializationVector: encryptionData.EncryptionInfo.InitializationVector)
-                .Build();
+        /* ---------------------------------------------------------------------- */
+        logger.LogInformation("sesja-sprawdzenie-stanu-i-pobranie-upo.md");
 
-            OpenBatchSessionResponse openBatchSessionResponse = await ksefClient.OpenBatchSessionAsync(openBatchRequest, await GetAccessToken(cancellationToken), cancellationToken);
-            
-            Console.WriteLine($"Session opened with reference number: {openBatchSessionResponse.ReferenceNumber}");
+        logger.LogInformation("4) Oczekiwanie na przetworzenie faktury");
+        SessionStatusResponse sessionStatus = await AsyncPollingUtils.PollWithBackoffAsync(
+            action: () => ksefClient.GetSessionStatusAsync(referenceNumber, accessToken, cancellationToken),
+            result => result is not null && result.SuccessfulInvoiceCount is not null,
+            initialDelay: TimeSpan.FromSeconds(1),
+            maxDelay: TimeSpan.FromSeconds(5),
+            maxAttempts: 30,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            List<BatchPartSendingInfo> encryptedParts = new List<BatchPartSendingInfo>
-            {
-                new BatchPartSendingInfo(encryptedZip, encryptedZipMetadata, 1)
-            };
+        // logger.LogInformation("4) Oczekiwanie na trwały zapis faktury w repozytorium KSeF");
+        // SessionInvoicesResponse sessionInvoices = await AsyncPollingUtils.PollWithBackoffAsync(
+        // action: () => ksefClient.GetSessionInvoicesAsync(
+        //     referenceNumber,
+        //     accessToken,
+        //     cancellationToken: cancellationToken),
+        // result => result is not null && result.Invoices.First().PermanentStorageDate is not null,
+        // initialDelay: TimeSpan.FromSeconds(1),
+        // maxDelay: TimeSpan.FromSeconds(5),
+        // maxAttempts: 30,
+        // cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            await ksefClient.SendBatchPartsAsync(openBatchSessionResponse, encryptedParts, cancellationToken);
-            
-            Console.WriteLine("File part uploaded successfully.");
+        logger.LogInformation("3. Pobranie informacji na temat przesłanych faktur");
+        await PobranieInformacjiNaTematPrzeslanychFaktur(ksefClient, referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
 
-            await ksefClient.CloseBatchSessionAsync(openBatchSessionResponse.ReferenceNumber, await GetAccessToken(cancellationToken), cancellationToken);
-            
-            Console.WriteLine("Session closed successfully.");
-
-            SessionStatusResponse sessionStatus;
-            int pollingAttempts = 0;
-            do
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    Console.Error.WriteLine("Operation cancelled.");
-                    return 1;
-                }
-
-                pollingAttempts++;
-                Console.WriteLine($"Checking session status... (Attempt {pollingAttempts})");
-                sessionStatus = await ksefClient.GetSessionStatusAsync(openBatchSessionResponse.ReferenceNumber, await GetAccessToken(cancellationToken), cancellationToken);
-                Console.WriteLine($"Session status: {sessionStatus.Status}");
-
-                if (sessionStatus.Status == "InProgress")
-                {
-                    await Task.Delay(5000, cancellationToken); // Wait 5 seconds
-                }
-
-            } while (sessionStatus.Status == "InProgress" && pollingAttempts < 20);
-
-            if (sessionStatus.Status == "InProgress")
-            {
-                Console.Error.WriteLine("Timeout exceeded while waiting for session to complete.");
-                return 1;
-            }
-
-            Console.WriteLine("Session processing completed.");
-            Console.WriteLine($"Successful invoices: {sessionStatus.SuccessfulInvoiceCount}");
-            Console.WriteLine($"Failed invoices: {sessionStatus.FailedInvoiceCount}");
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error: {ex.Message}");
-            return 1;
-        }
-        finally
-        {
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-                Console.WriteLine($"Deleted temporary ZIP file: {zipPath}");
-            }
-        }
-        
-        await Task.Yield();
         return 0;
     }
 }

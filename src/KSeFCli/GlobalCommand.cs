@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
+
 using CommandLine;
+
 using KSeF.Client.Api.Builders.Auth;
 using KSeF.Client.Api.Services;
 using KSeF.Client.Api.Services.Internal;
@@ -11,6 +13,7 @@ using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.DI;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -54,11 +57,11 @@ public abstract class GlobalCommand
 
     public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 
-    protected TokenStore TokenStore => _tokenStore.Value;
+    protected TokenStore GetTokenStore() => _tokenStore.Value;
 
     public ProfileConfig Config() => _cachedProfile.Value;
 
-    public TokenStore.Key getTokenStoreKey()
+    public TokenStore.Key GetTokenStoreKey()
     {
         var config = _cachedConfig.Value;
         var profile = Config();
@@ -76,12 +79,16 @@ public abstract class GlobalCommand
     public async Task<AuthenticationOperationStatusResponse> Auth(CancellationToken cancellationToken)
     {
         var config = Config();
-        return config.AuthMethod switch
+        using IServiceScope scope = GetScope();
+        ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        AuthenticationOperationStatusResponse response = config.AuthMethod switch
         {
             AuthMethod.KsefToken => await TokenAuth(cancellationToken).ConfigureAwait(false),
             AuthMethod.Xades => await CertAuth(cancellationToken).ConfigureAwait(false),
             _ => throw new Exception($"Invalid authmethod in profile: {config.Environment}")
         };
+        logger.LogInformation($"Access token valid until: {response.AccessToken.ValidUntil} . Refresh token valid until: {response.RefreshToken.ValidUntil}");
+        return response;
     }
 
     public async Task<AuthenticationOperationStatusResponse> TokenAuth(CancellationToken cancellationToken)

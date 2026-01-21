@@ -1,12 +1,16 @@
 using System.Text;
 using System.Text.Json;
+
 using KSeF.Client.Core.Models.Authorization;
 
 namespace KSeFCli;
 
 public class TokenStore
 {
-    public class Data : AuthenticationOperationStatusResponse;
+    public record Data
+    {
+        public AuthenticationOperationStatusResponse response;
+    }
 
     public record Key(string Nazwa, string Nip, string Environment);
 
