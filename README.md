@@ -12,6 +12,24 @@ chmod +x ksefcli
 sudo mv ksefcli /usr/local/bin/
 ```
 
+### Przykłady użycia
+
+Wyszukiwanie numeru KSeF dla faktury o konkretnym numerze:
+```bash
+$ ksefcli SzukajFaktur -q -c ksefcli.yaml --from "$(date -d -1week -u --iso-8601=seconds)" --invoiceNumber '0004/26' | jq -r '.Invoices[0].KsefNumber'
+5260215591-20260117-XXXXXXXXXXXX-5C
+```
+
+Przesyłanie faktury z użyciem konkretnego profilu:
+```bash
+$ ksefcli PrzeslijFaktury -c ksefcli.yaml -f d03900-001.xml  -a firma2
+```
+
+Wyszukiwanie faktur wystawionych w ostatnim tygodniu i zapisanie wyników do pliku:
+```bash
+$ ksefcli SzukajFaktur -c ksefcli.yaml --from "$(date -d -1week -u --iso-8601=seconds)" --to "$(date -u --iso-8601=seconds)" > /tmp/1.json
+```
+
 
 ## Konfiguracja
 
@@ -173,8 +191,7 @@ Przesyła faktury do KSeF.
 
 *   `--file` (wymagane): Ścieżka do pliku XML z fakturą do przesłania.
 
-
-## Cache Tokenów
+## Cache Tokenów (aktualnie nie działa)
 
 `ksefcli` przechowuje tokeny autoryzacyjne w pamięci podręcznej, aby uniknąć konieczności wielokrotnego uwierzytelniania. Domyślna lokalizacja pliku z tokenami to `~/.cache/ksefcli/tokenstore.json`.
 
@@ -202,3 +219,9 @@ Aby skonfigurować środowisko deweloperskie, wykonaj następujące kroki:
 ## Uwierzytelnianie w KSeF
 
 Szczegółowe informacje na temat mechanizmów uwierzytelniania w Krajowym Systemie e-Faktur można znaleźć w oficjalnej dokumentacji: [Uwierzytelnianie w KSeF](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md).
+Dokumentacja KSeF API: [https://api-test.ksef.mf.gov.pl/docs/v2/index.html](https://api-test.ksef.mf.gov.pl/docs/v2/index.html).
+
+---
+
+Program napisany przez Kamil Cukrowski.
+Licencja: [GPLv3](LICENSE.md).
