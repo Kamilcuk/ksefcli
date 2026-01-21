@@ -8,6 +8,7 @@ SOURCES := $(shell find $(S) \( -path $(S)/obj -o -path $(S)/bin \) -prune -o \(
 B = $(S)/obj
 $(B)/build: $(SOURCES)
 	dotnet build $(S)
+	dotnet run --project $(S) -- --help
 	@mkdir -p $(dir $@) && touch $@
 $(B)/format: $(SOURCES)
 	dotnet format $(S)
@@ -21,9 +22,9 @@ sources:
 	@echo $(SOURCES)
 run: build
 	dotnet run --project $(S) --
-test: format build
+test: build format
 	dotnet run --project $(S) -- --help
-	./cli -c .git/ksefcli.yaml TokenAuth | jq . >/dev/null
+	dotnet run --project $(S) -- -c .git/ksefcli.yaml TokenAuth | jq . >/dev/null
 	echo SUCCESS
 clean:
 	dotnet clean $(S)

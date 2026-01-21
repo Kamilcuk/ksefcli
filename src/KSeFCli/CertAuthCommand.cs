@@ -3,88 +3,78 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using KSeF.Client.Api.Builders.Auth;
 using KSeF.Client.Api.Services;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
-using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Authorization;
+using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
-public class CertAuthCommand : AsyncCommand<CertAuthCommand.Settings>
+public class CertAuthCommand : BaseKsefCommand<CertAuthCommand.Settings>
 {
-    private readonly IKSeFClient _ksefClient;
-    private readonly ICryptographyService _cryptographyService;
+    private readonly ILogger<CertAuthCommand> _logger;
 
-    public CertAuthCommand(IKSeFClient ksefClient, ICryptographyService cryptographyService)
+    public CertAuthCommand(ILogger<CertAuthCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
-        _cryptographyService = cryptographyService;
-    }
-
-    private static void PrintXmlToConsole(string xml, string title)
-    {
-        Console.WriteLine($"----- {title} -----");
-        Console.WriteLine(xml);
-        Console.WriteLine($"----- KONIEC: {title} -----\n");
+        _logger = logger;
     }
 
     public class Settings : GlobalSettings
     {
-        [CommandOption("--certificate-path")]
-        [Description("Path to the certificate file (.pfx)")]
-        public string CertificatePath { get; set; } = null!;
-
-        [CommandOption("--certificate-password")]
-        [Description("Password for the certificate file")]
-        public string? CertificatePassword { get; set; }
-
         [CommandOption("--subject-identifier-type")]
         [Description("Type of subject identifier (e.g., CertificateSubject, CertificateFingerprint)")]
         public AuthenticationTokenSubjectIdentifierTypeEnum SubjectIdentifierType { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, Settings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
-        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
+        if (profile.AuthMethod != AuthMethod.Xades)
+        {
+            _logger.LogError("Active profile is not configured for XAdES authentication.");
+            return 1;
+        }
 
-        // 1. Get Auth Challenge
-        Console.WriteLine("[2] Pobieranie wyzwania (challenge) z KSeF...");
-        AuthenticationChallengeResponse challengeResponse = await _ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
-        Console.WriteLine($"    Challenge: {challengeResponse.Challenge}");
+        string certificatePath = profile.Certificate!.Certificate;
+        string privateKeyPath = profile.Certificate.Private_Key;
+        string certificatePassword = System.Environment.GetEnvironmentVariable(profile.Certificate.Password_Env)!;
 
-        // 2. Prepare and Sign AuthTokenRequest
-        Console.WriteLine("[3] Budowanie AuthTokenRequest (builder)...");
+        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(privateKeyPath, certificatePassword);
+
+        _logger.LogInformation("1. Getting challenge");
+        AuthenticationChallengeResponse challengeResponse = await client.GetAuthChallengeAsync().ConfigureAwait(false);
+        _logger.LogInformation($"    Challenge: {challengeResponse.Challenge}");
+
+        _logger.LogInformation("2. Prepare and Sign AuthTokenRequest");
         AuthenticationTokenRequest authTokenRequest = AuthTokenRequestBuilder
             .Create()
             .WithChallenge(challengeResponse.Challenge)
-            .WithContext(AuthenticationTokenContextIdentifierType.Nip, settings.Nip)
+            .WithContext(AuthenticationTokenContextIdentifierType.Nip, profile.Nip)
             .WithIdentifierType(settings.SubjectIdentifierType)
             .Build();
 
-        // 4) Serializacja do XML
-        Console.WriteLine("[4] Serializacja żądania do XML (unsigned)...");
+        _logger.LogInformation("3. Serializacja żądania do XML (unsigned)");
         string unsignedXml = AuthenticationTokenRequestSerializer.SerializeToXmlString(authTokenRequest);
-        PrintXmlToConsole(unsignedXml, "XML przed podpisem");
+        _logger.LogDebug($"XML przed podpisem:\n{unsignedXml}");
 
-        Console.WriteLine("[6] Podpisywanie XML (XAdES)...");
+        _logger.LogInformation("4. Podpisywanie XML (XAdES)");
         string signedXml = SignatureService.Sign(unsignedXml, certificate);
-        PrintXmlToConsole(signedXml, "XML po podpisie (XAdES)");
+        _logger.LogDebug($"XML po podpisie (XAdES):\n{signedXml}");
 
-        // 7) Przesłanie podpisanego XML do KSeF
-        Console.WriteLine("[7] Wysyłanie podpisanego XML do KSeF...");
-        SignatureResponse submission = await _ksefClient.SubmitXadesAuthRequestAsync(signedXml, verifyCertificateChain: false).ConfigureAwait(false);
-        Console.WriteLine($"    ReferenceNumber: {submission.ReferenceNumber}");
+        _logger.LogInformation("5. Wysyłanie podpisanego XML do KSeF");
+        SignatureResponse submission = await client.SubmitXadesAuthRequestAsync(signedXml, verifyCertificateChain: false).ConfigureAwait(false);
+        _logger.LogInformation($"    ReferenceNumber: {submission.ReferenceNumber}");
 
-        // 8) Odpytanie o status
-        Console.WriteLine("[8] Odpytanie o status operacji uwierzytelnienia...");
+        _logger.LogInformation("6. Odpytanie o status operacji uwierzytelnienia");
         DateTime startTime = DateTime.UtcNow;
         TimeSpan timeout = TimeSpan.FromMinutes(2);
         AuthStatus status;
         do
         {
-            status = await _ksefClient.GetAuthStatusAsync(submission.ReferenceNumber, submission.AuthenticationToken.Token).ConfigureAwait(false);
-            Console.WriteLine($"      Status: {status.Status.Code} - {status.Status.Description} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
+            status = await client.GetAuthStatusAsync(submission.ReferenceNumber, submission.AuthenticationToken.Token).ConfigureAwait(false);
+            _logger.LogInformation($"      Status: {status.Status.Code} - {status.Status.Description} | upłynęło: {DateTime.UtcNow - startTime:mm:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
@@ -94,16 +84,15 @@ public class CertAuthCommand : AsyncCommand<CertAuthCommand.Settings>
 
         if (status.Status.Code != 200)
         {
-            Console.WriteLine($"Uwierzytelnienie nie powiodło się lub przekroczono czas oczekiwania. Kod: {status.Status.Code}, Opis: {status.Status.Description}");
+            _logger.LogError($"Uwierzytelnienie nie powiodło się lub przekroczono czas oczekiwania. Kod: {status.Status.Code}, Opis: {status.Status.Description}");
             return 1;
         }
 
-        // 9) Pobranie access token
-        Console.WriteLine("[9] Pobieranie access token...");
-        AuthenticationOperationStatusResponse tokenResponse = await _ksefClient.GetAccessTokenAsync(submission.AuthenticationToken.Token).ConfigureAwait(false);
+        _logger.LogInformation("7. Pobieranie access token");
+        AuthenticationOperationStatusResponse tokenResponse = await client.GetAccessTokenAsync(submission.AuthenticationToken.Token).ConfigureAwait(false);
 
-        Console.WriteLine(JsonSerializer.Serialize(tokenResponse));
-        Console.WriteLine("Zakończono pomyślnie.");
+        Console.Out.WriteLine(JsonSerializer.Serialize(tokenResponse));
+        _logger.LogInformation("Zakończono pomyślnie.");
 
         return 0;
     }

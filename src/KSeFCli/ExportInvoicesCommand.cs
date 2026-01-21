@@ -1,25 +1,28 @@
 using System.ComponentModel;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Invoices;
 using KSeF.Client.Core.Models.Sessions;
+using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
 [Description("Initialize an asynchronous invoice export")]
-public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportInvoicesSettings>
+public class ExportInvoicesCommand : BaseKsefCommand<ExportInvoicesCommand.ExportInvoicesSettings>
 {
-    private readonly IKSeFClient _ksefClient;
-    private readonly ICryptographyService _cryptographyService;
+    private readonly IKSeFFactoryCryptographyServices _cryptographyServiceFactory;
+    private readonly ILogger<ExportInvoicesCommand> _logger;
 
-    public ExportInvoicesCommand(IKSeFClient ksefClient, ICryptographyService cryptographyService)
+    public ExportInvoicesCommand(IKSeFFactoryCryptographyServices cryptographyServiceFactory, ILogger<ExportInvoicesCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
-        _cryptographyService = cryptographyService;
+        _cryptographyServiceFactory = cryptographyServiceFactory;
+        _logger = logger;
     }
 
     public class ExportInvoicesSettings : GlobalSettings
@@ -33,7 +36,7 @@ public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportIn
         public DateTime To { get; set; }
 
         [CommandOption("--date-type")]
-        [Description("Typ daty, według której ma być zastosowany zakres.\n" +
+        [Description(@"Typ daty, według której ma być zastosowany zakres.\n" +
                      "Dostępne wartości:\n" +
                      "  \"Issue\" - Data wystawienia faktury.\n" +
                      "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
@@ -44,33 +47,38 @@ public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportIn
         [CommandOption("-s|--subject-type")]
         [Description("Invoice subject type (e.g., Subject1, Subject2, Subject3)")]
         public string SubjectType { get; set; } = null!;
-
-        [CommandOption("--certificate-path")]
-        [Description("Path to the certificate file (.pfx)")]
-        public string CertificatePath { get; set; } = null!;
-
-        [CommandOption("--certificate-password")]
-        [Description("Password for the certificate file")]
-        public string? CertificatePassword { get; set; }
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, ExportInvoicesSettings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, ExportInvoicesSettings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
         if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
         {
-            Console.Error.WriteLine($"Invalid SubjectType: {settings.SubjectType}");
+            _logger.LogError($"Invalid SubjectType: {settings.SubjectType}");
             return 1;
         }
 
         if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
         {
-            Console.Error.WriteLine($"Invalid DateType: {settings.DateType}");
+            _logger.LogError($"Invalid DateType: {settings.DateType}");
             return 1;
         }
 
-        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(settings.CertificatePath, settings.CertificatePassword);
+        if (profile.AuthMethod != AuthMethod.Xades)
+        {
+            _logger.LogError("Exporting invoices requires XAdES authentication.");
+            return 1;
+        }
 
-        EncryptionData encryptionData = _cryptographyService.GetEncryptionData();
+        KSeF.Client.ClientFactory.Environment environment = Enum.Parse<KSeF.Client.ClientFactory.Environment>(profile.Environment, true);
+        ICryptographyService cryptographyService = await _cryptographyServiceFactory.CryprographyService(environment).ConfigureAwait(false);
+
+        string certificatePath = profile.Certificate!.Certificate;
+        string privateKeyPath = profile.Certificate.Private_Key;
+        string certificatePassword = System.Environment.GetEnvironmentVariable(profile.Certificate.Password_Env)!;
+
+        X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(privateKeyPath, certificatePassword);
+
+        EncryptionData encryptionData = cryptographyService.GetEncryptionData();
 
         InvoiceQueryFilters queryFilters = new InvoiceQueryFilters
         {
@@ -89,12 +97,13 @@ public class ExportInvoicesCommand : AsyncCommand<ExportInvoicesCommand.ExportIn
             Filters = queryFilters
         };
 
-        OperationResponse exportInvoicesResponse = await _ksefClient.ExportInvoicesAsync(
+        OperationResponse exportInvoicesResponse = await client.ExportInvoicesAsync(
             invoiceExportRequest,
-            settings.Token,
+            null, // No token needed for XAdES export, it's certificate based
             CancellationToken.None).ConfigureAwait(false);
 
         Console.WriteLine(JsonSerializer.Serialize(new { ReferenceNumber = exportInvoicesResponse.ReferenceNumber }));
+        _logger.LogInformation("Export invoices operation initiated successfully.");
         return 0;
     }
 }

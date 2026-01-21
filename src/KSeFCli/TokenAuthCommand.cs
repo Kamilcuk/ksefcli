@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
@@ -10,16 +11,15 @@ using Spectre.Console.Cli;
 namespace KSeFCli;
 
 
-public class TokenAuthCommand : AsyncCommand<TokenAuthCommand.Settings>
+public class TokenAuthCommand : BaseKsefCommand<TokenAuthCommand.Settings>
 {
-    private readonly IKSeFClient _ksefClient;
-    private readonly ICryptographyService _cryptographyService;
+    private readonly IKSeFFactoryCryptographyServices _cryptographyServiceFactory;
     private readonly ILogger<TokenAuthCommand> _logger;
 
-    public TokenAuthCommand(IKSeFClient ksefClient, ICryptographyService cryptographyService, ILogger<TokenAuthCommand> logger)
+    public TokenAuthCommand(IKSeFFactoryCryptographyServices cryptographyServiceFactory, ILogger<TokenAuthCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
-        _cryptographyService = cryptographyService;
+        _cryptographyServiceFactory = cryptographyServiceFactory;
         _logger = logger;
     }
 
@@ -27,35 +27,45 @@ public class TokenAuthCommand : AsyncCommand<TokenAuthCommand.Settings>
     {
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, Settings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
+        Console.Out.WriteLine(JsonSerializer.Serialize(profile));
+        if (profile.AuthMethod != AuthMethod.KsefToken)
+        {
+            _logger.LogError("Active profile is not configured for KSeF token authentication.");
+            return 1;
+        }
+
+        KSeF.Client.ClientFactory.Environment environment = Enum.Parse<KSeF.Client.ClientFactory.Environment>(profile.Environment, true);
+        ICryptographyService cryptographyService = await _cryptographyServiceFactory.CryprographyService(environment).ConfigureAwait(false);
+
         _logger.LogInformation("1. Getting challenge");
-        AuthenticationChallengeResponse challenge = await _ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
+        AuthenticationChallengeResponse challenge = await client.GetAuthChallengeAsync().ConfigureAwait(false);
         long timestampMs = challenge.Timestamp.ToUnixTimeMilliseconds();
 
-        string ksefToken = settings.Token;
+        string ksefToken = profile.Token!;
         _logger.LogInformation("1. Przygotowanie i szyfrowanie tokena");
         // Przygotuj "token|timestamp" i zaszyfruj RSA-OAEP SHA-256 zgodnie z wymaganiem API
         string tokenWithTimestamp = $"{ksefToken}|{timestampMs}";
         byte[] tokenBytes = System.Text.Encoding.UTF8.GetBytes(tokenWithTimestamp);
-        byte[] encrypted = _cryptographyService.EncryptKsefTokenWithRSAUsingPublicKey(tokenBytes);
+        byte[] encrypted = cryptographyService.EncryptKsefTokenWithRSAUsingPublicKey(tokenBytes);
         string encryptedTokenB64 = Convert.ToBase64String(encrypted);
 
         _logger.LogInformation("2. Wysłanie żądania uwierzytelnienia tokenem KSeF");
-        Trace.Assert(!string.IsNullOrEmpty(settings.Nip), "--nip jest empty");
+        Trace.Assert(!string.IsNullOrEmpty(profile.Nip), "NIP is empty in profile config");
         AuthenticationKsefTokenRequest request = new AuthenticationKsefTokenRequest
         {
             Challenge = challenge.Challenge,
             ContextIdentifier = new AuthenticationTokenContextIdentifier
             {
                 Type = AuthenticationTokenContextIdentifierType.Nip,
-                Value = settings.Nip
+                Value = profile.Nip
             },
             EncryptedToken = encryptedTokenB64,
             AuthorizationPolicy = null
         };
 
-        SignatureResponse signature = await _ksefClient.SubmitKsefTokenAuthRequestAsync(request, new CancellationToken()).ConfigureAwait(false);
+        SignatureResponse signature = await client.SubmitKsefTokenAuthRequestAsync(request, new CancellationToken()).ConfigureAwait(false);
 
         _logger.LogInformation("3. Sprawdzenie statusu uwierzytelniania");
         DateTime startTime = DateTime.UtcNow;
@@ -63,8 +73,8 @@ public class TokenAuthCommand : AsyncCommand<TokenAuthCommand.Settings>
         AuthStatus status;
         do
         {
-            status = await _ksefClient.GetAuthStatusAsync(signature.ReferenceNumber, signature.AuthenticationToken.Token).ConfigureAwait(false);
-            _logger.LogInformation($"      Status: {status.Status.Code} - {status.Status.Description} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
+            status = await client.GetAuthStatusAsync(signature.ReferenceNumber, signature.AuthenticationToken.Token).ConfigureAwait(false);
+            _logger.LogInformation($"      Status: {status.Status.Code} - {status.Status.Description} | upłynęło: {DateTime.UtcNow - startTime:mm:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
@@ -79,7 +89,7 @@ public class TokenAuthCommand : AsyncCommand<TokenAuthCommand.Settings>
         }
 
         _logger.LogInformation("4. Uzyskanie tokena dostępowego (accessToken)");
-        AuthenticationOperationStatusResponse tokenResponse = await _ksefClient.GetAccessTokenAsync(signature.AuthenticationToken.Token).ConfigureAwait(false);
+        AuthenticationOperationStatusResponse tokenResponse = await client.GetAccessTokenAsync(signature.AuthenticationToken.Token).ConfigureAwait(false);
 
         Console.Out.WriteLine(JsonSerializer.Serialize(tokenResponse));
         _logger.LogInformation("Zakończono pomyślnie.");

@@ -1,9 +1,4 @@
-using KSeF.Client.Api.Services;
-using KSeF.Client.Api.Services.Internal;
-using KSeF.Client.Clients;
-using KSeF.Client.Core.Interfaces.Clients;
-using KSeF.Client.Core.Interfaces.Services;
-using KSeF.Client.DI;
+using KSeF.Client.ClientFactory.DI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
@@ -15,17 +10,13 @@ internal class Program
 {
     public static async Task<int> Main(string[] args)
     {
-        IServiceCollection services = new ServiceCollection();
+        var services = new ServiceCollection();
 
         services.AddLogging(builder =>
         {
             builder.AddFilter("KSeFCli", LogLevel.Information)
-                   .AddFilter("Microsoft", LogLevel.Warning)
+                   .AddFilter("Default", LogLevel.Warning) // Suppress logs from other libraries
                    .AddFilter("System", LogLevel.Warning)
-                   .AddConsole(options =>
-                   {
-                       options.LogToStandardErrorThreshold = LogLevel.Trace;
-                   })
                    .AddSimpleConsole(options =>
                    {
                        options.SingleLine = true;
@@ -33,24 +24,11 @@ internal class Program
                    });
         });
 
-        services.AddKSeFClient(options =>
-        {
-            options.BaseUrl = KsefEnvironmentsUris.TEST;
-        });
+        services.RegisterKSeFClientFactory();
 
 
-        services.AddSingleton<ICryptographyClient, CryptographyClient>();
-        services.AddSingleton<ICertificateFetcher, DefaultCertificateFetcher>();
-        services.AddSingleton<ICryptographyService>(sp =>
-        {
-            ICertificateFetcher fetcher = sp.GetRequiredService<ICertificateFetcher>();
-            CryptographyService service = new CryptographyService(fetcher);
-            service.WarmupAsync().GetAwaiter().GetResult();
-            return service;
-        });
-
-        ITypeRegistrar registrar = new DependencyInjectionRegistrar(services);
-        CommandApp app = new CommandApp(registrar);
+        var registrar = new DependencyInjectionRegistrar(services);
+        var app = new CommandApp(registrar);
 
         app.Configure(config =>
         {
@@ -62,6 +40,7 @@ internal class Program
             config.AddCommand<TokenRefreshCommand>("TokenRefresh");
             config.AddCommand<CertAuthCommand>("CertAuth");
         });
+
         return await app.RunAsync(args).ConfigureAwait(false);
     }
 }

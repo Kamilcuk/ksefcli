@@ -1,17 +1,20 @@
 using System.Text.Json;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models.Authorization;
+using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
-public class TokenRefreshCommand : AsyncCommand<TokenRefreshCommand.Settings>
+public class TokenRefreshCommand : BaseKsefCommand<TokenRefreshCommand.Settings>
 {
-    private readonly IKSeFClient _ksefClient;
+    private readonly ILogger<TokenRefreshCommand> _logger;
 
-    public TokenRefreshCommand(IKSeFClient ksefClient)
+    public TokenRefreshCommand(ILogger<TokenRefreshCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
+        _logger = logger;
     }
 
     public class Settings : GlobalSettings
@@ -19,10 +22,17 @@ public class TokenRefreshCommand : AsyncCommand<TokenRefreshCommand.Settings>
         [CommandOption("--refresh-token")]
         public string RefreshToken { get; set; } = null!;
     }
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, Settings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
-        RefreshTokenResponse refreshedAccessTokenResponse = await _ksefClient.RefreshAccessTokenAsync(settings.RefreshToken).ConfigureAwait(false);
+        if (profile.AuthMethod != AuthMethod.KsefToken)
+        {
+            _logger.LogError("Token refresh requires KSeF Token authentication.");
+            return 1;
+        }
+
+        RefreshTokenResponse refreshedAccessTokenResponse = await client.RefreshAccessTokenAsync(settings.RefreshToken).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(refreshedAccessTokenResponse));
+        _logger.LogInformation("Token refreshed successfully.");
         return 0;
     }
 }

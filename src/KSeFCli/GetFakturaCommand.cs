@@ -1,18 +1,21 @@
 using System.ComponentModel;
 using System.Text.Json;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
+using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
 [Description("Get a single invoice by KSeF number")]
-public class GetFakturaCommand : AsyncCommand<GetFakturaCommand.Settings>
+public class GetFakturaCommand : BaseKsefCommand<GetFakturaCommand.Settings>
 {
-    private readonly IKSeFClient _ksefClient;
+    private readonly ILogger<GetFakturaCommand> _logger;
 
-    public GetFakturaCommand(IKSeFClient ksefClient)
+    public GetFakturaCommand(ILogger<GetFakturaCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
+        _logger = logger;
     }
 
     public class Settings : GlobalSettings
@@ -22,10 +25,17 @@ public class GetFakturaCommand : AsyncCommand<GetFakturaCommand.Settings>
         public string KsefNumber { get; set; } = null!;
     }
 
-    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, Settings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
-        string invoice = await _ksefClient.GetInvoiceAsync(settings.KsefNumber, settings.Token, CancellationToken.None).ConfigureAwait(false);
+        if (profile.AuthMethod != AuthMethod.KsefToken)
+        {
+            _logger.LogError("Getting invoice by KSeF number requires KSeF Token authentication.");
+            return 1;
+        }
+
+        string invoice = await client.GetInvoiceAsync(settings.KsefNumber, profile.Token!, CancellationToken.None).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(new { Invoice = invoice }));
+        _logger.LogInformation("Invoice retrieved successfully.");
         return 0;
     }
 }

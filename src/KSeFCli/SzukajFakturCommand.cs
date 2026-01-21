@@ -1,34 +1,37 @@
 using System.ComponentModel;
 using System.Text.Json;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models.Invoices;
+using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
 [Description("Query invoice metadata")]
-public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadataSettings>
+public class SzukajFakturCommand : BaseKsefCommand<SzukajFakturCommand.QueryMetadataSettings>
 {
-    private readonly IKSeFClient _ksefClient;
+    private readonly ILogger<SzukajFakturCommand> _logger;
 
-    public SzukajFakturCommand(IKSeFClient ksefClient)
+    public SzukajFakturCommand(ILogger<SzukajFakturCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
+        _logger = logger;
     }
 
     public class QueryMetadataSettings : GlobalSettings
     {
         [CommandOption("-s|--subject-type")]
-        [Description(@"
-                Enum: ""Subject1"" ""Subject2"" ""Subject3"" ""SubjectAuthorized""
+        [Description("""
+                Enum: "Subject1" "Subject2" "Subject3" "SubjectAuthorized"
 
                 Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.
-                Wartość \tOpis
-                Subject1 \tPodmiot 1 - sprzedawca
-                Subject2 \tPodmiot 2 - nabywca
-                Subject3 \tPodmiot 3
-                SubjectAuthorized \tPodmiot upoważniony
-            ")]
+                Wartość 	Opis
+                Subject1 	Podmiot 1 - sprzedawca
+                Subject2 	Podmiot 2 - nabywca
+                Subject3 	Podmiot 3
+                SubjectAuthorized 	Podmiot upoważniony
+            """)]
         public string SubjectType { get; set; } = null!;
 
         [CommandOption("--from")]
@@ -36,11 +39,11 @@ public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadat
         public DateTime From { get; set; }
 
         [CommandOption("--to")]
-        [Description("Data końcowowa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
+        [Description("Data końcowawa zakresu w formacie ISO-8601 np. 2026-01-03T13:45:00+00:00.")]
         public DateTime To { get; set; }
 
         [CommandOption("--date-type")]
-        [Description("Typ daty, według której ma być zastosowany zakres.\n" +
+        [Description(@"Typ daty, według której ma być zastosowany zakres.\n" +
                      "Dostępne wartości:\n" +
                      "  \"Issue\" - Data wystawienia faktury.\n" +
                      "  \"Invoicing\" - Data przyjęcia faktury w systemie KSeF (do dalszego przetwarzania).\n" +
@@ -58,17 +61,23 @@ public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadat
         [DefaultValue(10)]
         public int PageSize { get; set; }
     }
-    public override async Task<int> ExecuteAsync(CommandContext context, QueryMetadataSettings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, QueryMetadataSettings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
         if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
         {
-            Console.Error.WriteLine($"Invalid SubjectType: {settings.SubjectType}");
+            _logger.LogError($"Invalid SubjectType: {settings.SubjectType}");
             return 1;
         }
 
         if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
         {
-            Console.Error.WriteLine($"Invalid DateType: {settings.DateType}");
+            _logger.LogError($"Invalid DateType: {settings.DateType}");
+            return 1;
+        }
+
+        if (profile.AuthMethod != AuthMethod.KsefToken)
+        {
+            _logger.LogError("Querying invoice metadata requires KSeF Token authentication.");
             return 1;
         }
 
@@ -83,14 +92,15 @@ public class SzukajFakturCommand : AsyncCommand<SzukajFakturCommand.QueryMetadat
             }
         };
 
-        PagedInvoiceResponse pagedInvoicesResponse = await _ksefClient.QueryInvoiceMetadataAsync(
+        PagedInvoiceResponse pagedInvoicesResponse = await client.QueryInvoiceMetadataAsync(
             invoiceQueryFilters,
-            settings.Token,
+            profile.Token!, // Use token from profile config
             pageOffset: settings.PageOffset,
             pageSize: settings.PageSize,
             cancellationToken: CancellationToken.None).ConfigureAwait(false);
 
         Console.WriteLine(JsonSerializer.Serialize(pagedInvoicesResponse));
+        _logger.LogInformation("Invoice metadata queried successfully.");
         return 0;
     }
 }

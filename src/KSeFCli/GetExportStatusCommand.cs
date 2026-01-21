@@ -1,20 +1,23 @@
 using System.ComponentModel;
 using System.Text.Json;
+using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models.Invoices;
+using Microsoft.Extensions.Logging;
 using Spectre.Console.Cli;
 
 namespace KSeFCli;
 
 
 [Description("Checks the status of an asynchronous export operation")]
-public class GetExportStatusCommand : AsyncCommand<GetExportStatusCommand.GetExportStatusSettings>
+public class GetExportStatusCommand : BaseKsefCommand<GetExportStatusCommand.GetExportStatusSettings>
 {
-    private readonly IKSeFClient _ksefClient;
+    private readonly ILogger<GetExportStatusCommand> _logger;
 
-    public GetExportStatusCommand(IKSeFClient ksefClient)
+    public GetExportStatusCommand(ILogger<GetExportStatusCommand> logger, IKSeFClientFactory ksefClientFactory)
+        : base(ksefClientFactory)
     {
-        _ksefClient = ksefClient;
+        _logger = logger;
     }
 
     public class GetExportStatusSettings : GlobalSettings
@@ -23,12 +26,19 @@ public class GetExportStatusCommand : AsyncCommand<GetExportStatusCommand.GetExp
         [Description("Reference number of the asynchronous export operation")]
         public string ReferenceNumber { get; set; } = null!;
     }
-    public override async Task<int> ExecuteAsync(CommandContext context, GetExportStatusSettings settings, CancellationToken cancellationToken = default)
+    public override async Task<int> ExecuteWithProfileAsync(CommandContext context, GetExportStatusSettings settings, ProfileConfig profile, IKSeFClient client, CancellationToken cancellationToken)
     {
-        InvoiceExportStatusResponse exportStatus = await _ksefClient.GetInvoiceExportStatusAsync(
+        if (profile.AuthMethod != AuthMethod.KsefToken)
+        {
+            _logger.LogError("Checking export status requires KSeF Token authentication.");
+            return 1;
+        }
+
+        InvoiceExportStatusResponse exportStatus = await client.GetInvoiceExportStatusAsync(
             settings.ReferenceNumber,
-            settings.Token).ConfigureAwait(false);
+            profile.Token!).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(exportStatus));
+        _logger.LogInformation("Export status retrieved successfully.");
         return 0;
     }
 }
