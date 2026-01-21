@@ -32,3 +32,8 @@ test: format build
 clean:
 	dotnet clean $(S)
 
+###############################################################################
+
+static-from-docker:
+	docker build .
+	

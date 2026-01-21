@@ -18,7 +18,7 @@ COPY thirdparty/ksef-client-csharp/KSeF.Client.Core/ thirdparty/ksef-client-csha
 COPY thirdparty/ksef-client-csharp/KSeF.Client.ClientFactory/ thirdparty/ksef-client-csharp/KSeF.Client.ClientFactory/
 
 # Publish the application as a self-contained single file
-RUN dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -o /app/publish -r linux-x64 --self-contained true /p:PublishSingleFile=true
+RUN dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -o /app/publish -r linux-x64 --self-contained true /p:PublishSingleFile=true /p:TrimUnusedDependencies=true /p:PublishTrimmed=true
 
 # Use the .NET 10 runtime dependencies for the final image
 FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS final

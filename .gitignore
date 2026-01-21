@@ -75,3 +75,4 @@ prompt.md.env
 ksefcli.yaml
 *.env
 *.ksefcli.yaml
+openapi.json
