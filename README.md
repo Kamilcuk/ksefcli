@@ -4,7 +4,14 @@
 
 ## Instalacja
 
-Pobierz najnowszą wersję `ksefcli` z sekcji [Releases](https://github.com/your-repo/ksefcli/releases) i umieść ją w katalogu znajdującym się w `PATH`, na przykład `/usr/local/bin`.
+Możesz pobrać statycznie linkowaną binarkę `ksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
+
+```bash
+curl -LsS https://gitlab.com/kamcuk/ksefcli/builds/artifacts/main/download?job=build-main | zcat > ksefcli
+chmod +x ksefcli
+sudo mv ksefcli /usr/local/bin/
+```
+
 
 ## Konfiguracja
 
@@ -159,6 +166,13 @@ Sprawdza status zleconego eksportu faktur.
 Pobiera pojedynczą fakturę w formacie XML.
 
 *   `--ksef-id` (wymagane): Numer KSeF faktury.
+
+#### `PrzeslijFaktury`
+
+Przesyła faktury do KSeF.
+
+*   `--file` (wymagane): Ścieżka do pliku XML z fakturą do przesłania.
+
 
 ## Cache Tokenów
 
