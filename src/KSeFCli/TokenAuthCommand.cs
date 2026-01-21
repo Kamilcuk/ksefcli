@@ -42,6 +42,7 @@ public class TokenAuthCommand : BaseKsefCommand<TokenAuthCommand.Settings>
         _logger.LogInformation("1. Getting challenge");
         AuthenticationChallengeResponse challenge = await client.GetAuthChallengeAsync().ConfigureAwait(false);
         long timestampMs = challenge.Timestamp.ToUnixTimeMilliseconds();
+        Console.Out.WriteLine(JsonSerializer.Serialize(challenge));
 
         string ksefToken = profile.Token!;
         _logger.LogInformation("1. Przygotowanie i szyfrowanie tokena");
@@ -65,7 +66,8 @@ public class TokenAuthCommand : BaseKsefCommand<TokenAuthCommand.Settings>
             AuthorizationPolicy = null
         };
 
-        SignatureResponse signature = await client.SubmitKsefTokenAuthRequestAsync(request, new CancellationToken()).ConfigureAwait(false);
+        SignatureResponse signature = await client.SubmitKsefTokenAuthRequestAsync(request, cancellationToken).ConfigureAwait(false);
+        Console.Out.WriteLine(JsonSerializer.Serialize(signature));
 
         _logger.LogInformation("3. Sprawdzenie statusu uwierzytelniania");
         DateTime startTime = DateTime.UtcNow;

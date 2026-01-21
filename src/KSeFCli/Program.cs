@@ -39,6 +39,7 @@ internal class Program
             config.AddCommand<TokenAuthCommand>("TokenAuth");
             config.AddCommand<TokenRefreshCommand>("TokenRefresh");
             config.AddCommand<CertAuthCommand>("CertAuth");
+            config.AddCommand<AktywneSesjeCommand>("AktywneSesje");
         });
 
         return await app.RunAsync(args).ConfigureAwait(false);
