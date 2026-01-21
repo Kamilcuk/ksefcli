@@ -15,6 +15,7 @@ RUN dotnet restore src/KSeFCli/KSeFCli.csproj
 COPY src/ src/
 COPY thirdparty/ksef-client-csharp/KSeF.Client/ thirdparty/ksef-client-csharp/KSeF.Client/
 COPY thirdparty/ksef-client-csharp/KSeF.Client.Core/ thirdparty/ksef-client-csharp/KSeF.Client.Core/
+COPY thirdparty/ksef-client-csharp/KSeF.Client.ClientFactory/ thirdparty/ksef-client-csharp/KSeF.Client.ClientFactory/
 
 # Publish the application as a self-contained single file
 RUN dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -o /app/publish -r linux-x64 --self-contained true /p:PublishSingleFile=true

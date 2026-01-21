@@ -19,7 +19,25 @@ internal class Program
         };
 
         return await result.MapResult(
-            async (GlobalCommand cmd) => await cmd.ExecuteAsync(cts.Token).ConfigureAwait(false),
-            errs => Task.FromResult(1)).ConfigureAwait(false);
+            (GlobalCommand cmd) =>
+            {
+                try
+                {
+                    return cmd.ExecuteAsync(cts.Token);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine(ex);
+                    return Task.FromResult(3);
+                }
+            },
+            errs =>
+            {
+                if (errs.Any(e => e is HelpRequestedError or HelpVerbRequestedError))
+                    return Task.FromResult(0);
+
+                return Task.FromResult(1);
+            }
+        ).ConfigureAwait(false);
     }
 }
