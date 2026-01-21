@@ -11,7 +11,7 @@ workflow:
 default:
   tags: [nomad]
   interruptible: true
-  timeout: 5
+  timeout: 5min
 
 .build:
   image:
