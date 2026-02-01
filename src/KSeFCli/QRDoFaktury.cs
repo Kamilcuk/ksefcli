@@ -1,0 +1,52 @@
+using System.IO;
+using System.Security.Cryptography;
+using System.Text;
+using System.Xml.Linq;
+using CommandLine;
+using KSeF.Client.Core.Interfaces.Clients;
+using KSeF.Client.Core.Interfaces.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+
+namespace KSeFCli;
+
+[Verb("QRDoFaktury", HelpText = "Generate a QR code for an invoice and save it to a file")]
+public class QRDoFakturyCommand : GlobalCommand
+{
+    [Option('k', "ksef-number", Required = true, HelpText = "KSeF invoice number")]
+    public string KsefNumber { get; set; }
+
+    [Option('o', "output", Required = true, HelpText = "Output file path for the QR code (e.g., invoice.jpg)")]
+    public string OutputPath { get; set; }
+
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
+    {
+        var config = Config();
+        using IServiceScope scope = GetScope();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+        IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
+        IQrCodeService qrCodeService = scope.ServiceProvider.GetRequiredService<IQrCodeService>();
+
+        string invoiceXml = await ksefClient.GetInvoiceAsync(KsefNumber, config.Token, cancellationToken).ConfigureAwait(false);
+
+        XDocument xmlDoc = XDocument.Parse(invoiceXml);
+        XNamespace ns = xmlDoc.Root.GetDefaultNamespace();
+
+        string sellerNip = xmlDoc.Root.Element(ns + "Podmiot1").Element(ns + "DaneIdentyfikacyjne").Element(ns + "NIP").Value;
+        DateTime issueDate = DateTime.Parse(xmlDoc.Root.Element(ns + "Fa").Element(ns + "P_1").Value);
+
+        byte[] invoiceBytes = Encoding.UTF8.GetBytes(invoiceXml);
+        byte[] hashBytes = SHA256.HashData(invoiceBytes);
+        string invoiceHash = Base64UrlEncoder.Encode(hashBytes);
+
+        string url = linkSvc.BuildInvoiceVerificationUrl(sellerNip, issueDate, invoiceHash);
+
+        byte[] qrCodeBytes = qrCodeService.GenerateQrCode(url, 5); // 5 PixelsPerModule as seen in docs example
+
+        await File.WriteAllBytesAsync(OutputPath, qrCodeBytes, cancellationToken).ConfigureAwait(false);
+
+        Console.WriteLine($"QR code saved to {OutputPath}");
+
+        return 0;
+    }
+}
