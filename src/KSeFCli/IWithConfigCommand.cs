@@ -15,11 +15,10 @@ using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.DI;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace KSeFCli;
 
-public abstract class GlobalCommand
+public abstract class IWithConfigCommand : IGlobalCommand
 {
     [Option('c', "config", HelpText = "Path to config file", Required = true)]
     public string ConfigFile { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "ksefcli", "ksefcli.yaml");
@@ -30,18 +29,15 @@ public abstract class GlobalCommand
     [Option("cache", HelpText = "Active profile name")]
     public string TokenCache { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "ksefcli", "ksefcli.json");
 
-    [Option('v', "verbose", HelpText = "Enable verbose logging")]
-    public bool Verbose { get; set; }
 
-    [Option('q', "quiet", HelpText = "Enable quiet mode (warnings and errors only)")]
-    public bool Quiet { get; set; }
 
+    private static AuthenticationOperationStatusResponse? _cachedAuthResponse;
 
     private readonly Lazy<ProfileConfig> _cachedProfile;
     private readonly Lazy<KsefCliConfig> _cachedConfig;
     private readonly Lazy<TokenStore> _tokenStore;
 
-    public GlobalCommand()
+    public IWithConfigCommand()
     {
         _cachedConfig = new Lazy<KsefCliConfig>(() =>
         {
@@ -54,8 +50,6 @@ public abstract class GlobalCommand
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
     }
-
-    public abstract Task<int> ExecuteAsync(CancellationToken cancellationToken);
 
     protected TokenStore GetTokenStore() => _tokenStore.Value;
 
@@ -80,14 +74,13 @@ public abstract class GlobalCommand
     {
         var config = Config();
         using IServiceScope scope = GetScope();
-        ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
         AuthenticationOperationStatusResponse response = config.AuthMethod switch
         {
             AuthMethod.KsefToken => await TokenAuth(cancellationToken).ConfigureAwait(false),
             AuthMethod.Xades => await CertAuth(cancellationToken).ConfigureAwait(false),
             _ => throw new Exception($"Invalid authmethod in profile: {config.Environment}")
         };
-        logger.LogInformation($"Access token valid until: {response.AccessToken.ValidUntil} . Refresh token valid until: {response.RefreshToken.ValidUntil}");
+        Log.LogInformation($"Access token valid until: {response.AccessToken.ValidUntil} . Refresh token valid until: {response.RefreshToken.ValidUntil}");
         return response;
     }
 
@@ -100,19 +93,18 @@ public abstract class GlobalCommand
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         ICryptographyService cryptographyService = scope.ServiceProvider.GetRequiredService<ICryptographyService>();
-        ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-        logger.LogInformation("1. Getting challenge");
+        Log.LogInformation("1. Getting challenge");
         AuthenticationChallengeResponse challenge = await ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
         long timestampMs = challenge.Timestamp.ToUnixTimeMilliseconds();
         string ksefToken = config.Token ?? throw new InvalidOperationException("KSeF token is missing");
-        logger.LogInformation("1. Przygotowanie i szyfrowanie tokena");
+        Log.LogInformation("1. Przygotowanie i szyfrowanie tokena");
         // Przygotuj "token|timestamp" i zaszyfruj RSA-OAEP SHA-256 zgodnie z wymaganiem API
         string tokenWithTimestamp = $"{ksefToken}|{timestampMs}";
         byte[] tokenBytes = System.Text.Encoding.UTF8.GetBytes(tokenWithTimestamp);
         byte[] encrypted = cryptographyService.EncryptKsefTokenWithRSAUsingPublicKey(tokenBytes);
         string encryptedTokenB64 = Convert.ToBase64String(encrypted);
-        logger.LogInformation("2. Wysłanie żądania uwierzytelnienia tokenem KSeF");
+        Log.LogInformation("2. Wysłanie żądania uwierzytelnienia tokenem KSeF");
         Trace.Assert(!string.IsNullOrEmpty(config.Nip), "--nip jest empty");
         AuthenticationKsefTokenRequest request = new AuthenticationKsefTokenRequest
         {
@@ -126,14 +118,14 @@ public abstract class GlobalCommand
             AuthorizationPolicy = null
         };
         SignatureResponse signature = await ksefClient.SubmitKsefTokenAuthRequestAsync(request, new CancellationToken()).ConfigureAwait(false);
-        logger.LogInformation("3. Sprawdzenie statusu uwierzytelniania");
+        Log.LogInformation("3. Sprawdzenie statusu uwierzytelniania");
         DateTime startTime = DateTime.UtcNow;
         TimeSpan timeout = TimeSpan.FromMinutes(2);
         AuthStatus status;
         do
         {
             status = await ksefClient.GetAuthStatusAsync(signature.ReferenceNumber, signature.AuthenticationToken.Token).ConfigureAwait(false);
-            logger.LogInformation($"      Status: {status.Status.Code} - {status.Status.Description} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
+            Log.LogInformation($"      Status: {status.Status.Code} - {status.Status.Description} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
@@ -145,7 +137,7 @@ public abstract class GlobalCommand
         {
             throw new InvalidOperationException($"Uwierzytelnienie nie powiodło się lub przekroczono czas oczekiwania. Kod: {status.Status.Code}, Opis: {status.Status.Description}");
         }
-        logger.LogInformation("4. Uzyskanie tokena dostępowego (accessToken)");
+        Log.LogInformation("4. Uzyskanie tokena dostępowego (accessToken)");
         AuthenticationOperationStatusResponse tokenResponse = await ksefClient.GetAccessTokenAsync(signature.AuthenticationToken.Token).ConfigureAwait(false);
         return tokenResponse;
     }
@@ -162,7 +154,6 @@ public abstract class GlobalCommand
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         ICryptographyService cryptoService = scope.ServiceProvider.GetRequiredService<ICryptographyService>();
         SignatureService signatureService = scope.ServiceProvider.GetRequiredService<SignatureService>();
-        ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
 
         X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(config.Certificate!.Certificate, config.Certificate!.Password);
@@ -218,44 +209,20 @@ public abstract class GlobalCommand
 
     public async Task<string> GetAccessToken(CancellationToken cancellationToken)
     {
-        AuthenticationOperationStatusResponse data = await Auth(cancellationToken).ConfigureAwait(false);
-        return data.AccessToken.Token;
+        if (_cachedAuthResponse != null && _cachedAuthResponse.AccessToken.ValidUntil > DateTime.UtcNow.AddMinutes(5))
+        {
+            return _cachedAuthResponse.AccessToken.Token;
+        }
+
+        _cachedAuthResponse = await Auth(cancellationToken).ConfigureAwait(false);
+        return _cachedAuthResponse.AccessToken.Token;
     }
 
     public IServiceScope GetScope()
     {
+        ConfigureLogging();
         ProfileConfig config = Config();
         IServiceCollection services = new ServiceCollection();
-        services.AddLogging(builder =>
-        {
-            LogLevel KsefCliLogLevel = LogLevel.Information;
-            LogLevel MicrosoftLogLevel = LogLevel.Warning;
-            LogLevel SystemLogLevel = LogLevel.Warning;
-
-            if (Verbose)
-            {
-                KsefCliLogLevel = LogLevel.Debug;
-                MicrosoftLogLevel = LogLevel.Debug;
-                SystemLogLevel = LogLevel.Debug;
-            }
-            if (Quiet)
-            {
-                KsefCliLogLevel = LogLevel.Warning;
-            }
-
-            builder.AddFilter("KSeFCli", KsefCliLogLevel)
-                   .AddFilter("Microsoft", MicrosoftLogLevel)
-                   .AddFilter("System", SystemLogLevel)
-                   .AddConsole(options =>
-                   {
-                       options.LogToStandardErrorThreshold = LogLevel.Trace;
-                   })
-                   .AddSimpleConsole(options =>
-                   {
-                       options.SingleLine = true;
-                       options.TimestampFormat = "HH:mm:ss ";
-                   });
-        });
 
         KSeF.Client.ClientFactory.Environment environment = config.Environment.ToUpper() switch
         {
