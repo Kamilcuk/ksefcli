@@ -16,7 +16,8 @@ public class GetFakturaCommand : GlobalCommand
         var config = Config();
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
-        string invoice = await ksefClient.GetInvoiceAsync(KsefNumber, config.Token, cancellationToken).ConfigureAwait(false);
+        string accessToken = await GetAccessToken(cancellationToken).ConfigureAwait(false);
+        string invoice = await ksefClient.GetInvoiceAsync(KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(new { Invoice = invoice }));
         return 0;
     }
