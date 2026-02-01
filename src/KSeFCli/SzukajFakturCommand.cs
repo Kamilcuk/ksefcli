@@ -1,6 +1,4 @@
 using System.Text.Json;
-using System.Threading.Tasks;
-using System.Globalization;
 
 using CommandLine;
 
@@ -26,11 +24,11 @@ public class SzukajFakturCommand : GlobalCommand
     """)]
     public required string SubjectType { get; set; }
 
-    [Option("from", Required = true, HelpText = "Start date. Will be parsed using the 'date' shell command (e.g., -2days, 2023-01-01).")]
-    public string FromRaw { get; set; }
+    [Option("from", Required = true, HelpText = "Start date in ISO-8601 format")]
+    public DateTime From { get; set; }
 
-    [Option("to", HelpText = "End date. Will be parsed using the 'date' shell command (e.g., -1day, 2023-01-31).")]
-    public string? ToRaw { get; set; }
+    [Option("to", HelpText = "End date in ISO-8601 format")]
+    public DateTime? To { get; set; }
 
     [Option("dateType", Default = "Issue", HelpText = """
     Typ daty, według której ma być zastosowany zakres.
@@ -152,20 +150,13 @@ public class SzukajFakturCommand : GlobalCommand
             return 1;
         }
 
-        DateTime parsedFromDate = await ParseDate.Parse(settings.FromRaw).ConfigureAwait(false);
-        DateTime? parsedToDate = null;
-        if (settings.ToRaw is not null)
-        {
-            parsedToDate = await ParseDate.Parse(settings.ToRaw).ConfigureAwait(false);
-        }
-
         InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters
         {
             SubjectType = subjectType,
             DateRange = new DateRange
             {
-                From = parsedFromDate,
-                To = parsedToDate,
+                From = settings.From,
+                To = settings.To,
                 DateType = dateType,
                 RestrictToPermanentStorageHwmDate = settings.RestrictToPermanentStorageHwmDate
             },
