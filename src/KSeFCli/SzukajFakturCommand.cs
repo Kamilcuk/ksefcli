@@ -26,7 +26,7 @@ public class SzukajFakturCommand : GlobalCommand
     public required string SubjectType { get; set; }
 
     [Option("from", Required = true, HelpText = "Start date. Can be a specific date (e.g., 2023-01-01) or a relative date (e.g., -2days, 'last monday').")]
-    public string From { get; set; }
+    public required string From { get; set; }
 
     [Option("to", HelpText = "End date. Can be a specific date (e.g., 2023-01-31) or a relative date (e.g., today, -1day).")]
     public string? To { get; set; }
@@ -137,6 +137,19 @@ public class SzukajFakturCommand : GlobalCommand
     {
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+
+        List<InvoiceSummary> invoices = await SzukajFaktury(
+            ksefClient,
+            cancellationToken).ConfigureAwait(false);
+
+        Console.WriteLine(JsonSerializer.Serialize(invoices));
+        return 0;
+    }
+
+    private async Task<List<InvoiceSummary>> SzukajFaktury(
+        IKSeFClient ksefClient,
+        CancellationToken cancellationToken)
+    {
         SzukajFakturCommand settings = this;
 
         if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
@@ -151,8 +164,7 @@ public class SzukajFakturCommand : GlobalCommand
 
         if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
         {
-            Console.Error.WriteLine($"Invalid DateType: {settings.DateType}");
-            return 1;
+            throw new InvalidEnumArgumentException($"Invalid DateType: {settings.DateType}");
         }
 
         DateTime parsedFromDate = await ParseDate.Parse(settings.From).ConfigureAwait(false);
@@ -190,8 +202,7 @@ public class SzukajFakturCommand : GlobalCommand
                 }
                 else
                 {
-                    Console.Error.WriteLine($"Invalid CurrencyCode: {currencyCodeStr}");
-                    return 1;
+                    throw new InvalidEnumArgumentException($"Invalid CurrencyCode: {currencyCodeStr}");
                 }
             }
         }
@@ -200,8 +211,7 @@ public class SzukajFakturCommand : GlobalCommand
         {
             if (!Enum.TryParse(settings.AmountType, true, out AmountType amountType))
             {
-                Console.Error.WriteLine($"Invalid AmountType: {settings.AmountType}");
-                return 1;
+                throw new InvalidEnumArgumentException($"Invalid AmountType: {settings.AmountType}");
             }
             AmountFilter amountFilter = new AmountFilter
             {
@@ -222,8 +232,7 @@ public class SzukajFakturCommand : GlobalCommand
         {
             if (!Enum.TryParse(settings.BuyerIdentifierType, true, out BuyerIdentifierType buyerIdentifierType))
             {
-                Console.Error.WriteLine($"Invalid BuyerIdentifierType: {settings.BuyerIdentifierType}");
-                return 1;
+                throw new InvalidEnumArgumentException($"Invalid BuyerIdentifierType: {settings.BuyerIdentifierType}");
             }
             invoiceQueryFilters.BuyerIdentifier = new BuyerIdentifier
             {
@@ -236,8 +245,7 @@ public class SzukajFakturCommand : GlobalCommand
         {
             if (!Enum.TryParse(settings.InvoicingMode, true, out InvoicingMode invoicingMode))
             {
-                Console.Error.WriteLine($"Invalid InvoicingMode: {settings.InvoicingMode}");
-                return 1;
+                throw new InvalidEnumArgumentException($"Invalid InvoicingMode: {settings.InvoicingMode}");
             }
             invoiceQueryFilters.InvoicingMode = invoicingMode;
         }
@@ -246,8 +254,7 @@ public class SzukajFakturCommand : GlobalCommand
         {
             if (!Enum.TryParse(settings.FormType, true, out FormType formType))
             {
-                Console.Error.WriteLine($"Invalid FormType: {settings.FormType}");
-                return 1;
+                throw new InvalidEnumArgumentException($"Invalid FormType: {settings.FormType}");
             }
             invoiceQueryFilters.FormType = formType;
         }
@@ -263,20 +270,34 @@ public class SzukajFakturCommand : GlobalCommand
                 }
                 else
                 {
-                    Console.Error.WriteLine($"Invalid InvoiceType: {invoiceTypeStr}");
-                    return 1;
+                    throw new InvalidEnumArgumentException($"Invalid InvoiceType: {invoiceTypeStr}");
                 }
             }
         }
 
         string accessToken = await GetAccessToken(cancellationToken).ConfigureAwait(false);
-        PagedInvoiceResponse pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
-            invoiceQueryFilters,
-            accessToken,
-            pageOffset: settings.PageOffset,
-            pageSize: settings.PageSize,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
-        Console.WriteLine(JsonSerializer.Serialize(pagedInvoicesResponse));
-        return 0;
+
+        List<InvoiceSummary> allInvoices = new List<InvoiceSummary>();
+        PagedInvoiceResponse pagedInvoicesResponse;
+        int currentPageOffset = settings.PageOffset;
+
+        do
+        {
+            pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
+                invoiceQueryFilters,
+                accessToken,
+                pageOffset: currentPageOffset,
+                pageSize: settings.PageSize,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (pagedInvoicesResponse.Invoices != null)
+            {
+                allInvoices.AddRange(pagedInvoicesResponse.Invoices);
+            }
+
+            currentPageOffset += settings.PageSize;
+        } while (pagedInvoicesResponse.HasMore == true);
+
+        return allInvoices;
     }
 }
