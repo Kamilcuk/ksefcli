@@ -19,6 +19,9 @@ public class QRDoFakturyCommand : GlobalCommand
     [Option('o', "output", Required = true, HelpText = "Output file path for the QR code (e.g., invoice.jpg)")]
     public string OutputPath { get; set; }
 
+    [Option('p', "pixels", Default = 5, HelpText = "Pixels per module for the QR code")]
+    public int PixelsPerModule { get; set; }
+
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         var config = Config();
@@ -41,7 +44,7 @@ public class QRDoFakturyCommand : GlobalCommand
 
         string url = linkSvc.BuildInvoiceVerificationUrl(sellerNip, issueDate, invoiceHash);
 
-        byte[] qrCodeBytes = qrCodeService.GenerateQrCode(url, 5); // 5 PixelsPerModule as seen in docs example
+        byte[] qrCodeBytes = qrCodeService.GenerateQrCode(url, PixelsPerModule);
 
         await File.WriteAllBytesAsync(OutputPath, qrCodeBytes, cancellationToken).ConfigureAwait(false);
 
