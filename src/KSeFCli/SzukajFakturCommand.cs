@@ -25,13 +25,11 @@ public class SzukajFakturCommand : GlobalCommand
     """)]
     public required string SubjectType { get; set; }
 
-    [TypeConverter(typeof(DateConverter))]
     [Option("from", Required = true, HelpText = "Start date. Can be a specific date (e.g., 2023-01-01) or a relative date (e.g., -2days, 'last monday').")]
-    public DateTime From { get; set; }
+    public string From { get; set; }
 
-    [TypeConverter(typeof(DateConverter))]
     [Option("to", HelpText = "End date. Can be a specific date (e.g., 2023-01-31) or a relative date (e.g., today, -1day).")]
-    public DateTime? To { get; set; }
+    public string? To { get; set; }
 
     [Option("dateType", Default = "Issue", HelpText = """
     Typ daty, według której ma być zastosowany zakres.
@@ -153,13 +151,20 @@ public class SzukajFakturCommand : GlobalCommand
             return 1;
         }
 
+        DateTime parsedFromDate = await ParseDate.Parse(settings.From).ConfigureAwait(false);
+        DateTime? parsedToDate = null;
+        if (settings.To is not null)
+        {
+            parsedToDate = await ParseDate.Parse(settings.To).ConfigureAwait(false);
+        }
+
         InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters
         {
             SubjectType = subjectType,
             DateRange = new DateRange
             {
-                From = settings.From,
-                To = settings.To,
+                From = parsedFromDate,
+                To = parsedToDate,
                 DateType = dateType,
                 RestrictToPermanentStorageHwmDate = settings.RestrictToPermanentStorageHwmDate
             },
