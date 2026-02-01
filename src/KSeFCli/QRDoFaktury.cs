@@ -1,8 +1,4 @@
-using System.IO;
-using System.Security.Cryptography;
-using System.Text;
-using System.Xml.Linq;
-using CommandLine;
+using KSeF.Client.Api.Services;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +24,6 @@ public class QRDoFakturyCommand : GlobalCommand
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
-        IQrCodeService qrCodeService = scope.ServiceProvider.GetRequiredService<IQrCodeService>();
 
         string invoiceXml = await ksefClient.GetInvoiceAsync(KsefNumber, config.Token, cancellationToken).ConfigureAwait(false);
 
@@ -44,7 +39,7 @@ public class QRDoFakturyCommand : GlobalCommand
 
         string url = linkSvc.BuildInvoiceVerificationUrl(sellerNip, issueDate, invoiceHash);
 
-        byte[] qrCodeBytes = qrCodeService.GenerateQrCode(url, PixelsPerModule);
+        byte[] qrCodeBytes = QrCodeService.GenerateQrCode(url, PixelsPerModule);
 
         await File.WriteAllBytesAsync(OutputPath, qrCodeBytes, cancellationToken).ConfigureAwait(false);
 
