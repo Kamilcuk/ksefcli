@@ -136,6 +136,7 @@ public class SzukajFakturCommand : IWithConfigCommand
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         using IServiceScope scope = GetScope();
+        Log.LogInformation("Szukanie faktur...");
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
 
         List<InvoiceSummary> invoices = await SzukajFaktury(
@@ -285,6 +286,7 @@ public class SzukajFakturCommand : IWithConfigCommand
 
         do
         {
+            Log.LogInformation($"Fetching page with offset {currentPageOffset} and size {settings.PageSize}");
             pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
                 invoiceQueryFilters,
                 accessToken,
@@ -299,6 +301,8 @@ public class SzukajFakturCommand : IWithConfigCommand
 
             currentPageOffset += settings.PageSize;
         } while (pagedInvoicesResponse.HasMore == true);
+
+        Log.LogInformation($"Found {allInvoices.Count} invoices.");
 
         return allInvoices;
     }

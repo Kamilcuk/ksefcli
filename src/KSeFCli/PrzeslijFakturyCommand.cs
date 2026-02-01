@@ -6,7 +6,6 @@ using KSeF.Client.Core.Models.Sessions;
 using KSeF.Client.Core.Models.Sessions.BatchSession;
 using KSeF.Client.Tests.Utils;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 
 
@@ -35,21 +34,20 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
     private async Task<OpenBatchSessionResult> PrepareAndOpenBatchSessionAsync(
             IEnumerable<(string FileName, byte[] Content)> invoices,
             IKSeFClient ksefClient,
-        ILogger<Program> logger,
         ICryptographyService cryptographyService,
         string accessToken)
     {
         EncryptionData encryptionData = cryptographyService.GetEncryptionData();
 
-        logger.LogInformation("1. Przygotowanie paczki ZIP");
+        Log.LogInformation("1. Przygotowanie paczki ZIP");
         (byte[] zipBytes, FileMetadata zipMeta) =
             BatchUtils.BuildZip(invoices, cryptographyService);
 
-        logger.LogInformation("2. Podział binarny paczki ZIP na części oraz 3. Zaszyfrowanie części paczki");
+        Log.LogInformation("2. Podział binarny paczki ZIP na części oraz 3. Zaszyfrowanie części paczki");
         List<BatchPartSendingInfo> encryptedParts =
             BatchUtils.EncryptAndSplit(zipBytes, encryptionData, cryptographyService);
 
-        logger.LogInformation("4. Otwarcie sesji wsadowej");
+        Log.LogInformation("4. Otwarcie sesji wsadowej");
         OpenBatchSessionRequest openBatchRequest =
             BatchUtils.BuildOpenBatchRequest(zipMeta, encryptionData, encryptedParts);
 
@@ -102,22 +100,21 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         ICryptographyService cryptographyService = scope.ServiceProvider.GetRequiredService<ICryptographyService>();
-        ILogger<Program> logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
-        OpenBatchSessionResult result = await PrepareAndOpenBatchSessionAsync(invoices, ksefClient, logger, cryptographyService, accessToken).ConfigureAwait(false);
+        OpenBatchSessionResult result = await PrepareAndOpenBatchSessionAsync(invoices, ksefClient, cryptographyService, accessToken).ConfigureAwait(false);
         string referenceNumber = result.ReferenceNumber;
-        logger.LogInformation($"ReferenceNumber={result.ReferenceNumber}");
+        Log.LogInformation($"ReferenceNumber={result.ReferenceNumber}");
 
-        logger.LogInformation("5. Przesłanie zadeklarowanych części paczki");
+        Log.LogInformation("5. Przesłanie zadeklarowanych części paczki");
         await ksefClient.SendBatchPartsAsync(result.OpenBatchSessionResponse, result.EncryptedParts).ConfigureAwait(false);
 
-        logger.LogInformation("6. Zamknięcie sesji wsadowej");
+        Log.LogInformation("6. Zamknięcie sesji wsadowej");
         await ksefClient.CloseBatchSessionAsync(result.ReferenceNumber, accessToken).ConfigureAwait(false);
 
         /* ---------------------------------------------------------------------- */
-        logger.LogInformation("sesja-sprawdzenie-stanu-i-pobranie-upo.md");
+        Log.LogInformation("sesja-sprawdzenie-stanu-i-pobranie-upo.md");
 
-        logger.LogInformation("4) Oczekiwanie na przetworzenie faktury");
+        Log.LogInformation("4) Oczekiwanie na przetworzenie faktury");
         SessionStatusResponse sessionStatus = await AsyncPollingUtils.PollWithBackoffAsync(
             action: () => ksefClient.GetSessionStatusAsync(referenceNumber, accessToken, cancellationToken),
             result => result is not null && result.SuccessfulInvoiceCount is not null,
@@ -138,7 +135,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         // maxAttempts: 30,
         // cancellationToken: cancellationToken).ConfigureAwait(false);
 
-        logger.LogInformation("3. Pobranie informacji na temat przesłanych faktur");
+        Log.LogInformation("3. Pobranie informacji na temat przesłanych faktur");
         await PobranieInformacjiNaTematPrzeslanychFaktur(ksefClient, referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
 
         return 0;

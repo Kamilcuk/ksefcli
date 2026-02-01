@@ -2,6 +2,33 @@
 
 `ksefcli` to narzędzie wiersza poleceń (CLI) dla systemu Linux, napisane w języku C#, które ułatwia interakcję z Krajowym Systemem e-Faktur (KSeF) w Polsce. Aplikacja wykorzystuje bibliotekę kliencką `ksef-client-csharp` do komunikacji z usługami KSeF.
 
+## Spis Treści
+
+- [Instalacja](#instalacja)
+- [Przykłady użycia](#przykłady-użycia)
+- [Konfiguracja](#konfiguracja)
+  - [Struktura pliku `ksefcli.yaml`](#struktura-pliku-ksefcliyaml)
+  - [Opcje Konfiguracyjne](#opcje-konfiguracyjne)
+  - [Przykład Konfiguracji](#przykład-konfiguracji)
+- [Użycie](#użycie)
+  - [Opcje Globalne](#opcje-globalne)
+  - [Dostępne Polecenia](#dostępne-polecenia)
+- [Polecenia](#polecenia)
+  - [`Auth`](#auth)
+  - [`TokenAuth`](#tokenauth)
+  - [`CertAuth`](#certauth)
+  - [`TokenRefresh`](#tokenrefresh)
+  - [`GetFaktura`](#getfaktura)
+  - [`SzukajFaktur`](#szukajfaktur)
+  - [`PobierzFaktury`](#pobierzfaktury)
+  - [`PrzeslijFaktury`](#przeslijfaktury)
+  - [`LinkDoFaktury`](#linkdofaktury)
+  - [`QRDoFaktury`](#qrdofaktury)
+  - [`XML2PDF`](#xml2pdf)
+- [Rozwój](#rozwój)
+- [Uwierzytelnianie w KSeF](#uwierzytelnianie-w-ksef)
+- [Autor i Licencja](#autor-i-licencja)
+
 ## Instalacja
 
 Możesz pobrać statycznie linkowaną binarkę `ksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
@@ -12,7 +39,7 @@ chmod +x ksefcli
 sudo mv ksefcli /usr/local/bin/
 ```
 
-### Przykłady użycia
+## Przykłady użycia
 
 Wyszukiwanie numeru KSeF dla faktury o konkretnym numerze:
 ```bash
@@ -29,7 +56,6 @@ Wyszukiwanie faktur wystawionych w ostatnim tygodniu i zapisanie wyników do pli
 ```bash
 $ ksefcli SzukajFaktur -c ksefcli.yaml --from "$(date -d -1week -u --iso-8601=seconds)" --to "$(date -u --iso-8601=seconds)" > /tmp/1.json
 ```
-
 
 ## Konfiguracja
 
@@ -100,11 +126,6 @@ profiles:
 
 ```
 
-W tym przykładzie:
-- Domyślnym profilem jest `firma1`.
-- Zdefiniowano trzy profile (`firma1`, `firma2`, `firma3`) używające uwierzytelniania tokenem na środowisku testowym dla dwóch różnych NIP-ów.
-- Profil `cert_auth_example` używa uwierzytelniania certyfikatem na środowisku produkcyjnym. Hasło do certyfikatu zostanie odczytane ze zmiennej środowiskowej `KSEF_CERT_PASSWORD`.
-
 ## Użycie
 
 Ogólna składnia poleceń `ksefcli` jest następująca:
@@ -125,61 +146,213 @@ Wszystkie polecenia akceptują następujące opcje globalne:
 
 ### Dostępne Polecenia
 
-#### `Auth`
+*   `Auth`: Uwierzytelnia przy użyciu skonfigurowanej metody.
+*   `TokenAuth`: Uwierzytelnia przy użyciu tokena sesji KSeF.
+*   `CertAuth`: Uwierzytelnia przy użyciu certyfikatu kwalifikowanego.
+*   `TokenRefresh`: Odświeża istniejący token sesji.
+*   `SzukajFaktur`: Wyszukuje faktury na podstawie określonych kryteriów.
+*   `PobierzFaktury`: Pobiera faktury na podstawie kryteriów wyszukiwania.
+*   `GetFaktura`: Pobiera pojedynczą fakturę po jej numerze KSeF.
+*   `PrzeslijFaktury`: Wysyła faktury do KSeF.
+*   `LinkDoFaktury`: Generuje link weryfikacyjny dla faktury.
+*   `QRDoFaktury`: Generuje kod QR dla linku weryfikacyjnego faktury.
+*   `XML2PDF`: Konwertuje fakturę KSeF w formacie XML na format PDF.
+
+## Polecenia
+
+---
+
+### `Auth`
 
 Uwierzytelnia użytkownika na podstawie metody zdefiniowanej w aktywnym profilu (token lub certyfikat) i zwraca token dostępowy.
 
+**Użycie:**
 ```bash
 ksefcli -a moj_profil Auth
 ```
 
-#### `TokenAuth`
+---
 
-Wymusza uwierzytelnienie za pomocą tokena sesyjnego, używając konfiguracji z aktywnego profilu. Profil musi zawierać klucz `token`.
+### `TokenAuth`
 
+Wymusza uwierzytelnienie za pomocą tokena sesyjnego z aktywnego profilu. Profil musi zawierać klucz `token`.
+
+**Użycie:**
 ```bash
 ksefcli -a profil_z_tokenem TokenAuth
 ```
 
-#### `CertAuth`
+---
 
-Wymusza uwierzytelnienie za pomocą certyfikatu kwalifikowanego, używając konfiguracji z aktywnego profilu. Profil musi zawierać sekcję `certificate`.
+### `CertAuth`
 
+Wymusza uwierzytelnienie za pomocą certyfikatu kwalifikowanego z aktywnego profilu. Profil musi zawierać sekcję `certificate`.
+
+**Użycie:**
 ```bash
 ksefcli -a profil_z_certyfikatem CertAuth
 ```
 
-#### `TokenRefresh`
+---
 
-Odświeża token autoryzacyjny. *To polecenie jest w trakcie implementacji.*
+### `TokenRefresh`
 
-#### `SzukajFaktur`
+Odświeża istniejący token sesji.
 
-Wyszukuje faktury na podstawie podanych kryteriów. Odpowiada endpointowi `GET /online/Query/Invoice/Sync`.
+**Użycie:**
+```bash
+ksefcli -a moj_profil TokenRefresh
+```
 
-*   `-s`, `--subject-type` (wymagane): Typ podmiotu (`Subject1`, `Subject2`, `Subject3`).
-*   `--from` (wymagane): Data początkowa zakresu w formacie ISO-8601 (np. `2024-01-01T00:00:00Z`).
-*   `--to` (wymagane): Data końcowa zakresu w formacie ISO-8601.
-*   `--date-type`: Typ daty filtrowania (`invoicing`, `issue`, `payment`). Domyślnie: `issue`.
-*   `--page-offset`: Numer strony wyników. Domyślnie: `0`.
-*   `--page-size`: Liczba wyników na stronie. Domyślnie: `100`.
+---
 
-
-#### `GetFaktura`
+### `GetFaktura`
 
 Pobiera pojedynczą fakturę w formacie XML.
 
-*   `--ksef-id` (wymagane): Numer KSeF faktury.
+**Użycie:**
+```bash
+ksefcli GetFaktura <ksef-numer>
+```
 
-#### `PrzeslijFaktury`
+**Argumenty:**
 
-Przesyła faktury do KSeF.
+| Argument      | Opis                  | Wymagane |
+|---------------|-----------------------|----------|
+| `ksef-numer`  | Numer KSeF faktury.   | Tak      |
 
-*   `--file` (wymagane): Ścieżka do pliku XML z fakturą do przesłania.
+---
 
-## Cache Tokenów (aktualnie nie działa)
+### `SzukajFaktur`
 
-`ksefcli` przechowuje tokeny autoryzacyjne w pamięci podręcznej, aby uniknąć konieczności wielokrotnego uwierzytelniania. Domyślna lokalizacja pliku z tokenami to `~/.cache/ksefcli/tokenstore.json`.
+Wyszukuje faktury na podstawie podanych kryteriów. Odpowiada endpointowi `GET /online/Query/Invoice/Sync`.
+
+**Użycie:**
+```bash
+ksefcli SzukajFaktur --from "-7days" --subjectType Subject2
+```
+
+**Opcje:**
+
+| Opcja                                   | Opis                                                                                                                                     | Domyślnie    | Wymagane |
+|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|--------------|----------|
+| `-s`, `--subjectType`                   | Typ podmiotu dla kryteriów filtrowania. Możliwe wartości: `Subject1` (sprzedawca), `Subject2` (nabywca), `Subject3`, `SubjectAuthorized`. | `Subject1`   | Tak      |
+| `--from`                                | Data początkowa. Może być datą (np. `2023-01-01`) lub datą względną (np. `-2days`, `'last monday'`).                                       |              | Tak      |
+| `--to`                                  | Data końcowa. Może być datą (np. `2023-01-31`) lub datą względną (np. `today`, `-1day`).                                                   |              | Nie      |
+| `--dateType`                            | Typ daty używany w zakresie dat. Możliwe wartości: `Issue`, `Invoicing`, `PermanentStorage`.                                               | `Issue`      | Tak      |
+| `--pageOffset`                          | Przesunięcie strony dla paginacji.                                                                                                       | `0`          | Nie      |
+| `--pageSize`                            | Rozmiar strony dla paginacji.                                                                                                            | `10`         | Nie      |
+| `--restrictToPermanentStorageHwmDate`   | Ogranicza filtrowanie do `PermanentStorageHwmDate`. Dotyczy tylko `dateType` = `PermanentStorage`.                                     |              | Nie      |
+| `--ksefNumber`                          | Numer KSeF faktury (dokładne dopasowanie).                                                                                               |              | Nie      |
+| `--invoiceNumber`                       | Numer faktury nadany przez wystawcę (dokładne dopasowanie).                                                                              |              | Nie      |
+| `--amountType`                          | Typ filtru kwotowego. Możliwe wartości: `Brutto`, `Netto`, `Vat`.                                                                          |              | Nie      |
+| `--amountFrom`                          | Minimalna wartość kwoty.                                                                                                                 |              | Nie      |
+| `--amountTo`                            | Maksymalna wartość kwoty.                                                                                                                |              | Nie      |
+| `--sellerNip`                           | NIP sprzedawcy (dokładne dopasowanie).                                                                                                   |              | Nie      |
+| `--buyerIdentifierType`                 | Typ identyfikatora nabywcy. Możliwe wartości: `Nip`, `VatUe`, `Other`, `None`.                                                            |              | Nie      |
+| `--buyerIdValue`                        | Wartość identyfikatora nabywcy (dokładne dopasowanie).                                                                                   |              | Nie      |
+| `--currencyCodes`                       | Kody walut, oddzielone przecinkami (np. `PLN,EUR`).                                                                                       |              | Nie      |
+| `--invoicingMode`                       | Tryb fakturowania: `Online` lub `Offline`.                                                                                               |              | Nie      |
+| `--isSelfInvoicing`                     | Czy faktura jest samofakturowaniem.                                                                                                      |              | Nie      |
+| `--formType`                            | Typ dokumentu. Możliwe wartości: `FA`, `PEF`, `RR`.                                                                                      |              | Nie      |
+| `--invoiceTypes`                        | Typy faktur, oddzielone przecinkami (np. `Vat`, `Zal`, `Kor`).                                                                             |              | Nie      |
+| `--hasAttachment`                       | Czy faktura posiada załącznik.                                                                                                           |              | Nie      |
+
+---
+
+### `PobierzFaktury`
+
+Pobiera wiele faktur na podstawie kryteriów wyszukiwania. Rozszerza polecenie `SzukajFaktur` o opcje zapisywania plików.
+
+**Użycie:**
+```bash
+ksefcli PobierzFaktury --from "-7days" --subjectType Subject2 -o /tmp/faktury --pdf
+```
+
+**Opcje:**
+To polecenie akceptuje wszystkie opcje z `SzukajFaktur` oraz dodatkowo:
+
+| Opcja                | Opis                                                            | Wymagane |
+|----------------------|-----------------------------------------------------------------|----------|
+| `-o`, `--outputdir`  | Katalog wyjściowy do zapisania faktur.                          | Tak      |
+| `-p`, `--pdf`        | Zapisz również wersję PDF faktury.                              | Nie      |
+| `--useInvoiceNumber` | Użyj `InvoiceNumber` zamiast `KsefNumber` jako nazwy pliku.     | Nie      |
+
+---
+
+### `PrzeslijFaktury`
+
+Wysyła faktury w formacie XML do KSeF.
+
+**Użycie:**
+```bash
+ksefcli PrzeslijFaktury -f faktura1.xml faktura2.xml
+```
+
+**Opcje:**
+
+| Opcja           | Opis                                | Wymagane |
+|-----------------|-------------------------------------|----------|
+| `-f`, `--files` | Ścieżki do plików XML z fakturami.  | Tak      |
+
+---
+
+### `LinkDoFaktury`
+
+Generuje link weryfikacyjny dla pojedynczej faktury.
+
+**Użycie:**
+```bash
+ksefcli LinkDoFaktury <ksef-numer>
+```
+
+**Argumenty:**
+
+| Argument      | Opis                  | Wymagane |
+|---------------|-----------------------|----------|
+| `ksef-numer`  | Numer KSeF faktury.   | Tak      |
+
+---
+
+### `QRDoFaktury`
+
+Generuje kod QR dla linku weryfikacyjnego faktury i zapisuje go do pliku.
+
+**Użycie:**
+```bash
+ksefcli QRDoFaktury <ksef-numer> faktura-qr.png
+```
+
+**Argumenty:**
+
+| Argument        | Opis                                      | Wymagane |
+|-----------------|-------------------------------------------|----------|
+| `ksef-numer`    | Numer KSeF faktury.                       | Tak      |
+| `output-path`   | Ścieżka pliku wyjściowego dla kodu QR.    | Tak      |
+
+**Opcje:**
+
+| Opcja            | Opis                                 | Domyślnie |
+|------------------|--------------------------------------|-----------|
+| `-p`, `--pixels` | Piksele na moduł dla kodu QR.        | `5`       |
+
+---
+
+### `XML2PDF`
+
+Konwertuje fakturę KSeF w formacie XML na plik PDF.
+
+**Użycie:**
+```bash
+ksefcli XML2PDF faktura.xml faktura.pdf
+```
+
+**Argumenty:**
+
+| Argument      | Opis                        | Wymagane |
+|---------------|-----------------------------|----------|
+| `input-file`  | Wejściowy plik XML.         | Tak      |
+| `output-file` | Wyjściowy plik PDF.         | Nie      |
 
 ## Rozwój
 
@@ -207,7 +380,7 @@ Aby skonfigurować środowisko deweloperskie, wykonaj następujące kroki:
 Szczegółowe informacje na temat mechanizmów uwierzytelniania w Krajowym Systemie e-Faktur można znaleźć w oficjalnej dokumentacji: [Uwierzytelnianie w KSeF](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md).
 Dokumentacja KSeF API: [https://api-test.ksef.mf.gov.pl/docs/v2/index.html](https://api-test.ksef.mf.gov.pl/docs/v2/index.html).
 
----
+## Autor i Licencja
 
-Program napisany przez Kamil Cukrowski.
+Program napisany przez Kamila Cukrowskiego.
 Licencja: [GPLv3](LICENSE.md).
