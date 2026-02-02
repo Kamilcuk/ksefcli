@@ -15,7 +15,7 @@ internal class Program
             with.EnableDashDash = true;
         });
 
-        ParserResult<object> result = parser.ParseArguments<GetFakturaCommand, SzukajFakturCommand, TokenAuthCommand, TokenRefreshCommand, CertAuthCommand, AuthCommand, PrzeslijFakturyCommand, PobierzFakturyCommand, LinkDoFakturyCommand, QRDoFakturyCommand, XML2PDFCommand>(args);
+        ParserResult<object> result = parser.ParseArguments<GetFakturaCommand, SzukajFakturCommand, TokenAuthCommand, TokenRefreshCommand, CertAuthCommand, AuthCommand, PrzeslijFakturyCommand, PobierzFakturyCommand, LinkDoFakturyCommand, QRDoFakturyCommand, XML2PDFCommand, SelfUpdateCommand>(args);
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (s, e) =>
@@ -26,10 +26,11 @@ internal class Program
         };
 
         return await result.MapResult(
-            (IWithConfigCommand cmd) =>
+            (IGlobalCommand cmd) =>
             {
                 try
                 {
+                    cmd.ConfigureLogging();
                     return cmd.ExecuteAsync(cts.Token);
                 }
                 catch (Exception ex)
@@ -42,7 +43,7 @@ internal class Program
             {
                 HelpText helpText = HelpText.AutoBuild(result, h =>
                 {
-                    h.Copyright = "Copyright (C) 2026 Kamil Cukrowski. Source code lisenced under GPLv3."; 
+                    h.Copyright = "Copyright (C) 2026 Kamil Cukrowski. Source code lisenced under GPLv3.";
                     // new CopyrightInfo("Kamil Cukrowski", 2026);
                     h.AdditionalNewLineAfterOption = false;
                     return h;
