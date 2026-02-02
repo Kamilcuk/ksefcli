@@ -213,7 +213,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
         TokenStore.Key key = GetTokenStoreKey();
         TokenStore.Data? storedToken = tokenStore.GetToken(key);
 
-        if (storedToken == null || storedToken.response.RefreshToken.ValidUntil < DateTime.UtcNow.AddMinutes(1))
+        if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTime.UtcNow.AddMinutes(1))
         {
             Log.LogInformation("No valid token found in store, starting new auth");
             AuthenticationOperationStatusResponse response = await Auth(cancellationToken).ConfigureAwait(false);
@@ -221,15 +221,15 @@ public abstract class IWithConfigCommand : IGlobalCommand
             return response.AccessToken.Token;
         }
 
-        if (storedToken.response.AccessToken.ValidUntil < DateTime.UtcNow.AddMinutes(10))
+        if (storedToken.Response.AccessToken.ValidUntil < DateTime.UtcNow.AddMinutes(10))
         {
             Log.LogInformation("Refreshing token");
-            AuthenticationOperationStatusResponse refreshedResponse = await TokenRefresh(storedToken.response.RefreshToken, cancellationToken).ConfigureAwait(false);
+            AuthenticationOperationStatusResponse refreshedResponse = await TokenRefresh(storedToken.Response.RefreshToken, cancellationToken).ConfigureAwait(false);
             tokenStore.SetToken(key, new TokenStore.Data(refreshedResponse));
             return refreshedResponse.AccessToken.Token;
         }
 
-        return storedToken.response.AccessToken.Token;
+        return storedToken.Response.AccessToken.Token;
     }
 
     public async Task<AuthenticationOperationStatusResponse> TokenRefresh(TokenInfo refreshToken, CancellationToken cancellationToken)
