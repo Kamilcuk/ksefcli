@@ -9,6 +9,28 @@ internal record Subprocess(
     bool Quiet = false
 )
 {
+    public static bool CheckCommandExists(string command)
+    {
+        var paths = System.Environment.GetEnvironmentVariable("PATH")!.Split(Path.PathSeparator);
+        var commandName = command;
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+        {
+            if (!commandName.EndsWith(".exe"))
+                commandName += ".exe";
+        }
+        
+        foreach (var path in paths)
+        {
+            var fullPath = Path.Combine(path, commandName);
+            if (File.Exists(fullPath))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     private Process AddArgsAndEnvironmentToProcessStartInfoAndStart(ProcessStartInfo processStartInfo)
     {
         foreach (System.Collections.DictionaryEntry kvp in System.Environment.GetEnvironmentVariables())

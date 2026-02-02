@@ -22,6 +22,11 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
+        if (Pdf)
+        {
+            XML2PDFCommand.AssertNpxExists();
+        }
+        
         Directory.CreateDirectory(OutputDir);
 
         using IServiceScope scope = GetScope();
