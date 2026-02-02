@@ -33,11 +33,19 @@
 
 Możesz pobrać statycznie linkowaną binarkę `ksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
 
+Poniższy link jest przeznaczony dla systemu Linux.
+
 ```bash
-curl -LsS https://gitlab.com/firma3/ksefcli/builds/artifacts/main/download?job=build-main | zcat > ksefcli
+curl -LsS https://gitlab.com/kamcuk/ksefcli/builds/artifacts/main/download?job=linux_build-main | zcat > ksefcli
 chmod +x ksefcli
 sudo mv ksefcli /usr/local/bin/
 ```
+
+### Bezpośrednie linki do pobrania
+
+- [Linux x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build-main)
+- [Windows x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build-main)
+
 
 ## Przykłady użycia
 
@@ -356,11 +364,13 @@ ksefcli XML2PDF faktura.xml faktura.pdf
 
 ## Rozwój
 
+Rozwój odbywa się na GitLabie.
+
 Aby skonfigurować środowisko deweloperskie, wykonaj następujące kroki:
 
 1.  Sklonuj repozytorium:
     ```bash
-    git clone https://github.com/your-repo/ksefcli.git
+    git clone https://gitlab.com/kamcuk/ksefcli.git
     ```
 2.  Zainstaluj zależności .NET:
     ```bash

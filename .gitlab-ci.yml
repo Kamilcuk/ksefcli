@@ -20,7 +20,7 @@ stages:
 secret_detection:
   stage: build
 
-.build_base:
+.build_linux_base:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:10.0
   variables:
@@ -40,15 +40,44 @@ secret_detection:
     paths:
       - ksefcli
 
-build-main:
-  extends: .build_base
+.build_windows_base:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  cache:
+    key:
+      files:
+        - src/KSeFCli/KSeFCli.csproj
+    paths:
+      - .nuget/packages
+  script:
+    - dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
+    - mv -v src/KSeFCli/bin/Release/net10.0/win-x64/publish/ksefcli.exe .
+    - stat ksefcli.exe
+  artifacts:
+    paths:
+      - ksefcli.exe
+
+linux_build_main:
+  extends: [.build_linux_base, .build_main]
+
+linux_build_mr:
+  extends: [.build_linux_base, .build_mr]
+
+windows_build_main:
+  extends: [.build_windows_base, .build_main]
+
+windows_build_mr:
+  extends: [.build_windows_base, .build_mr]
+
+.build_main:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   artifacts:
     expire_in: never
 
-build-mr:
-  extends: .build_base
+.build_mr:
   rules:
     - if: $CI_MERGE_REQUEST_IID
   artifacts:
@@ -64,3 +93,14 @@ format_check:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_MERGE_REQUEST_IID
+
+test_linux:
+  stage: test
+  image: bash:latest
+  needs:
+    - job: linux_build_mr
+      optional: true
+    - job: linux_build_main
+      optional: true
+  script:
+    - ./test.sh ksefcli
