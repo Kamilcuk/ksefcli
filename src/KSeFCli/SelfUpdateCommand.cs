@@ -49,7 +49,7 @@ public class SelfUpdateCommand : IGlobalCommand
         {
             using (var httpClient = new HttpClient())
             {
-                Log.LogInformation($"Downloading new version from {downloadUrl}...");
+                Log.LogInformation($"Downloading new version from {downloadUrl}");
                 var response = await httpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 using (var fs = new FileStream(tempFile.Path, FileMode.Create, FileAccess.Write, FileShare.None))
