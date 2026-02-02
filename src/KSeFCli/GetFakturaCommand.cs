@@ -1,6 +1,9 @@
 using System.Xml.Linq;
+
 using CommandLine;
+
 using KSeF.Client.Core.Interfaces.Clients;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace KSeFCli;
@@ -18,10 +21,10 @@ public class GetFakturaCommand : IWithConfigCommand
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         string accessToken = await GetAccessToken(cancellationToken).ConfigureAwait(false);
         string invoiceXml = await ksefClient.GetInvoiceAsync(KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
-        
+
         XDocument doc = XDocument.Parse(invoiceXml);
         Console.WriteLine(doc.ToString());
-        
+
         return 0;
     }
 }

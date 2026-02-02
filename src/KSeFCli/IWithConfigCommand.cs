@@ -86,7 +86,9 @@ public abstract class IWithConfigCommand : IGlobalCommand
     {
         var config = Config();
         if (config.AuthMethod != AuthMethod.KsefToken)
+        {
             throw new InvalidOperationException("This command requires token authentication.");
+        }
 
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();

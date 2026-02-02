@@ -26,7 +26,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
         {
             XML2PDFCommand.AssertNpxExists();
         }
-        
+
         Directory.CreateDirectory(OutputDir);
 
         using IServiceScope scope = GetScope();
@@ -36,9 +36,9 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
         foreach (var invoiceSummary in invoices)
         {
-            var fileName = UseInvoiceNumber ? invoiceSummary.InvoiceNumber : invoiceSummary.KsefNumber;
-            var jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
-            var xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
+            string fileName = UseInvoiceNumber ? invoiceSummary.InvoiceNumber : invoiceSummary.KsefNumber;
+            string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
+            string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
             await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
 

@@ -1,33 +1,40 @@
-using System.Runtime.InteropServices;
-using CommandLine;
-using System;
-using System.IO;
-using System.Net.Http;
 using System.Reflection;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
+
+using CommandLine;
 
 namespace KSeFCli;
 
 [Verb("SelfUpdate", HelpText = "Updates the tool to the latest version.")]
 public class SelfUpdateCommand : IGlobalCommand
 {
+    [Option('d', "destination", HelpText = "Save the new version to the specified path instead of replacing the current executable.")]
+    public string? Destination { get; set; }
+
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        string currentExecutablePath = Assembly.GetExecutingAssembly().Location;
-        if (string.IsNullOrEmpty(currentExecutablePath))
+        string? currentExecutablePath = null;
+        if (string.IsNullOrEmpty(Destination))
         {
-            Log.LogError("Error: Could not determine the location of the current executable.");
-            return 1;
+            currentExecutablePath = Assembly.GetExecutingAssembly().Location;
+            if (string.IsNullOrEmpty(currentExecutablePath))
+            {
+                Log.LogError("Error: Could not determine the location of the current executable.");
+                return 1;
+            }
         }
 
         string downloadUrl;
+        string fileName;
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             downloadUrl = "https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build_main";
+            fileName = "ksefcli.exe";
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
             downloadUrl = "https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build_main";
+            fileName = "ksefcli";
         }
         else
         {
@@ -56,8 +63,18 @@ public class SelfUpdateCommand : IGlobalCommand
                 await new Subprocess(new[] { "chmod", "+x", tempFile.Path }).CheckCallAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            Log.LogInformation("Replacing the current executable...");
-            File.Move(tempFile.Path, currentExecutablePath, true);
+            string destinationPath;
+            if (Destination is null)
+            {
+                destinationPath = currentExecutablePath!;
+            }
+            else
+            {
+                destinationPath = Directory.Exists(Destination) ? Path.Combine(Destination, fileName) : Destination;
+            }
+
+            Log.LogInformation($"Saving to {destinationPath}...");
+            File.Move(tempFile.Path, destinationPath, true);
             Log.LogInformation("Update successful.");
             return 0;
         }

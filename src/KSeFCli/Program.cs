@@ -51,7 +51,9 @@ internal class Program
                 Console.WriteLine(helpText);
 
                 if (errs.Any(e => e is HelpRequestedError or HelpVerbRequestedError))
+                {
                     return Task.FromResult(0);
+                }
 
                 return Task.FromResult(1);
             }

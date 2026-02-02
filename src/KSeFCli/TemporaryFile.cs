@@ -24,7 +24,9 @@ public sealed class TemporaryFile : IDisposable
         try
         {
             if (File.Exists(Path))
+            {
                 File.Delete(Path);
+            }
         }
         catch
         {

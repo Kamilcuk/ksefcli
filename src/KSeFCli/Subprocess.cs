@@ -11,30 +11,35 @@ internal record Subprocess(
 {
     public static bool CheckCommandExists(string command)
     {
-        var paths = System.Environment.GetEnvironmentVariable("PATH")!.Split(Path.PathSeparator);
-        var commandName = command;
+        string[] paths = System.Environment.GetEnvironmentVariable("PATH")!.Split(Path.PathSeparator);
+        string commandName = command;
         if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
         {
             if (!commandName.EndsWith(".exe"))
+            {
                 commandName += ".exe";
+            }
         }
-        
-        foreach (var path in paths)
+
+        foreach (string path in paths)
         {
-            var fullPath = Path.Combine(path, commandName);
+            string fullPath = Path.Combine(path, commandName);
             if (File.Exists(fullPath))
             {
                 return true;
             }
         }
-        
+
         return false;
     }
 
     private Process AddArgsAndEnvironmentToProcessStartInfoAndStart(ProcessStartInfo processStartInfo)
     {
         foreach (System.Collections.DictionaryEntry kvp in System.Environment.GetEnvironmentVariables())
+        {
             processStartInfo.Environment[kvp.Key.ToString()!] = kvp.Value?.ToString();
+        }
+
         if (Environment != null)
         {
             foreach (var kvp in Environment)
@@ -43,11 +48,17 @@ internal record Subprocess(
                 processStartInfo.Environment[kvp.Key] = kvp.Value;
             }
         }
-        foreach (var arg in CommandAndArgs.Skip(1))
+        foreach (string? arg in CommandAndArgs.Skip(1))
+        {
             processStartInfo.ArgumentList.Add(arg);
+        }
+
         var process = Process.Start(processStartInfo)!;
         if (process == null)
+        {
             throw new InvalidOperationException("Failed to start process");
+        }
+
         return process;
     }
 
@@ -65,10 +76,16 @@ internal record Subprocess(
     public async Task CheckCallAsync(CancellationToken cancellationToken = default)
     {
         if (CommandAndArgs == null || !CommandAndArgs.Any())
+        {
             throw new InvalidOperationException("No command specified.");
+        }
+
         IEnumerable<string> args = CommandAndArgs.Skip(1);
         if (!Quiet)
+        {
             Log.LogInformation($"Executing: {string.Join(" ", CommandAndArgs)}");
+        }
+
         ProcessStartInfo processStartInfo = new()
         {
             FileName = CommandAndArgs.First(),
@@ -83,7 +100,10 @@ internal record Subprocess(
     public async Task<byte[]> CheckOutputAsync(CancellationToken cancellationToken = default)
     {
         if (!Quiet)
+        {
             Log.LogInformation($"Executing (capturing output): {string.Join(" ", CommandAndArgs.Select(a => $"\"{a}\""))}");
+        }
+
         ProcessStartInfo processStartInfo = new ProcessStartInfo
         {
             FileName = CommandAndArgs.First(),

@@ -1,12 +1,6 @@
-using System.Diagnostics;
 using System.Text.Json;
+
 using CommandLine;
-using KSeF.Client.Core.Interfaces.Clients;
-using KSeF.Client.Core.Interfaces.Services;
-using KSeF.Client.Core.Models;
-using KSeF.Client.Core.Models.Authorization;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace KSeFCli;
 
