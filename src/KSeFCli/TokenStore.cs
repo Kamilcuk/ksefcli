@@ -7,7 +7,7 @@ namespace KSeFCli;
 
 public class TokenStore
 {
-    public record Data(AuthenticationOperationStatusResponse response);
+    public record Data(AuthenticationOperationStatusResponse Response);
 
     public record Key(string Nazwa, string Nip, string Environment)
     {
@@ -65,7 +65,7 @@ public class TokenStore
 
         if (tokens.TryGetValue(key.ToCacheKey(), out Data? token))
         {
-            if (token?.response is null || token.response.RefreshToken is null)
+            if (token?.Response is null || token.Response.RefreshToken is null)
             {
                 Log.LogWarning($"Invalid token data found in cache for key: {key.ToCacheKey()}. Deleting the entry.");
                 tokens.Remove(key.ToCacheKey());
@@ -98,9 +98,9 @@ public class TokenStore
                 tokens = new Dictionary<string, Data>();
             }
 
-            System.Diagnostics.Trace.Assert(token.response is not null, "token.response is not null");
-            System.Diagnostics.Trace.Assert(token.response.AccessToken is not null, "token.response.AccessToken is not null");
-            System.Diagnostics.Trace.Assert(token.response.RefreshToken is not null, "token.response.RefreshToken is not null");
+            System.Diagnostics.Trace.Assert(token.Response is not null, "token.response is not null");
+            System.Diagnostics.Trace.Assert(token.Response.AccessToken is not null, "token.response.AccessToken is not null");
+            System.Diagnostics.Trace.Assert(token.Response.RefreshToken is not null, "token.response.RefreshToken is not null");
             tokens[key.ToCacheKey()] = token;
 
             fs.Seek(0, SeekOrigin.Begin);
