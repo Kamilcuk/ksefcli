@@ -16,7 +16,7 @@ public class SelfUpdateCommand : IGlobalCommand
         string currentExecutablePath = Assembly.GetExecutingAssembly().Location;
         if (string.IsNullOrEmpty(currentExecutablePath))
         {
-            Console.Error.WriteLine("Error: Could not determine the location of the current executable.");
+            Log.LogError("Error: Could not determine the location of the current executable.");
             return 1;
         }
 
@@ -31,7 +31,7 @@ public class SelfUpdateCommand : IGlobalCommand
         }
         else
         {
-            Console.Error.WriteLine("Error: Self-update is only supported on Windows and Linux.");
+            Log.LogError("Error: Self-update is only supported on Windows and Linux.");
             return 1;
         }
 
@@ -42,7 +42,7 @@ public class SelfUpdateCommand : IGlobalCommand
         {
             using (var httpClient = new HttpClient())
             {
-                Console.WriteLine($"Downloading new version from {downloadUrl}...");
+                Log.LogInformation($"Downloading new version from {downloadUrl}...");
                 var response = await httpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 using (var fs = new FileStream(tempFile.Path, FileMode.Create, FileAccess.Write, FileShare.None))
@@ -56,14 +56,14 @@ public class SelfUpdateCommand : IGlobalCommand
                 await new Subprocess(new[] { "chmod", "+x", tempFile.Path }).CheckCallAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            Console.WriteLine("Replacing the current executable...");
+            Log.LogInformation("Replacing the current executable...");
             File.Move(tempFile.Path, currentExecutablePath, true);
-            Console.WriteLine("Update successful.");
+            Log.LogInformation("Update successful.");
             return 0;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error during self-update: {ex.Message}");
+            Log.LogError($"Error during self-update: {ex.Message}");
             return 1;
         }
     }
