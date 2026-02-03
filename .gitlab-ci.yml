@@ -6,7 +6,7 @@ include:
 default:
   interruptible: true
   timeout: 5min
-  tags: [nomad]
+  # tags: [nomad]
 
 workflow:
   rules:
