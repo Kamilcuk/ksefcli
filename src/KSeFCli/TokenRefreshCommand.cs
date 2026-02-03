@@ -1,7 +1,10 @@
 using System.Text.Json;
+
 using CommandLine;
+
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models.Authorization;
+
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -12,7 +15,7 @@ public class TokenRefreshCommand : IWithConfigCommand
 {
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfig config = Config();
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         if (string.IsNullOrEmpty(config.Token))

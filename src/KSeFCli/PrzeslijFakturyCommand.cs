@@ -1,10 +1,13 @@
 using System.Text.Json;
+
 using CommandLine;
+
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Sessions;
 using KSeF.Client.Core.Models.Sessions.BatchSession;
 using KSeF.Client.Tests.Utils;
+
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -61,7 +64,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         );
     }
 
-    static async Task PobranieInformacjiNaTematPrzeslanychFaktur(
+    private static async Task PobranieInformacjiNaTematPrzeslanychFaktur(
             IKSeFClient ksefClient,
             string referenceNumber,
             string accessToken,

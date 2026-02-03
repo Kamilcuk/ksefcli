@@ -53,9 +53,10 @@ public class XML2PDFCommand : IGlobalCommand
 
     public static async Task<byte[]> XML2PDF(string xmlContent, bool quiet, CancellationToken cancellationToken)
     {
-        using var tempXml = new TemporaryFile(extension: ".xml");
+        AssertNpxExists();
+        using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
         await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
-        using var tempPdf = new TemporaryFile(extension: ".pdf");
+        using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
         string scriptPath = Path.Combine(AppContext.BaseDirectory, "run-pdf-generator.mjs");
         Subprocess nodeScript = new(
             CommandAndArgs: new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator", "invoice", tempXml.Path, tempPdf.Path, },
@@ -64,5 +65,13 @@ public class XML2PDFCommand : IGlobalCommand
         await nodeScript.CheckCallAsync(cancellationToken).ConfigureAwait(false);
         byte[] pdfBytes = await File.ReadAllBytesAsync(tempPdf.Path, cancellationToken).ConfigureAwait(false);
         return pdfBytes;
+    }
+
+    public static void AssertNpxExists()
+    {
+        if (!Subprocess.CheckCommandExists("npx"))
+        {
+            throw new InvalidOperationException("Command `npx` not found. Please install Node.js and npm to use this functionality.");
+        }
     }
 }

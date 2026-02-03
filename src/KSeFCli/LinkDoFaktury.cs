@@ -1,9 +1,12 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+
 using CommandLine;
+
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
@@ -17,7 +20,7 @@ public class LinkDoFakturyCommand : IWithConfigCommand
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfig config = Config();
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
@@ -27,8 +30,10 @@ public class LinkDoFakturyCommand : IWithConfigCommand
 
         XDocument xmlDoc = XDocument.Parse(invoiceXml);
         if (xmlDoc.Root is null)
+        {
             throw new InvalidDataException("Invoice XML is missing the root element.");
-        
+        }
+
         XNamespace ns = xmlDoc.Root.GetDefaultNamespace();
 
         string sellerNip = xmlDoc.Root.Element(ns + "Podmiot1")?.Element(ns + "DaneIdentyfikacyjne")?.Element(ns + "NIP")?.Value ?? throw new InvalidDataException("Could not find seller NIP in invoice XML.");

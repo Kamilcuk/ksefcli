@@ -1,11 +1,13 @@
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Xml.Linq;
+
 using CommandLine;
+
 using KSeF.Client.Api.Services;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
@@ -25,7 +27,7 @@ public class QRDoFakturyCommand : IWithConfigCommand
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfig config = Config();
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
@@ -35,7 +37,9 @@ public class QRDoFakturyCommand : IWithConfigCommand
 
         XDocument xmlDoc = XDocument.Parse(invoiceXml);
         if (xmlDoc.Root is null)
+        {
             throw new InvalidDataException("Invoice XML is missing the root element.");
+        }
 
         XNamespace ns = xmlDoc.Root.GetDefaultNamespace();
 

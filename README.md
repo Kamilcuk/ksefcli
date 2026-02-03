@@ -33,17 +33,25 @@
 
 Możesz pobrać statycznie linkowaną binarkę `ksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
 
+Poniższy link jest przeznaczony dla systemu Linux.
+
 ```bash
-curl -LsS https://gitlab.com/firma3/ksefcli/builds/artifacts/main/download?job=build-main | zcat > ksefcli
+curl -LsS https://gitlab.com/kamcuk/ksefcli/builds/artifacts/main/download?job=linux_build-main | zcat > ksefcli
 chmod +x ksefcli
 sudo mv ksefcli /usr/local/bin/
 ```
+
+### Bezpośrednie linki do pobrania
+
+- [Linux x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build-main)
+- [Windows x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build-main)
+
 
 ## Przykłady użycia
 
 Wyszukiwanie numeru KSeF dla faktury o konkretnym numerze:
 ```bash
-$ ksefcli SzukajFaktur -q -c ksefcli.yaml --from "$(date -d -1week -u --iso-8601=seconds)" --invoiceNumber '0004/26' | jq -r '.Invoices[0].KsefNumber'
+$ ksefcli SzukajFaktur -q -c ksefcli.yaml --from "-1week" --to "now" --invoiceNumber '0004/26' | jq -r '.Invoices[0].KsefNumber'
 12312312312-20260117-XXXXXXXXXXXX-5C
 ```
 
@@ -54,7 +62,7 @@ $ ksefcli PrzeslijFaktury -c ksefcli.yaml -f d03900-001.xml  -a firma2
 
 Wyszukiwanie faktur wystawionych w ostatnim tygodniu i zapisanie wyników do pliku:
 ```bash
-$ ksefcli SzukajFaktur -c ksefcli.yaml --from "$(date -d -1week -u --iso-8601=seconds)" --to "$(date -u --iso-8601=seconds)" > /tmp/1.json
+$ ksefcli SzukajFaktur -c ksefcli.yaml --from "-1week" --to "now" > /tmp/1.json
 ```
 
 ## Konfiguracja
@@ -156,6 +164,7 @@ Wszystkie polecenia akceptują następujące opcje globalne:
 *   `PrzeslijFaktury`: Wysyła faktury do KSeF.
 *   `LinkDoFaktury`: Generuje link weryfikacyjny dla faktury.
 *   `QRDoFaktury`: Generuje kod QR dla linku weryfikacyjnego faktury.
+*   `SelfUpdate`: Aktualizuje narzędzie ksefcli do najnowszej wersji.
 *   `XML2PDF`: Konwertuje fakturę KSeF w formacie XML na format PDF.
 
 ## Polecenia
@@ -338,6 +347,17 @@ ksefcli QRDoFaktury <ksef-numer> faktura-qr.png
 
 ---
 
+### `SelfUpdate`
+
+Aktualizuje narzędzie `ksefcli` do najnowszej stabilnej wersji, pobierając binarkę z repozytorium GitLab CI/CD.
+
+**Użycie:**
+```bash
+ksefcli SelfUpdate
+```
+
+---
+
 ### `XML2PDF`
 
 Konwertuje fakturę KSeF w formacie XML na plik PDF.
@@ -356,11 +376,13 @@ ksefcli XML2PDF faktura.xml faktura.pdf
 
 ## Rozwój
 
+Rozwój odbywa się na GitLabie.
+
 Aby skonfigurować środowisko deweloperskie, wykonaj następujące kroki:
 
 1.  Sklonuj repozytorium:
     ```bash
-    git clone https://github.com/your-repo/ksefcli.git
+    git clone https://gitlab.com/kamcuk/ksefcli.git
     ```
 2.  Zainstaluj zależności .NET:
     ```bash

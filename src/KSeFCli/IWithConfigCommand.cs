@@ -31,8 +31,6 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
 
 
-    private static AuthenticationOperationStatusResponse? _cachedAuthResponse;
-
     private readonly Lazy<ProfileConfig> _cachedProfile;
     private readonly Lazy<KsefCliConfig> _cachedConfig;
     private readonly Lazy<TokenStore> _tokenStore;
@@ -45,7 +43,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
         });
         _cachedProfile = new Lazy<ProfileConfig>(() =>
         {
-            var config = _cachedConfig.Value;
+            KsefCliConfig config = _cachedConfig.Value;
             return config.Profiles[config.ActiveProfile];
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
@@ -57,8 +55,8 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public TokenStore.Key GetTokenStoreKey()
     {
-        var config = _cachedConfig.Value;
-        var profile = Config();
+        KsefCliConfig config = _cachedConfig.Value;
+        ProfileConfig profile = Config();
         return new TokenStore.Key(config.ActiveProfile, profile.Nip, profile.Environment);
     }
 
@@ -72,7 +70,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> Auth(CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfig config = Config();
         using IServiceScope scope = GetScope();
         AuthenticationOperationStatusResponse response = config.AuthMethod switch
         {
@@ -86,9 +84,11 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> TokenAuth(CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfig config = Config();
         if (config.AuthMethod != AuthMethod.KsefToken)
+        {
             throw new InvalidOperationException("This command requires token authentication.");
+        }
 
         using IServiceScope scope = GetScope();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
@@ -144,7 +144,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> CertAuth(CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfig config = Config();
         if (config.AuthMethod != AuthMethod.Xades)
         {
             throw new InvalidOperationException("This command requires certificate authentication.");
@@ -209,18 +209,43 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<string> GetAccessToken(CancellationToken cancellationToken)
     {
-        if (_cachedAuthResponse != null && _cachedAuthResponse.AccessToken.ValidUntil > DateTime.UtcNow.AddMinutes(5))
+        TokenStore tokenStore = GetTokenStore();
+        TokenStore.Key key = GetTokenStoreKey();
+        TokenStore.Data? storedToken = tokenStore.GetToken(key);
+
+        if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTime.UtcNow.AddMinutes(1))
         {
-            return _cachedAuthResponse.AccessToken.Token;
+            Log.LogInformation("No valid token found in store, starting new auth");
+            AuthenticationOperationStatusResponse response = await Auth(cancellationToken).ConfigureAwait(false);
+            tokenStore.SetToken(key, new TokenStore.Data(response));
+            return response.AccessToken.Token;
         }
 
-        _cachedAuthResponse = await Auth(cancellationToken).ConfigureAwait(false);
-        return _cachedAuthResponse.AccessToken.Token;
+        if (storedToken.Response.AccessToken.ValidUntil < DateTime.UtcNow.AddMinutes(10))
+        {
+            Log.LogInformation("Refreshing token");
+            AuthenticationOperationStatusResponse refreshedResponse = await TokenRefresh(storedToken.Response.RefreshToken, cancellationToken).ConfigureAwait(false);
+            tokenStore.SetToken(key, new TokenStore.Data(refreshedResponse));
+            return refreshedResponse.AccessToken.Token;
+        }
+
+        return storedToken.Response.AccessToken.Token;
+    }
+
+    public async Task<AuthenticationOperationStatusResponse> TokenRefresh(TokenInfo refreshToken, CancellationToken cancellationToken)
+    {
+        using IServiceScope scope = GetScope();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+        RefreshTokenResponse response = await ksefClient.RefreshAccessTokenAsync(refreshToken.Token, cancellationToken).ConfigureAwait(false);
+        return new AuthenticationOperationStatusResponse
+        {
+            AccessToken = response.AccessToken,
+            RefreshToken = refreshToken,
+        };
     }
 
     public IServiceScope GetScope()
     {
-        ConfigureLogging();
         ProfileConfig config = Config();
         IServiceCollection services = new ServiceCollection();
 

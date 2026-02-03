@@ -14,7 +14,7 @@ $(B)/build: $(SOURCES)
 	dotnet build $(S)
 	@mkdir -p $(dir $@) && touch $@
 $(B)/format: $(SOURCES)
-	dotnet format $(S) -v d --include $(call join_comma,$(SOURCES))
+	dotnet format $(S) -v d
 	@mkdir -p $(dir $@) && touch $@
 ###############################################################################
 
@@ -32,7 +32,7 @@ test: format build
 clean:
 	dotnet clean $(S)
 test-format:
-	dotnet format $(S) -v d --include $(call join_comma,$(SOURCES)) --verify-no-changes
+	dotnet format $(S) -v d --verify-no-changes
 
 ###############################################################################
 
