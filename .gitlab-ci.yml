@@ -36,6 +36,8 @@ secret_detection:
     - mv -v src/KSeFCli/bin/Release/net10.0/linux-x64/publish/ksefcli .
     - ldd ksefcli
     - stat ksefcli
+    # Run tests.
+    - ./test.sh ksefcli
   artifacts:
     paths:
       - ksefcli
@@ -93,14 +95,3 @@ format_check:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_MERGE_REQUEST_IID
-
-test_linux:
-  stage: test
-  image: bash:latest
-  needs:
-    - job: linux_build_mr
-      optional: true
-    - job: linux_build_main
-      optional: true
-  script:
-    - ./test.sh ksefcli
