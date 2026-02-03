@@ -36,15 +36,15 @@ Możesz pobrać statycznie linkowaną binarkę `ksefcli` bezpośrednio z artefak
 Poniższy link jest przeznaczony dla systemu Linux.
 
 ```bash
-curl -LsS https://gitlab.com/kamcuk/ksefcli/builds/artifacts/main/download?job=linux_build-main | zcat > ksefcli
+curl -LsS https://gitlab.com/kamcuk/ksefcli/builds/artifacts/main/download?job=linux_build_main | zcat > ksefcli
 chmod +x ksefcli
 sudo mv ksefcli /usr/local/bin/
 ```
 
 ### Bezpośrednie linki do pobrania
 
-- [Linux x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build-main)
-- [Windows x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build-main)
+- [Linux x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build_main)
+- [Windows x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build_main)
 
 
 ## Przykłady użycia
