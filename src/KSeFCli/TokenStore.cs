@@ -65,9 +65,19 @@ public class TokenStore
 
         if (tokens.TryGetValue(key.ToCacheKey(), out Data? token))
         {
-            if (token?.Response is null || token.Response.RefreshToken is null)
+            string invalidReason = "";
+            if (token?.Response is null)
             {
-                Log.LogWarning($"Invalid token data found in cache for key: {key.ToCacheKey()}. Deleting the entry.");
+                invalidReason = "Response is null";
+            }
+            else if (token.Response.RefreshToken is null)
+            {
+                invalidReason = "RefreshToken is null";
+            }
+            
+            if (!string.IsNullOrEmpty(invalidReason))
+            {
+                Log.LogWarning($"Invalid token data found in cache for key: {key.ToCacheKey()} (reason: {invalidReason}). Deleting the entry.");
                 tokens.Remove(key.ToCacheKey());
                 using (FileStream newFs = new FileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
