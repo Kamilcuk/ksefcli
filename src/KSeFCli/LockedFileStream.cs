@@ -2,11 +2,11 @@ using System.Text;
 
 namespace KSeFCli;
 
-public class LockFile : IDisposable
+public class LockedFileStream : IDisposable
 {
     public FileStream Fs { get; }
 
-    public LockFile(string path, FileMode mode, FileAccess access, FileShare share)
+    public LockedFileStream(string path, FileMode mode, FileAccess access, FileShare share)
     {
         bool locked = false;
         while (true)
