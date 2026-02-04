@@ -26,7 +26,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
     [Option('a', "active", HelpText = "Active profile name")]
     public string ActiveProfile { get; set; } = System.Environment.GetEnvironmentVariable("KSEFCLI_ACTIVE") ?? "";
 
-    [Option("cache", HelpText = "Active profile name")]
+    [Option("cache", HelpText = "Path to token cache file")]
     public string TokenCache { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "ksefcli", "ksefcli.json");
 
     [Option("no-tokencache", HelpText = "Disable token cache usage")]
