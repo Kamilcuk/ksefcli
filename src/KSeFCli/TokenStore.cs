@@ -34,56 +34,53 @@ public class TokenStore
 
     public Data? GetToken(Key key)
     {
-        if (!File.Exists(_path))
+        using (LockedFileStream lockFile = new LockedFileStream(_path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
         {
-            return null;
-        }
-
-        byte[] data;
-        using (LockedFileStream lockFile = new LockedFileStream(_path, FileMode.Open, FileAccess.Read, FileShare.Read))
-        {
-            data = new byte[lockFile.Fs.Length];
-            lockFile.Fs.ReadExactly(data);
-        }
-
-        Dictionary<string, Data> tokens;
-        try
-        {
-            tokens = JsonSerializer.Deserialize<Dictionary<string, Data>>(data, _jsonOptions) ?? new Dictionary<string, Data>();
-        }
-        catch (JsonException)
-        {
-            Log.LogWarning($"Invalid JSON in token cache file: {_path}. Overwriting with empty data.");
-            using (LockedFileStream lockFile = new LockedFileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None))
+            if (lockFile.Fs.Length == 0)
             {
+                return null;
+            }
+
+            byte[] data = new byte[lockFile.Fs.Length];
+            lockFile.Fs.ReadExactly(data);
+
+            Dictionary<string, Data> tokens;
+            try
+            {
+                tokens = JsonSerializer.Deserialize<Dictionary<string, Data>>(data, _jsonOptions) ?? new Dictionary<string, Data>();
+            }
+            catch (JsonException)
+            {
+                Log.LogWarning($"Invalid JSON in token cache file: {_path}. Overwriting with empty data.");
+                lockFile.Fs.Seek(0, SeekOrigin.Begin);
+                lockFile.Fs.SetLength(0);
                 byte[] emptyData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new Dictionary<string, Data>(), _jsonOptions));
                 lockFile.Fs.Write(emptyData, 0, emptyData.Length);
                 lockFile.Fs.Flush(true);
+                return null;
             }
-            return null;
-        }
 
-        if (tokens.TryGetValue(key.ToCacheKey(), out Data? token))
-        {
-            string invalidReason = token?.Response is null ? "Response is null" :
-                                   token.Response.RefreshToken is null ? "RefreshToken is null" :
-                                   token.Response.AccessToken is null ? "AccessToken is null" : "";
-
-            if (!string.IsNullOrEmpty(invalidReason))
+            if (tokens.TryGetValue(key.ToCacheKey(), out Data? token))
             {
-                Log.LogWarning($"Invalid token data found in cache for key: {key.ToCacheKey()} (reason: {invalidReason}). Deleting the entry.");
-                tokens.Remove(key.ToCacheKey());
-                using (LockedFileStream lockFile = new LockedFileStream(_path, FileMode.Create, FileAccess.Write, FileShare.None))
+                string invalidReason = token?.Response is null ? "Response is null" :
+                                       token.Response.RefreshToken is null ? "RefreshToken is null" :
+                                       token.Response.AccessToken is null ? "AccessToken is null" : "";
+
+                if (!string.IsNullOrEmpty(invalidReason))
                 {
+                    Log.LogWarning($"Invalid token data found in cache for key: {key.ToCacheKey()} (reason: {invalidReason}). Deleting the entry.");
+                    tokens.Remove(key.ToCacheKey());
+                    lockFile.Fs.Seek(0, SeekOrigin.Begin);
+                    lockFile.Fs.SetLength(0);
                     byte[] newData = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(tokens, _jsonOptions));
                     lockFile.Fs.Write(newData, 0, newData.Length);
                     lockFile.Fs.Flush(true);
+                    return null;
                 }
-                return null;
+                return token;
             }
-            return token;
+            return null;
         }
-        return null;
     }
 
     public void SetToken(Key key, Data token)
