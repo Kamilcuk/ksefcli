@@ -46,6 +46,12 @@ if [[ ! ( -r $maybe && ! -v KCKSEFCLI_CONFIG ) ]]; then
 fi
 export KCKSEFCLI_CONFIG=$maybe
 #
+
+# Test SprawdzLimitCertyfikatow
+tmp=$( setx "${exe[@]}" SprawdzLimitCertyfikatow -a token )
+assert 'is a json' jq >/dev/null <<<"$tmp"
+
+#
 for i in 1 2; do
   tmp=$( setx "${exe[@]}" SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
   len=$( setx jq length <<<"$tmp" )
