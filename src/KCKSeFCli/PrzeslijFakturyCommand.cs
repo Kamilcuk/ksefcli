@@ -20,6 +20,12 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
     [Option('f', "files", Required = true, HelpText = "Paths to XML invoice files.")]
     public IEnumerable<string> Pliki { get; set; }
 
+    [Option('u', "upodir", Required = false, HelpText = "katalog do zapisu plikow upo")]
+    public string? UpoDir { get; set; }
+    
+    [Option("upopdf", Required = false, HelpText = "convertuj upo od razu na pdf")]
+    public bool UpoPdf { get; set; }
+
     public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths)
     {
         return paths.Select(path => (
@@ -139,6 +145,59 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
 
         Log.LogInformation("3. Pobranie informacji na temat przesłanych faktur");
         await PobranieInformacjiNaTematPrzeslanychFaktur(ksefClient, referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrEmpty(UpoDir))
+        {
+            Directory.CreateDirectory(UpoDir);
+
+            if (sessionStatus.Upo is not null)
+            {
+                // Zbiorcze UPO
+                foreach (var upo in sessionStatus.Upo.Pages)
+                {
+                    Log.LogInformation($"Pobieranie zbiorczego UPO: {upo.ReferenceNumber}");
+                    var upoContent = await ksefClient.GetSessionUpoAsync(referenceNumber, upo.ReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
+                    var upoPath = Path.Combine(UpoDir, $"{upo.ReferenceNumber}.xml");
+                    await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
+                    if(UpoPdf)
+                    {
+                        Log.LogInformation($"Generowanie PDF dla zbiorczego UPO: {upo.ReferenceNumber}");
+                        var pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, cancellationToken).ConfigureAwait(false);
+                        await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+            
+            // Indywidualne UPO
+            const int pageSize = 50;
+            string? continuationtoken = null;
+            do
+            {
+                SessionInvoicesResponse sessionInvoices = await ksefClient
+                    .GetSessionInvoicesAsync(
+                        referenceNumber,
+                        accessToken,
+                        pageSize,
+                        continuationtoken,
+                        cancellationToken).ConfigureAwait(false);
+
+                foreach (var invoice in sessionInvoices.Invoices.Where(i => i.KsefReferenceNumber is not null))
+                {
+                    Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefReferenceNumber}");
+                    var upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
+                    var upoPath = Path.Combine(UpoDir, $"{invoice.KsefReferenceNumber}.xml");
+                    await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
+                    if(UpoPdf)
+                    {
+                        Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefReferenceNumber}");
+                        var pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, cancellationToken).ConfigureAwait(false);
+                        await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+
+                continuationtoken = sessionInvoices.ContinuationToken;
+            } while (continuationtoken != null);
+        }
 
         return 0;
     }

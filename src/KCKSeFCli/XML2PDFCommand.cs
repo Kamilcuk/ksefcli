@@ -11,6 +11,9 @@ public class XML2PDFCommand : IGlobalCommand
     [Value(1, HelpText = "Output PDF file path.")]
     public string? OutputFile { get; set; }
 
+    [Option("upo", Required = false, HelpText = "use UPO template")]
+    public bool Upo { get; set; }
+
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         ConfigureLogging();
@@ -42,7 +45,7 @@ public class XML2PDFCommand : IGlobalCommand
         }
 
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await XML2PDF(xmlContent, Quiet, cancellationToken).ConfigureAwait(false);
+        byte[] pdfContent = await XML2PDF(xmlContent, Quiet, Upo, cancellationToken).ConfigureAwait(false);
 
         await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
 
@@ -51,7 +54,7 @@ public class XML2PDFCommand : IGlobalCommand
         return 0;
     }
 
-    public static async Task<byte[]> XML2PDF(string xmlContent, bool quiet, CancellationToken cancellationToken)
+    public static async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, CancellationToken cancellationToken)
     {
         AssertNpxExists();
         using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
@@ -59,7 +62,7 @@ public class XML2PDFCommand : IGlobalCommand
         using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
         string scriptPath = Path.Combine(AppContext.BaseDirectory, "run-pdf-generator.mjs");
         Subprocess nodeScript = new(
-            CommandAndArgs: new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator", "invoice", tempXml.Path, tempPdf.Path, },
+            CommandAndArgs: new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator", upo ? "upo" : "invoice", tempXml.Path, tempPdf.Path, },
             Quiet: quiet
         );
         await nodeScript.CheckCallAsync(cancellationToken).ConfigureAwait(false);
