@@ -8,37 +8,19 @@ namespace KCKSeFCli.Tests;
 
 public class CliTestFixture : IDisposable
 {
-    public string CliPath { get; private set; }
     public string ConfigPath { get; private set; }
     public string TestsDirectory { get; private set; }
+
+    private TextWriter _originalConsoleOut;
+    private TextWriter _originalConsoleError;
 
     public CliTestFixture()
     {
         TestsDirectory = Path.Combine(Directory.GetCurrentDirectory());
-        CliPath = Path.Combine(Directory.GetCurrentDirectory(), "kcksefcli");
         ConfigPath = Path.Combine(TestsDirectory, "test_kcksefcli.yaml");
 
-        // Ensure the CLI executable is built and available
-        // This part would typically be handled by a build script or by running `dotnet build` in CI/CD
-        // For local development/testing, you might need to manually ensure it's built or add a pre-test build step.
-        // For now, assuming it's built and copied to the test output directory by the .csproj settings.
-        if (!File.Exists(CliPath))
-        {
-             var buildResult = RunCliCommand("dotnet", new[] { "build", Path.Combine(TestsDirectory, "../../src/KCKSeFCli") });
-             if (buildResult.ExitCode != 0)
-             {
-                 throw new InvalidOperationException($"CLI build failed: {buildResult.StandardError}");
-             }
-
-            // Find the published executable - this might be brittle depending on publish output structure
-            var publishPath = Path.Combine(TestsDirectory, "../../src/KCKSeFCli/bin/Debug/net10.0");
-            var exeFiles = Directory.GetFiles(publishPath, "kcksefcli*");
-            if (!exeFiles.Any())
-            {
-                throw new InvalidOperationException($"kcksefcli executable not found in {publishPath}");
-            }
-            CliPath = exeFiles.First();
-        }
+        _originalConsoleOut = Console.Out;
+        _originalConsoleError = Console.Error;
 
         Environment.SetEnvironmentVariable("KCKSEFCLI_CONFIG", ConfigPath);
     }
@@ -46,47 +28,46 @@ public class CliTestFixture : IDisposable
     public void Dispose()
     {
         Environment.SetEnvironmentVariable("KCKSEFCLI_CONFIG", null);
+        Console.SetOut(_originalConsoleOut);
+        Console.SetError(_originalConsoleError);
     }
 
-    public ProcessResult RunCliCommand(string command, IEnumerable<string> args, string? activeProfile = null, IDictionary<string, string>? environmentVariables = null)
+    public ProcessResult RunCliCommand(IEnumerable<string> args, string? activeProfile = null, IDictionary<string, string>? environmentVariables = null)
     {
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = command,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            WorkingDirectory = TestsDirectory // Run commands from the tests directory
-        };
+        using var swOut = new StringWriter();
+        using var swErr = new StringWriter();
 
-        foreach (var arg in args)
-        {
-            startInfo.ArgumentList.Add(arg);
-        }
+        Console.SetOut(swOut);
+        Console.SetError(swErr);
+
+        var allArgs = new List<string>(args);
 
         if (activeProfile != null)
         {
-            startInfo.ArgumentList.Add("-a");
-            startInfo.ArgumentList.Add(activeProfile);
+            allArgs.Insert(0, "-a");
+            allArgs.Insert(1, activeProfile);
         }
 
+        // Temporarily set environment variables for this run
+        var originalEnvironmentVariables = new Dictionary<string, string?>();
         if (environmentVariables != null)
         {
             foreach (var envVar in environmentVariables)
             {
-                startInfo.EnvironmentVariables[envVar.Key] = envVar.Value;
+                originalEnvironmentVariables[envVar.Key] = Environment.GetEnvironmentVariable(envVar.Key);
+                Environment.SetEnvironmentVariable(envVar.Key, envVar.Value);
             }
         }
 
-        using var process = Process.Start(startInfo);
-        process.Should().NotBeNull();
+        int exitCode = KCKSeFCli.Program.Main(allArgs.ToArray()).GetAwaiter().GetResult();
 
-        string output = process!.StandardOutput.ReadToEnd();
-        string error = process.StandardError.ReadToEnd();
-        process.WaitForExit();
+        // Restore original environment variables
+        foreach (var envVar in originalEnvironmentVariables)
+        {
+            Environment.SetEnvironmentVariable(envVar.Key, envVar.Value);
+        }
 
-        return new ProcessResult(output, error, process.ExitCode);
+        return new ProcessResult(swOut.ToString(), swErr.ToString(), exitCode);
     }
 
     public record ProcessResult(string StandardOutput, string StandardError, int ExitCode);
@@ -115,7 +96,7 @@ public class CliTests
     public void Cli_Version_ShouldReturnCorrectVersion()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "--version" });
+        var result = _fixture.RunCliCommand(new[] { "--version" });
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -127,7 +108,7 @@ public class CliTests
     public void Cli_Help_ShouldReturnHelpText()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "--help" });
+        var result = _fixture.RunCliCommand(new[] { "--help" });
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -151,7 +132,7 @@ public class CliTests
         }
 
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "PrintConfig" }, activeProfile, environmentVariables);
+        var result = _fixture.RunCliCommand(new[] { "PrintConfig" }, activeProfile, environmentVariables);
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -164,7 +145,7 @@ public class CliTests
     public void Cli_SprawdzLimitCertyfikatow_ShouldReturnJson()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "SprawdzLimitCertyfikatow" }, "token_test");
+        var result = _fixture.RunCliCommand(new[] { "SprawdzLimitCertyfikatow" }, "token_test");
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -177,7 +158,7 @@ public class CliTests
     public void Cli_UniewaznijCertyfikat_Help_ShouldReturnHelpText()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "UniewaznijCertyfikat", "--help" });
+        var result = _fixture.RunCliCommand(new[] { "UniewaznijCertyfikat", "--help" });
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -189,7 +170,7 @@ public class CliTests
     public void Cli_WylistujCertyfikaty_Help_ShouldReturnHelpText()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "WylistujCertyfikaty", "--help" });
+        var result = _fixture.RunCliCommand(new[] { "WylistujCertyfikaty", "--help" });
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -201,7 +182,7 @@ public class CliTests
     public void Cli_PobierzCertyfikat_Help_ShouldReturnHelpText()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "PobierzCertyfikat", "--help" });
+        var result = _fixture.RunCliCommand(new[] { "PobierzCertyfikat", "--help" });
 
         // Assert
         result.ExitCode.Should().Be(0);
@@ -213,7 +194,7 @@ public class CliTests
     public void Cli_NowyCertyfikat_Help_ShouldReturnHelpText()
     {
         // Act
-        var result = _fixture.RunCliCommand(_fixture.CliPath, new[] { "NowyCertyfikat", "--help" });
+        var result = _fixture.RunCliCommand(new[] { "NowyCertyfikat", "--help" });
 
         // Assert
         result.ExitCode.Should().Be(0);

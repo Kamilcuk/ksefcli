@@ -3,7 +3,7 @@ using CommandLine.Text;
 
 namespace KCKSeFCli;
 
-internal class Program
+public class Program
 {
     public static async Task<int> Main(string[] args)
     {
