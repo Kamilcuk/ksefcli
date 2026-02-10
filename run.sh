@@ -32,6 +32,17 @@ resolve_fast() {
 
 ###############################################################################
 
+build_project() {
+  echo "+ dotnet build src/KCKSeFCli" >&2
+  dotnet build src/KCKSeFCli
+}
+
+if [[ "$1" == "build" ]]; then
+  shift
+  build_project
+  exit 0
+fi
+
 opt_fast=0
 opt_cmd=()
 while getopts fp:h opt; do

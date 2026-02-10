@@ -69,7 +69,7 @@ public class Program
                 });
                 Console.WriteLine(helpText);
 
-                if (errs.Any(e => e is HelpRequestedError or HelpVerbRequestedError))
+                if (errs.Any(e => e is HelpRequestedError or HelpVerbRequestedError or VersionRequestedError))
                 {
                     return Task.FromResult(0);
                 }

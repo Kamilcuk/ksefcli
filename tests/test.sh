@@ -5,12 +5,12 @@ DIR="$(dirname "$(readlink -f "$0")")"
 
 # Download L_lib.sh library
 if hash L_lib.sh 2>/dev/null; then
-  . L_lib.sh -s
+	. L_lib.sh -s
 else
-  if [[ ! -e L_lib.sh ]]; then
-	  curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
-  fi
-  . "$DIR"/L_lib.sh -s
+	if [[ ! -e L_lib.sh ]]; then
+		curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
+	fi
+	. "$DIR"/L_lib.sh -s
 fi
 
 # Parse command line arguments
@@ -20,12 +20,12 @@ L_argparse dest_prefix=opt_ \
 	---- "$@"
 
 if [[ -z "${opt_exe:-}" ]]; then
-  if L_hash make; then
-    L_logrun make -C "$DIR"/.. build
-  else
-    L_logrun dotnet build "$DIR"/../src/KCKSeFCli
-  fi
-  opt_exe=("$(readlink -f "$DIR"/../cli)")
+	if L_hash make; then
+		L_logrun make -C "$DIR"/.. build
+	else
+		L_logrun dotnet build "$DIR"/../src/KCKSeFCli
+	fi
+	opt_exe=("$(readlink -f "$DIR"/../cli)")
 fi
 
 cli() {
@@ -60,53 +60,52 @@ clitest_profile_inline() {
 clitest_help_uniewaznij() {
 	local output
 	output=$(cli UniewaznijCertyfikat --help)
-	grep -q "Certificate serial number to revoke" <<<"$output"
+	L_unittest_cmd -I grep -q "Certificate serial number to revoke" <<<"$output"
 }
 
 clitest_help_wylistuj() {
 	local output
 	output=$(cli WylistujCertyfikaty --help)
-	grep -q "Filter by certificate status" <<<"$output"
+	L_unittest_cmd -I grep -q "Filter by certificate name" <<<"$output"
 }
 
 clitest_help_pobierz() {
 	local output
 	output=$(cli PobierzCertyfikat --help)
-	grep -q "Certificate serial number to retrieve" <<<"$output"
+	L_unittest_cmd -I grep -q "Certificate serial number to retrieve" <<<"$output"
 }
 
 clitest_help_nowy() {
 	local output
 	output=$(cli NowyCertyfikat --help)
-	grep -q "Name for the new certificate" <<<"$output"
+	L_unittest_cmd -I grep -q "Name for the new certificate" <<<"$output"
 }
 
 # integration tests
 
 setup_integration_config() {
-    local maybe="$PWD/.git/KSEF/kcksefcli.yaml"
-    if [[ ! ( -r "$maybe" && ! -v KCKSEFCLI_CONFIG ) ]]; then
-        echo "skipping config-dependent tests: $maybe missing" >&2
-        return 1
-    fi
-    export KCKSEFCLI_CONFIG="$maybe"
+	local maybe="$DIR/../.git/KSEF/kcksefcli.yaml"
+	if [[ -r "$maybe" ]]; then
+		export KCKSEFCLI_CONFIG="$maybe"
+		return 0
+	fi
+	echo "skipping integration tests: $maybe missing" >&2
+	return 1
 }
 
-clitest_integration_limit_json() {
+clitest_z_integration_limit_json() {
 	setup_integration_config || return 0
 	local output
-	output=$(cli SprawdzLimitCertyfikatow -a token)
-	[[ $? -eq 0 ]] && jq -e . >/dev/null <<<"$output"
+	output=$(cli SprawdzLimitCertyfikatow -a token) || return 1
+	jq -es . <<<"$output" >/dev/null || return 1
 }
 
-clitest_integration_szukaj_faktur_loop() {
+clitest_z_integration_szukaj_faktur_loop() {
 	setup_integration_config || return 0
 	local output len
 	for i in 1 2; do
-		output=$(cli SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00)
-		[[ $? -ne 0 ]] && return 1
-		len=$(jq length <<<"$output")
-		[[ "$len" -ne 1 ]] && return 1
+		output=$(cli SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00) || return 1
+		L_unittest_cmd -I -r '[12]' jq length <<<"$output"
 	done
 }
 
