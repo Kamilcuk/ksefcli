@@ -5,6 +5,8 @@ assert() {
   if ! "${@:2}"; then
     echo "ERROR: $*" >&2
     exit 2
+  else
+    echo "OK ${BASH_LINENO[0]}" >&2
   fi
 }
 
@@ -21,7 +23,7 @@ if (( !$# )); then
 fi
 exe=("$@")
 
-setx "${exe[@]}" version || :
+( setx "${exe[@]}" --version ) || :
 
 setx "${exe[@]}" --help
 
@@ -38,13 +40,14 @@ setx env KSEF_TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="tests/test_kcks
 setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_inline_test
 
 maybe=$PWD/.git/KSEF/kcksefcli.yaml
-if [[ -r $maybe && ! -v KCKSEFCLI_CONFIG ]]; then
-  export KCKSEFCLI_CONFIG=$maybe
-  #
-  for i in 1 2; do
-    tmp=$( setx SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
-    len=$( setx jq length <<<"$tmp" )
-    assert '' test "$len" == 1
-  done
-  #
+if [[ ! ( -r $maybe && ! -v KCKSEFCLI_CONFIG ) ]]; then
+  echo "Skipping tests" >&2
+  exit 0
 fi
+export KCKSEFCLI_CONFIG=$maybe
+#
+for i in 1 2; do
+  tmp=$( setx "${exe[@]}" SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
+  len=$( setx jq length <<<"$tmp" )
+  assert '' test "$len" == 1
+done

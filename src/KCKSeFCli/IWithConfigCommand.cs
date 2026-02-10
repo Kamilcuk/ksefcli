@@ -16,35 +16,35 @@ using KSeF.Client.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KCKCKSeFCli;
+namespace KCKSeFCli;
 
 public abstract class IWithConfigCommand : IGlobalCommand
 {
     [Option('c', "config", HelpText = "Path to config file")]
-    public string ConfigFile { get; set; } = System.Environment.GetEnvironmentVariable("KCKCKSEFCLI_CONFIG") ?? System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kckcksefcli", "kckcksefcli.yaml");
+    public string ConfigFile { get; set; } = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
 
     [Option('a', "active", HelpText = "Active profile name")]
-    public string ActiveProfile { get; set; } = System.Environment.GetEnvironmentVariable("KCKCKSEFCLI_ACTIVE") ?? "";
+    public string ActiveProfile { get; set; } = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? "";
 
     [Option("cache", HelpText = "Path to token cache file")]
-    public string TokenCache { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "kcksefcli", "kcksefcli.json");
+    public string TokenCache { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "kcksefcli", "tokenstore.json");
 
     [Option("no-tokencache", HelpText = "Disable token cache usage")]
     public bool NoTokenCache { get; set; }
 
     private readonly Lazy<ProfileConfig> _cachedProfile;
-    private readonly Lazy<KCKCKSeFCliConfig> _cachedConfig;
+    private readonly Lazy<KCKSeFCliConfig> _cachedConfig;
     private readonly Lazy<TokenStore> _tokenStore;
 
     public IWithConfigCommand()
     {
-        _cachedConfig = new Lazy<KCKCKSeFCliConfig>(() =>
+        _cachedConfig = new Lazy<KCKSeFCliConfig>(() =>
         {
             return ConfigLoader.Load(ConfigFile, ActiveProfile);
         });
         _cachedProfile = new Lazy<ProfileConfig>(() =>
         {
-            KCKCKSeFCliConfig config = _cachedConfig.Value;
+            KCKSeFCliConfig config = _cachedConfig.Value;
             return config.Profiles[config.ActiveProfile];
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
@@ -56,7 +56,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public TokenStore.Key GetTokenStoreKey()
     {
-        KCKCKSeFCliConfig config = _cachedConfig.Value;
+        KCKSeFCliConfig config = _cachedConfig.Value;
         ProfileConfig profile = Config();
         return new TokenStore.Key(config.ActiveProfile, profile);
     }
@@ -113,7 +113,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             throw new InvalidOperationException("This command requires token authentication.");
         }
 
-        IKCKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKCKSeFClient>();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         ICryptographyService cryptographyService = await GetCryptographicService(scope, cancellationToken).ConfigureAwait(false);
 
         Log.LogInformation("1. Getting challenge");
@@ -172,7 +172,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             throw new InvalidOperationException("This command requires certificate authentication.");
         }
 
-        IKCKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKCKSeFClient>();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         ICryptographyService cryptoService = await GetCryptographicService(scope, cancellationToken).ConfigureAwait(false);
 
         byte[] certBytes = Encoding.UTF8.GetBytes(config.Certificate!.Certificate!);
@@ -262,7 +262,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> TokenRefresh(IServiceScope scope, TokenInfo refreshToken, CancellationToken cancellationToken)
     {
-        IKCKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKCKSeFClient>();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         RefreshTokenResponse response = await ksefClient.RefreshAccessTokenAsync(refreshToken.Token, cancellationToken).ConfigureAwait(false);
         return new AuthenticationOperationStatusResponse
         {
@@ -283,7 +283,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             _ => throw new Exception($"Invalid environment in profile: {config.Environment}")
         };
         services.AddSingleton(config);
-        services.AddKCKSeFClient(options =>
+        services.AddKSeFClient(options =>
         {
             options.BaseUrl = KsefEnvironmentConfig.BaseUrls[environment];
         });
