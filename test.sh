@@ -51,6 +51,11 @@ export KCKSEFCLI_CONFIG=$maybe
 tmp=$( setx "${exe[@]}" SprawdzLimitCertyfikatow -a token )
 assert 'is a json' jq >/dev/null <<<"$tmp"
 
+# Test UniewaznijCertyfikat help
+tmp=$( setx "${exe[@]}" UniewaznijCertyfikat --help )
+assert 'UniewaznijCertyfikat help contains serial number' grep -q "Certificate serial number to revoke" <<<"$tmp"
+
+
 #
 for i in 1 2; do
   tmp=$( setx "${exe[@]}" SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
