@@ -37,7 +37,7 @@ secret_detection:
     - ldd kcksefcli
     - stat kcksefcli
     # Run tests.
-    - dotnet test tests/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj
+    - ./tests/test.sh ./kcksefcli
   artifacts:
     paths:
       - kcksefcli
