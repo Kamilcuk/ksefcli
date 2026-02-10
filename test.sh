@@ -55,6 +55,9 @@ assert 'is a json' jq >/dev/null <<<"$tmp"
 tmp=$( setx "${exe[@]}" UniewaznijCertyfikat --help )
 assert 'UniewaznijCertyfikat help contains serial number' grep -q "Certificate serial number to revoke" <<<"$tmp"
 
+# Test WylistujCertyfikaty help
+tmp=$( setx "${exe[@]}" WylistujCertyfikaty --help )
+assert 'WylistujCertyfikaty help contains status option' grep -q "Filter by certificate status" <<<"$tmp"
 
 #
 for i in 1 2; do
