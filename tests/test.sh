@@ -1,75 +1,113 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-assert() {
-  if ! "${@:2}"; then
-    echo "ERROR: $*" >&2
-    exit 2
-  else
-    echo "OK ${BASH_LINENO[0]}" >&2
+DIR="$(dirname "$(readlink -f "$0")")"
+
+# Download L_lib.sh library
+if hash L_lib.sh 2>/dev/null; then
+  . L_lib.sh -s
+else
+  if [[ ! -e L_lib.sh ]]; then
+	  curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
   fi
+  . "$DIR"/L_lib.sh -s
+fi
+
+# Parse command line arguments
+L_argparse dest_prefix=opt_ \
+	-- -r help="Filter tests with this regex" \
+	-- exe nargs=REMAINDER help="Path to the command to test" \
+	---- "$@"
+
+if [[ -z "${opt_exe:-}" ]]; then
+  if L_hash make; then
+    L_logrun make -C "$DIR"/.. build
+  else
+    L_logrun dotnet build "$DIR"/../src/KCKSeFCli
+  fi
+  opt_exe=("$DIR/../cli")
+fi
+
+cli() {
+	L_logrun "${opt_exe[@]}" "$@"
 }
 
-setx() {
-  local -
-  set -x
-  "$@" || exit "$?"
+clitest_version() {
+	cli --version
 }
 
-cd "$(dirname "$(readlink -f "$0")")"
-if (( !$# )); then
-  dotnet build src/KCKSeFCli
-  set -- ./cli
-fi
-exe=("$@")
+clitest_help() {
+	cli --help
+}
 
-( setx "${exe[@]}" --version ) || :
+clitest_profile_cert() {
+	KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_test >/dev/null
+}
 
-setx "${exe[@]}" --help
+clitest_profile_token() {
+	KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" cli PrintConfig --active token_test >/dev/null
+}
 
-# Test with cert_test profile (from file paths)
-setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_test
+clitest_profile_env_pw() {
+	TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" \
+		cli PrintConfig --active cert_env_password_test >/dev/null
+}
 
-# Test with token_test profile
-setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active token_test
+clitest_profile_inline() {
+	KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
+}
 
-# Test with cert_env_password_test profile
-setx env TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_env_password_test
+clitest_help_uniewaznij() {
+	local output
+	output=$(cli UniewaznijCertyfikat --help)
+	grep -q "Certificate serial number to revoke" <<<"$output"
+}
 
-# Test with cert_inline_test profile
-setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_inline_test
+clitest_help_wylistuj() {
+	local output
+	output=$(cli WylistujCertyfikaty --help)
+	grep -q "Filter by certificate status" <<<"$output"
+}
 
-maybe=$PWD/.git/KSEF/kcksefcli.yaml
-if [[ ! ( -r $maybe && ! -v KCKSEFCLI_CONFIG ) ]]; then
-  echo "Skipping tests" >&2
-  exit 0
-fi
-export KCKSEFCLI_CONFIG=$maybe
-#
+clitest_help_pobierz() {
+	local output
+	output=$(cli PobierzCertyfikat --help)
+	grep -q "Certificate serial number to retrieve" <<<"$output"
+}
 
-# Test SprawdzLimitCertyfikatow
-tmp=$( setx "${exe[@]}" SprawdzLimitCertyfikatow -a token )
-assert 'is a json' jq >/dev/null <<<"$tmp"
+clitest_help_nowy() {
+	local output
+	output=$(cli NowyCertyfikat --help)
+	grep -q "Name for the new certificate" <<<"$output"
+}
 
-# Test UniewaznijCertyfikat help
-tmp=$( setx "${exe[@]}" UniewaznijCertyfikat --help )
-assert 'UniewaznijCertyfikat help contains serial number' grep -q "Certificate serial number to revoke" <<<"$tmp"
+# integration tests
 
-# Test WylistujCertyfikaty help
-tmp=$( setx "${exe[@]}" WylistujCertyfikaty --help )
-assert 'WylistujCertyfikaty help contains status option' grep -q "Filter by certificate status" <<<"$tmp"
+setup_integration_config() {
+    local maybe="$PWD/.git/KSEF/kcksefcli.yaml"
+    if [[ ! ( -r "$maybe" && ! -v KCKSEFCLI_CONFIG ) ]]; then
+        echo "skipping config-dependent tests: $maybe missing" >&2
+        return 1
+    fi
+    export KCKSEFCLI_CONFIG="$maybe"
+}
 
-# Test PobierzCertyfikat help
-tmp=$( setx "${exe[@]}" PobierzCertyfikat --help )
-assert 'PobierzCertyfikat help contains serial number' grep -q "Certificate serial number to retrieve" <<<"$tmp"
+clitest_integration_limit_json() {
+	setup_integration_config || return 0
+	local output
+	output=$(cli SprawdzLimitCertyfikatow -a token)
+	[[ $? -eq 0 ]] && jq -e . >/dev/null <<<"$output"
+}
 
-# Test NowyCertyfikat help
-tmp=$( setx "${exe[@]}" NowyCertyfikat --help )
-assert 'NowyCertyfikat help contains certificate name' grep -q "Name for the new certificate" <<<"$tmp"
+clitest_integration_szukaj_faktur_loop() {
+	setup_integration_config || return 0
+	local output len
+	for i in 1 2; do
+		output=$(cli SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00)
+		[[ $? -ne 0 ]] && return 1
+		len=$(jq length <<<"$output")
+		[[ "$len" -ne 1 ]] && return 1
+	done
+}
 
-#
-for i in 1 2; do
-  tmp=$( setx "${exe[@]}" SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
-  len=$( setx jq length <<<"$tmp" )
-  assert '' test "$len" == 1
-done
+L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
