@@ -34,7 +34,7 @@ setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --
 setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active token_test
 
 # Test with cert_env_password_test profile
-setx env KSEF_TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_env_password_test
+setx env TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_env_password_test
 
 # Test with cert_inline_test profile
 setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_inline_test

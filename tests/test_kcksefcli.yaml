@@ -17,7 +17,7 @@ profiles:
     certificate:
       private_key_file: './my_private_key.pem'
       certificate_file: './my_certificate.pem'
-      password_env: 'KSEF_TEST_PASSWORD_ENV'
+      password_env: 'TEST_PASSWORD_ENV'
   cert_inline_test:
     environment: test
     nip: '2233445566'
