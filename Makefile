@@ -26,9 +26,7 @@ sources:
 run: build
 	dotnet run --project $(S) --
 test: format build
-	dotnet run --project $(S) -- --help
-	./cli -c .git/kcksefcli.yaml TokenAuth | jq . >/dev/null
-	echo SUCCESS
+	dotnet test tests/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj
 clean:
 	dotnet clean $(S)
 test-format:
