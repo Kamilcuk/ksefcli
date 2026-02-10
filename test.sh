@@ -59,6 +59,10 @@ assert 'UniewaznijCertyfikat help contains serial number' grep -q "Certificate s
 tmp=$( setx "${exe[@]}" WylistujCertyfikaty --help )
 assert 'WylistujCertyfikaty help contains status option' grep -q "Filter by certificate status" <<<"$tmp"
 
+# Test PobierzCertyfikat help
+tmp=$( setx "${exe[@]}" PobierzCertyfikat --help )
+assert 'PobierzCertyfikat help contains serial number' grep -q "Certificate serial number to retrieve" <<<"$tmp"
+
 #
 for i in 1 2; do
   tmp=$( setx "${exe[@]}" SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
