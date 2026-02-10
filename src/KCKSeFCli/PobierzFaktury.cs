@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 
 using CommandLine;
 
@@ -68,21 +69,27 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
     public static string DodajNumerKsefDoDodatkowegoOpisu(string invoiceXml, string ksefNumber)
     {
-        var xml = System.Xml.Linq.XDocument.Parse(invoiceXml);
+        XDocument xml = System.Xml.Linq.XDocument.Parse(invoiceXml);
         if (xml.Root is null)
+        {
             throw new InvalidOperationException("XML root element not found.");
+        }
 
-        var ns = xml.Root.GetDefaultNamespace();
+        XNamespace ns = xml.Root.GetDefaultNamespace();
 
-        var faElement = xml.Root.Element(ns + "Fa");
+        XElement? faElement = xml.Root.Element(ns + "Fa");
         if (faElement is null)
+        {
             throw new InvalidOperationException("Element <Fa> not found in invoice XML.");
+        }
 
-        var faWiersz = faElement.Element(ns + "FaWiersz");
+        XElement? faWiersz = faElement.Element(ns + "FaWiersz");
         if (faWiersz is null)
+        {
             throw new InvalidOperationException("Element <FaWiersz> not found in invoice XML.");
+        }
 
-        var dodatkowyOpis = new System.Xml.Linq.XElement(ns + "DodatkowyOpis",
+        XElement dodatkowyOpis = new System.Xml.Linq.XElement(ns + "DodatkowyOpis",
             new System.Xml.Linq.XElement(ns + "Klucz", "Numer faktury KSEF"),
             new System.Xml.Linq.XElement(ns + "Wartosc", ksefNumber)
         );

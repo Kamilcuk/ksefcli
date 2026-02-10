@@ -1,7 +1,6 @@
-using System.Text.Json;
-
 using CommandLine;
 
+using KSeF.Client.Api.Builders.Certificates;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Models.Certificates;
 

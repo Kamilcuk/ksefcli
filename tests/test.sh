@@ -25,7 +25,7 @@ if [[ -z "${opt_exe:-}" ]]; then
   else
     L_logrun dotnet build "$DIR"/../src/KCKSeFCli
   fi
-  opt_exe=("$DIR/../cli")
+  opt_exe=("$(readlink -f "$DIR"/../cli)")
 fi
 
 cli() {
@@ -41,20 +41,20 @@ clitest_help() {
 }
 
 clitest_profile_cert() {
-	KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_test >/dev/null
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_test >/dev/null
 }
 
 clitest_profile_token() {
-	KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" cli PrintConfig --active token_test >/dev/null
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active token_test >/dev/null
 }
 
 clitest_profile_env_pw() {
-	TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" \
+	TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" \
 		cli PrintConfig --active cert_env_password_test >/dev/null
 }
 
 clitest_profile_inline() {
-	KCKSEFCLI_CONFIG="$L_DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
 }
 
 clitest_help_uniewaznij() {

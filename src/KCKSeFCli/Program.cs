@@ -15,7 +15,26 @@ public class Program
             with.EnableDashDash = true;
         });
 
-        ParserResult<object> result = parser.ParseArguments<GetFakturaCommand, SzukajFakturCommand, TokenAuthCommand, TokenRefreshCommand, CertAuthCommand, AuthCommand, PrzeslijFakturyCommand, PobierzFakturyCommand, LinkDoFakturyCommand, QRDoFakturyCommand, XML2PDFCommand, SelfUpdateCommand, PrintConfigCommand, SprawdzLimitCertyfikatowCommand, UniewaznijCertyfikatCommand, WylistujCertyfikatyCommand, PobierzCertyfikatCommand, NowyCertyfikatCommand>(args);
+        ParserResult<object> result = parser.ParseArguments(args,
+            typeof(GetFakturaCommand),
+            typeof(SzukajFakturCommand),
+            typeof(TokenAuthCommand),
+            typeof(TokenRefreshCommand),
+            typeof(CertAuthCommand),
+            typeof(AuthCommand),
+            typeof(PrzeslijFakturyCommand),
+            typeof(PobierzFakturyCommand),
+            typeof(LinkDoFakturyCommand),
+            typeof(QRDoFakturyCommand),
+            typeof(XML2PDFCommand),
+            typeof(SelfUpdateCommand),
+            typeof(PrintConfigCommand),
+            typeof(SprawdzLimitCertyfikatowCommand),
+            typeof(UniewaznijCertyfikatCommand),
+            typeof(WylistujCertyfikatyCommand),
+            typeof(PobierzCertyfikatCommand),
+            typeof(NowyCertyfikatCommand)
+        );
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (s, e) =>

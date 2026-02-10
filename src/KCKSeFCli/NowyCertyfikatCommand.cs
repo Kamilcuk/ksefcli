@@ -3,12 +3,9 @@ using System.Text.Json;
 using CommandLine;
 
 using KSeF.Client.Api.Builders.Certificates;
-using KSeF.Client.Api.Builders.X509Certificates;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Certificates;
-using KSeF.Client.Core.Models.Common;
-using KSeF.Client.Tests.Utils;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -53,7 +50,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand
         Console.WriteLine($"Enrollment Info: {JsonSerializer.Serialize(enrollmentInfo, new JsonSerializerOptions { WriteIndented = true })}");
 
         Log.LogInformation("3. Przygotowanie CSR (Certificate Signing Request).");
-        var (csrBase64, privateKeyBase64) = cryptographyService.GenerateCsrWithEcdsa(enrollmentInfo);
+        (string? csrBase64, string? privateKeyBase64) = cryptographyService.GenerateCsrWithEcdsa(enrollmentInfo);
 
         if (!string.IsNullOrEmpty(CsrOutputPath))
         {
@@ -87,7 +84,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand
         do
         {
             statusResponse = await ksefClient.GetCertificateEnrollmentStatusAsync(referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
-            Console.WriteLine($"Status: {statusResponse.Status.Code} - {statusResponse.Status.Description} | Elapsed: {DateTime.UtcNow - startTime:mm\:ss}");
+            Console.WriteLine($"Status: {statusResponse.Status.Code} - {statusResponse.Status.Description} | Elapsed: {DateTime.UtcNow - startTime:mm:ss}");
             if (statusResponse.Status.Code == 200 || statusResponse.Status.Code == 120)
             {
                 break;

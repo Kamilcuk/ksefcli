@@ -86,7 +86,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
-        using var scope = GetScope();
+        using IServiceScope scope = GetScope();
         return await ExecuteInScopeAsync(scope, cancellationToken).ConfigureAwait(false);
     }
 
