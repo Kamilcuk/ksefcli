@@ -37,7 +37,7 @@ build_project() {
   dotnet build src/KCKSeFCli
 }
 
-if [[ "$1" == "build" ]]; then
+if [[ "${1:-}" == "build" ]]; then
   shift
   build_project
   exit 0

@@ -181,15 +181,15 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                         continuationtoken,
                         cancellationToken).ConfigureAwait(false);
 
-                foreach (var invoice in sessionInvoices.Invoices.Where(i => i.KsefReferenceNumber is not null))
+                foreach (var invoice in sessionInvoices.Invoices.Where(i => i.KsefNumber is not null))
                 {
-                    Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefReferenceNumber}");
-                    var upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
-                    var upoPath = Path.Combine(UpoDir, $"{invoice.KsefReferenceNumber}.xml");
+                    Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefNumber}");
+                    var upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
+                    var upoPath = Path.Combine(UpoDir, $"{invoice.KsefNumber}.xml");
                     await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
                     if(UpoPdf)
                     {
-                        Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefReferenceNumber}");
+                        Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefNumber}");
                         var pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
                     }

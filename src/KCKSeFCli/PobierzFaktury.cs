@@ -57,7 +57,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
             if (Pdf)
             {
-                byte[] pdfContent = await XML2PDFCommand.XML2PDF(invoiceXml, Quiet, cancellationToken).ConfigureAwait(false);
+                byte[] pdfContent = await XML2PDFCommand.XML2PDF(invoiceXml, Quiet, false, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
                 Console.WriteLine($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
