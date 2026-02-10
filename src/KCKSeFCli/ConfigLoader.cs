@@ -2,11 +2,11 @@ using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 public static class ConfigLoader
 {
-    public static KsefCliConfig Load(string configPath, string? activeProfileNameOverride)
+    public static KCKSeFCliConfig Load(string configPath, string? activeProfileNameOverride)
     {
         string absoluteConfigPath = Path.GetFullPath(configPath);
         if (!File.Exists(absoluteConfigPath))
@@ -19,10 +19,10 @@ public static class ConfigLoader
             .IgnoreUnmatchedProperties()
             .Build();
 
-        KsefCliConfig config;
+        KCKSeFCliConfig config;
         try
         {
-            config = deserializer.Deserialize<KsefCliConfig>(
+            config = deserializer.Deserialize<KCKSeFCliConfig>(
                 File.ReadAllText(absoluteConfigPath)
             );
         }
@@ -89,7 +89,7 @@ public static class ConfigLoader
             }
         }
 
-        KsefCliConfig finalConfig = new KsefCliConfig
+        KCKSeFCliConfig finalConfig = new KCKSeFCliConfig
         {
             ActiveProfile = activeProfile,
             Profiles = resolvedProfiles,

@@ -1,6 +1,6 @@
-# ksefcli Project
+# kcksefcli Project
 
-Project `ksefcli` is a CLI application for Linux, written in C#, used for interaction with the National System of e-Invoices (KSeF) API in Poland. It uses the client library `ksef-client-csharp` to communicate with KSeF services.
+Project `kcksefcli` is a CLI application for Linux, written in C#, used for interaction with the National System of e-Invoices (KSeF) API in Poland. It uses the client library `ksef-client-csharp` to communicate with KSeF services.
 
 ## Agent Guidelines
 

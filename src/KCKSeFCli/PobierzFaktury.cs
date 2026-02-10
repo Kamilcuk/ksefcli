@@ -7,7 +7,7 @@ using KSeF.Client.Core.Models.Invoices;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("PobierzFaktury", HelpText = "Download invoices based on search criteria.")]
 public class PobierzFakturyCommand : SzukajFakturCommand

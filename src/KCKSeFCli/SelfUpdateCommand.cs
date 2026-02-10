@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 
 using CommandLine;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("SelfUpdate", HelpText = "Updates the tool to the latest version.")]
 public class SelfUpdateCommand : IGlobalCommand
@@ -36,13 +36,13 @@ public class SelfUpdateCommand : IGlobalCommand
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
-            downloadUrl = "https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build_main";
-            fileName = "ksefcli.exe";
+            downloadUrl = "https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli.exe?job=windows_build_main";
+            fileName = "kcksefcli.exe";
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            downloadUrl = "https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build_main";
-            fileName = "ksefcli";
+            downloadUrl = "https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli?job=linux_build_main";
+            fileName = "kcksefcli";
         }
         else
         {

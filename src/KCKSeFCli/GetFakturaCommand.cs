@@ -6,7 +6,7 @@ using KSeF.Client.Core.Interfaces.Clients;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("GetFaktura", HelpText = "Get a single invoice by KSeF number")]
 public class GetFakturaCommand : IWithConfigCommand

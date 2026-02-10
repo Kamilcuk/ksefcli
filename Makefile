@@ -7,7 +7,7 @@ join_comma = $(subst $(space),$(comma),$(1))
 all: build
 
 ###############################################################################
-S = src/KSeFCli
+S = src/KCKSeFCli
 SOURCES := $(shell find $(S) \( -path $(S)/obj -o -path $(S)/bin \) -prune -o \( -type f \( -name '*.cs' -o -name '*.csproj' \) -print \) )
 B = $(S)/obj
 $(B)/build: $(SOURCES)
@@ -27,7 +27,7 @@ run: build
 	dotnet run --project $(S) --
 test: format build
 	dotnet run --project $(S) -- --help
-	./cli -c .git/ksefcli.yaml TokenAuth | jq . >/dev/null
+	./cli -c .git/kcksefcli.yaml TokenAuth | jq . >/dev/null
 	echo SUCCESS
 clean:
 	dotnet clean $(S)

@@ -5,7 +5,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <AssemblyName>ksefcli</AssemblyName>
+    <AssemblyName>kcksefcli</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <None Include="run-pdf-generator.mjs">

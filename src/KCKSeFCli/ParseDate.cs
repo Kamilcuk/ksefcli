@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 public static class ParseDate
 {

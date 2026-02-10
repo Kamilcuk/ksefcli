@@ -1,6 +1,6 @@
 using CommandLine;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("XML2PDF", HelpText = "Convert KSeF XML invoice to PDF.")]
 public class XML2PDFCommand : IGlobalCommand

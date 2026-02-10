@@ -21,7 +21,7 @@ cli_run() {
 resolve_fast() {
   local exe
   exe=$(
-    find ./src/KSeFCli/bin/ -type f -executable -name ksefcli -exec stat -c '%Y %n' {} + |
+    find ./src/KCKSeFCli/bin/ -type f -executable -name kcksefcli -exec stat -c '%Y %n' {} + |
       sort -n | tail -n 1 | cut -d' ' -f2-
   )
   if [[ ! -f "$exe" ]]; then
@@ -49,12 +49,12 @@ if (( opt_fast )); then
   fi
   resolve_fast
 elif (( ${#opt_cmd[@]} == 0 )); then
-  opt_cmd=(dotnet run --project src/KSeFCli --)
+  opt_cmd=(dotnet run --project src/KCKSeFCli --)
 fi
 
-maybe=$PWD/.git/KSEF/ksefcli.yaml
-if [[ -r $maybe && ! -v KSEFCLI_CONFIG ]]; then
-  export KSEFCLI_CONFIG=$maybe
+maybe=$PWD/.git/KSEF/kcksefcli.yaml
+if [[ -r $maybe && ! -v KCKSEFCLI_CONFIG ]]; then
+  export KCKSEFCLI_CONFIG=$maybe
 fi
 
 if (( $# )); then

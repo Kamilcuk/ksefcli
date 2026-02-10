@@ -10,23 +10,23 @@ public static class Log
     {
         _loggerFactory = LoggerFactory.Create(builder =>
         {
-            LogLevel ksefCliLevel = LogLevel.Information;
+            LogLevel kcksefCliLevel = LogLevel.Information;
             LogLevel microsoftLevel = LogLevel.Warning;
             LogLevel systemLevel = LogLevel.Warning;
 
             if (verbose)
             {
-                ksefCliLevel = LogLevel.Debug;
+                kcksefCliLevel = LogLevel.Debug;
                 microsoftLevel = LogLevel.Debug;
                 systemLevel = LogLevel.Debug;
             }
 
             if (quiet)
             {
-                ksefCliLevel = LogLevel.Warning;
+                kcksefCliLevel = LogLevel.Warning;
             }
 
-            builder.AddFilter("KSeFCli", ksefCliLevel)
+            builder.AddFilter("KCKSeFCli", kcksefCliLevel)
                    .AddFilter("Microsoft", microsoftLevel)
                    .AddFilter("System", systemLevel)
                    .AddConsole(options =>
@@ -40,7 +40,7 @@ public static class Log
                    });
         });
 
-        Logger = _loggerFactory.CreateLogger("KSeFCli");
+        Logger = _loggerFactory.CreateLogger("KCKSeFCli");
     }
 
     public static void LogTrace(string message) => Logger.LogTrace(message);

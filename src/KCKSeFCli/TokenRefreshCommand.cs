@@ -8,7 +8,7 @@ using KSeF.Client.Core.Models.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("TokenRefresh", HelpText = "Refresh an existing session token")]
 public class TokenRefreshCommand : IWithConfigCommand

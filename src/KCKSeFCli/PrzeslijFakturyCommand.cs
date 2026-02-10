@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("PrzeslijFaktury", HelpText = "Upload invoices in XML format.")]
 public class PrzeslijFakturyCommand : IWithConfigCommand

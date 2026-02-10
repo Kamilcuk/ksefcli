@@ -1,4 +1,4 @@
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 public class LockedFileStream : IDisposable
 {

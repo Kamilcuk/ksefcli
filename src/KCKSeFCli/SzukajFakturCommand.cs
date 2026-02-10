@@ -9,7 +9,7 @@ using KSeF.Client.Core.Models.Invoices.Common;
 
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("SzukajFaktur", HelpText = "Query invoice metadata")]
 public class SzukajFakturCommand : IWithConfigCommand

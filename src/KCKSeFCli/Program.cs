@@ -1,7 +1,7 @@
 using CommandLine;
 using CommandLine.Text;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 internal class Program
 {

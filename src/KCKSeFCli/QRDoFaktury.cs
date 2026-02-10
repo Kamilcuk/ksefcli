@@ -11,7 +11,7 @@ using KSeF.Client.Core.Interfaces.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("QRDoFaktury", HelpText = "Generate a QR code for an invoice and save it to a file")]
 public class QRDoFakturyCommand : IWithConfigCommand

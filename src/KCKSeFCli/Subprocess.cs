@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 internal record Subprocess(
     IEnumerable<string> CommandAndArgs,

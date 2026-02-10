@@ -7,7 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("PrintConfig", HelpText = "Print the active configuration")]
 public class PrintConfigCommand : IWithConfigCommand

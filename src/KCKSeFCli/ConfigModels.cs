@@ -1,8 +1,8 @@
 using KSeF.Client.Core.Models.Authorization;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
-public sealed class KsefCliConfig
+public sealed class KCKSeFCliConfig
 {
     public string ActiveProfile { get; init; } = "";
     public Dictionary<string, ProfileConfig> Profiles { get; init; } = new();

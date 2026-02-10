@@ -10,7 +10,7 @@ using KSeF.Client.Core.Interfaces.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("LinkDoFaktury", HelpText = "Generate a link to an invoice")]
 public class LinkDoFakturyCommand : IWithConfigCommand

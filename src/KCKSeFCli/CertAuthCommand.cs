@@ -5,7 +5,7 @@ using CommandLine;
 using KSeF.Client.Core.Models.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("CertAuth", HelpText = "Authenticate using a certificate")]
 public class CertAuthCommand : IWithConfigCommand

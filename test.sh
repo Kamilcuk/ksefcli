@@ -1,25 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+assert() {
+  if ! "${@:2}"; then
+    echo "ERROR: $*" >&2
+    exit 2
+  fi
+}
+
+setx() {
+  local -
+  set -x
+  "$@" || exit "$?"
+}
+
 cd "$(dirname "$(readlink -f "$0")")"
 if (( !$# )); then
-  set -- dotnet run --project src/KSeFCli --
+  dotnet build src/KCKSeFCli
+  set -- ./cli
 fi
 exe=("$@")
 
-set -x
+setx "${exe[@]}" version || :
 
-"${exe[@]}" version || :
-
-"${exe[@]}" --help
+setx "${exe[@]}" --help
 
 # Test with cert_test profile (from file paths)
-env KSEFCLI_CONFIG="tests/test_ksefcli.yaml" "${exe[@]}" PrintConfig --active cert_test
+setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_test
 
 # Test with token_test profile
-env KSEFCLI_CONFIG="tests/test_ksefcli.yaml" "${exe[@]}" PrintConfig --active token_test
+setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active token_test
 
 # Test with cert_env_password_test profile
-env KSEF_TEST_PASSWORD_ENV="env_password" KSEFCLI_CONFIG="tests/test_ksefcli.yaml" "${exe[@]}" PrintConfig --active cert_env_password_test
+setx env KSEF_TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_env_password_test
 
 # Test with cert_inline_test profile
-env KSEFCLI_CONFIG="tests/test_ksefcli.yaml" "${exe[@]}" PrintConfig --active cert_inline_test
+setx env KCKSEFCLI_CONFIG="tests/test_kcksefcli.yaml" "${exe[@]}" PrintConfig --active cert_inline_test
+
+maybe=$PWD/.git/KSEF/kcksefcli.yaml
+if [[ -r $maybe && ! -v KCKSEFCLI_CONFIG ]]; then
+  export KCKSEFCLI_CONFIG=$maybe
+  #
+  for i in 1 2; do
+    tmp=$( setx SzukajFaktur -a token -v --from 2026-01-21T00:00:00+01:00 --to 2026-01-22T00:00:00+01:00 )
+    len=$( setx jq length <<<"$tmp" )
+    assert '' test "$len" == 1
+  done
+  #
+fi

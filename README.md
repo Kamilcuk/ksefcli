@@ -1,13 +1,13 @@
-# ksefcli
+# kcksefcli
 
-`ksefcli` to narzędzie wiersza poleceń (CLI) dla systemu Linux, napisane w języku C#, które ułatwia interakcję z Krajowym Systemem e-Faktur (KSeF) w Polsce. Aplikacja wykorzystuje bibliotekę kliencką `ksef-client-csharp` do komunikacji z usługami KSeF.
+`kcksefcli` to narzędzie wiersza poleceń (CLI) dla systemu Linux, napisane w języku C#, które ułatwia interakcję z Krajowym Systemem e-Faktur (KSeF) w Polsce. Aplikacja wykorzystuje bibliotekę kliencką `ksef-client-csharp` do komunikacji z usługami KSeF.
 
 ## Spis Treści
 
 - [Instalacja](#instalacja)
 - [Przykłady użycia](#przykłady-użycia)
 - [Konfiguracja](#konfiguracja)
-  - [Struktura pliku `ksefcli.yaml`](#struktura-pliku-ksefcliyaml)
+  - [Struktura pliku `kcksefcli.yaml`](#struktura-pliku-kcksefcliyaml)
   - [Opcje Konfiguracyjne](#opcje-konfiguracyjne)
   - [Przykład Konfiguracji](#przykład-konfiguracji)
 - [Użycie](#użycie)
@@ -31,49 +31,49 @@
 
 ## Instalacja
 
-Możesz pobrać statycznie linkowaną binarkę `ksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
+Możesz pobrać statycznie linkowaną binarkę `kcksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
 
 Poniższy link jest przeznaczony dla systemu Linux.
 
 ```bash
-curl -LsS https://gitlab.com/kamcuk/ksefcli/builds/artifacts/main/download?job=linux_build_main | zcat > ksefcli
-chmod +x ksefcli
-sudo mv ksefcli /usr/local/bin/
+curl -LsS https://gitlab.com/kamcuk/kcksefcli/builds/artifacts/main/download?job=linux_build_main | zcat > kcksefcli
+chmod +x kcksefcli
+sudo mv kcksefcli /usr/local/bin/
 ```
 
 ### Bezpośrednie linki do pobrania
 
-- [Linux x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli?job=linux_build_main)
-- [Windows x64](https://gitlab.com/kamcuk/ksefcli/-/jobs/artifacts/main/raw/ksefcli.exe?job=windows_build_main)
+- [Linux x64](https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli?job=linux_build_main)
+- [Windows x64](https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli.exe?job=windows_build_main)
 
 
 ## Przykłady użycia
 
 Wyszukiwanie numeru KSeF dla faktury o konkretnym numerze:
 ```bash
-$ ksefcli SzukajFaktur -q -c ksefcli.yaml --from "-1week" --to "now" --invoiceNumber '0004/26' | jq -r '.Invoices[0].KsefNumber'
+$ kcksefcli SzukajFaktur -q -c kcksefcli.yaml --from "-1week" --to "now" --invoiceNumber '0004/26' | jq -r '.Invoices[0].KsefNumber'
 12312312312-20260117-XXXXXXXXXXXX-5C
 ```
 
 Przesyłanie faktury z użyciem konkretnego profilu:
 ```bash
-$ ksefcli PrzeslijFaktury -c ksefcli.yaml -f d03900-001.xml  -a firma2
+$ kcksefcli PrzeslijFaktury -c kcksefcli.yaml -f d03900-001.xml  -a firma2
 ```
 
 Wyszukiwanie faktur wystawionych w ostatnim tygodniu i zapisanie wyników do pliku:
 ```bash
-$ ksefcli SzukajFaktur -c ksefcli.yaml --from "-1week" --to "now" > /tmp/1.json
+$ kcksefcli SzukajFaktur -c kcksefcli.yaml --from "-1week" --to "now" > /tmp/1.json
 ```
 
 ## Konfiguracja
 
-Przed rozpoczęciem pracy z `ksefcli`, należy skonfigurować aplikację, tworząc plik `ksefcli.yaml` w jednym z następujących miejsc:
-- W katalogu bieżącym: `./ksefcli.yaml`
-- W katalogu konfiguracyjnym użytkownika: `$HOME/.config/ksefcli/ksefcli.yaml`
+Przed rozpoczęciem pracy z `kcksefcli`, należy skonfigurować aplikację, tworząc plik `kcksefcli.yaml` w jednym z następujących miejsc:
+- W katalogu bieżącym: `./kcksefcli.yaml`
+- W katalogu konfiguracyjnym użytkownika: `$HOME/.config/kcksefcli/kcksefcli.yaml`
 
 Plik ten zawiera profile, które umożliwiają zarządzanie różnymi poświadczeniami i środowiskami KSeF.
 
-### Struktura pliku `ksefcli.yaml`
+### Struktura pliku `kcksefcli.yaml`
 
 ```yaml
 active_profile: <nazwa_aktywnego_profilu>
@@ -148,10 +148,10 @@ W tym przykładzie:
 
 ## Użycie
 
-Ogólna składnia poleceń `ksefcli` jest następująca:
+Ogólna składnia poleceń `kcksefcli` jest następująca:
 
 ```bash
-ksefcli <polecenie> [opcje]
+kcksefcli <polecenie> [opcje]
 ```
 
 ### Opcje Globalne
@@ -169,7 +169,7 @@ ksefcli <polecenie> [opcje]
 *   `LinkDoFaktury`: Generuje link weryfikacyjny dla faktury.
 *   `QRDoFaktury`: Generuje kod QR dla linku weryfikacyjnego faktury.
 *   `PrintConfig`: Prints the active configuration in YAML or JSON format.
-*   `SelfUpdate`: Aktualizuje narzędzie ksefcli do najnowszej wersji.
+*   `SelfUpdate`: Aktualizuje narzędzie kcksefcli do najnowszej wersji.
 *   `XML2PDF`: Konwertuje fakturę KSeF w formacie XML na format PDF.
 
 ## Polecenia
@@ -182,7 +182,7 @@ Uwierzytelnia użytkownika na podstawie metody zdefiniowanej w aktywnym profilu 
 
 **Użycie:**
 ```bash
-ksefcli -a moj_profil Auth
+kcksefcli -a moj_profil Auth
 ```
 
 ---
@@ -193,7 +193,7 @@ Wymusza uwierzytelnienie za pomocą tokena sesyjnego z aktywnego profilu. Profil
 
 **Użycie:**
 ```bash
-ksefcli -a profil_z_tokenem TokenAuth
+kcksefcli -a profil_z_tokenem TokenAuth
 ```
 
 ---
@@ -204,7 +204,7 @@ Wymusza uwierzytelnienie za pomocą certyfikatu kwalifikowanego z aktywnego prof
 
 **Użycie:**
 ```bash
-ksefcli -a profil_z_certyfikatem CertAuth
+kcksefcli -a profil_z_certyfikatem CertAuth
 ```
 
 ---
@@ -215,7 +215,7 @@ Odświeża istniejący token sesji.
 
 **Użycie:**
 ```bash
-ksefcli -a moj_profil TokenRefresh
+kcksefcli -a moj_profil TokenRefresh
 ```
 
 ---
@@ -226,7 +226,7 @@ Pobiera pojedynczą fakturę w formacie XML.
 
 **Użycie:**
 ```bash
-ksefcli GetFaktura <ksef-numer>
+kcksefcli GetFaktura <ksef-numer>
 ```
 
 **Argumenty:**
@@ -243,7 +243,7 @@ Wyszukuje faktury na podstawie podanych kryteriów. Odpowiada endpointowi `GET /
 
 **Użycie:**
 ```bash
-ksefcli SzukajFaktur --from "-7days" --subjectType Subject2
+kcksefcli SzukajFaktur --from "-7days" --subjectType Subject2
 ```
 
 **Opcje:**
@@ -280,7 +280,7 @@ Pobiera wiele faktur na podstawie kryteriów wyszukiwania. Rozszerza polecenie `
 
 **Użycie:**
 ```bash
-ksefcli PobierzFaktury --from "-7days" --subjectType Subject2 -o /tmp/faktury --pdf
+kcksefcli PobierzFaktury --from "-7days" --subjectType Subject2 -o /tmp/faktury --pdf
 ```
 
 **Opcje:**
@@ -300,7 +300,7 @@ Wysyła faktury w formacie XML do KSeF.
 
 **Użycie:**
 ```bash
-ksefcli PrzeslijFaktury -f faktura1.xml faktura2.xml
+kcksefcli PrzeslijFaktury -f faktura1.xml faktura2.xml
 ```
 
 **Opcje:**
@@ -317,7 +317,7 @@ Generuje link weryfikacyjny dla pojedynczej faktury.
 
 **Użycie:**
 ```bash
-ksefcli LinkDoFaktury <ksef-numer>
+kcksefcli LinkDoFaktury <ksef-numer>
 ```
 
 **Argumenty:**
@@ -334,7 +334,7 @@ Generuje kod QR dla linku weryfikacyjnego faktury i zapisuje go do pliku.
 
 **Użycie:**
 ```bash
-ksefcli QRDoFaktury <ksef-numer> faktura-qr.png
+kcksefcli QRDoFaktury <ksef-numer> faktura-qr.png
 ```
 
 **Argumenty:**
@@ -358,7 +358,7 @@ Wypisuje aktywną konfigurację w formacie YAML (domyślnie) lub JSON (z opcją 
 
 **Użycie:**
 ```bash
-ksefcli PrintConfig [--json]
+kcksefcli PrintConfig [--json]
 ```
 
 **Opcje:**
@@ -371,11 +371,11 @@ ksefcli PrintConfig [--json]
 
 ### `SelfUpdate`
 
-Aktualizuje narzędzie `ksefcli` do najnowszej stabilnej wersji, pobierając binarkę z repozytorium GitLab CI/CD.
+Aktualizuje narzędzie `kcksefcli` do najnowszej stabilnej wersji, pobierając binarkę z repozytorium GitLab CI/CD.
 
 **Użycie:**
 ```bash
-ksefcli SelfUpdate [--url <adres-url-binarki>]
+kcksefcli SelfUpdate [--url <adres-url-binarki>]
 ```
 
 **Opcje:**
@@ -393,7 +393,7 @@ Konwertuje fakturę KSeF w formacie XML na plik PDF.
 
 **Użycie:**
 ```bash
-ksefcli XML2PDF faktura.xml faktura.pdf
+kcksefcli XML2PDF faktura.xml faktura.pdf
 ```
 
 **Argumenty:**
@@ -411,7 +411,7 @@ Aby skonfigurować środowisko deweloperskie, wykonaj następujące kroki:
 
 1.  Sklonuj repozytorium:
     ```bash
-    git clone https://gitlab.com/kamcuk/ksefcli.git
+    git clone https://gitlab.com/kamcuk/kcksefcli.git
     ```
 2.  Zainstaluj zależności .NET:
     ```bash

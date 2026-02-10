@@ -1,7 +1,7 @@
 using CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 [Verb("Auth", HelpText = "Authenticate using configured method")]
 public class AuthCommand : IWithConfigCommand

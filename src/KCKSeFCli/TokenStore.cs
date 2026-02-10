@@ -3,7 +3,7 @@ using System.Text.Json;
 
 using KSeF.Client.Core.Models.Authorization;
 
-namespace KSeFCli;
+namespace KCKSeFCli;
 
 public class TokenStore
 {
@@ -50,7 +50,7 @@ public class TokenStore
     {
         string defaultPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".cache", "ksefcli", "tokenstore.json");
+            ".cache", "kcksefcli", "tokenstore.json");
         return new TokenStore(defaultPath);
     }
 
