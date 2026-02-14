@@ -14,6 +14,12 @@ public class XML2PDFCommand : IGlobalCommand
     [Option("upo", Required = false, HelpText = "use UPO template")]
     public bool Upo { get; set; }
 
+    [Option("nrKSeF", Required = false, HelpText = "KSeF invoice number to embed in PDF.")]
+    public string? NrKSeF { get; set; }
+
+    [Option("qrCode", Required = false, HelpText = "QR code to embed in PDF.")]
+    public string? QrCode { get; set; }
+
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
         ConfigureLogging();
@@ -45,7 +51,7 @@ public class XML2PDFCommand : IGlobalCommand
         }
 
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await XML2PDF(xmlContent, Quiet, Upo, cancellationToken).ConfigureAwait(false);
+        byte[] pdfContent = await XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCode, cancellationToken).ConfigureAwait(false);
 
         await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
 
@@ -54,15 +60,32 @@ public class XML2PDFCommand : IGlobalCommand
         return 0;
     }
 
-    public static async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, CancellationToken cancellationToken)
+    public static async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCode, CancellationToken cancellationToken)
     {
         AssertNpxExists();
         using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
         await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
         using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
         string scriptPath = Path.Combine(AppContext.BaseDirectory, "run-pdf-generator.mjs");
+        List<string> commandArgs = new() { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator", upo ? "upo" : "invoice", tempXml.Path, tempPdf.Path };
+
+        System.Collections.Generic.Dictionary<string, string> options = new();
+        if (!string.IsNullOrEmpty(nrKSeF))
+        {
+            options.Add("nrKSeF", nrKSeF);
+        }
+        if (!string.IsNullOrEmpty(qrCode))
+        {
+            options.Add("qrCode", qrCode);
+        }
+
+        if (options.Count > 0)
+        {
+            commandArgs.Add(System.Text.Json.JsonSerializer.Serialize(options));
+        }
+
         Subprocess nodeScript = new(
-            CommandAndArgs: new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator", upo ? "upo" : "invoice", tempXml.Path, tempPdf.Path, },
+            CommandAndArgs: commandArgs.ToArray(),
             Quiet: quiet
         );
         await nodeScript.CheckCallAsync(cancellationToken).ConfigureAwait(false);

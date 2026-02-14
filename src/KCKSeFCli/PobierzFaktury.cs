@@ -1,9 +1,9 @@
 using System.Text.Json;
-using System.Xml.Linq;
 
 using CommandLine;
 
 using KSeF.Client.Core.Interfaces.Clients;
+using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Invoices;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -22,9 +22,6 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("useInvoiceNumber", HelpText = "Use InvoiceNumber instead of KsefNumber for the filename to save invoices.")]
     public bool UseInvoiceNumber { get; set; }
 
-    [Option("dodaj-numer-ksef-do-dodatkowego-opisu", HelpText = "Adds KSeF number to the invoice XML in the 'DodatkowyOpis' section.")]
-    public bool DodajNumerKsefDoDodatkowegoOpisuFlag { get; set; }
-
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
         if (Pdf)
@@ -34,6 +31,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
         Directory.CreateDirectory(OutputDir);
 
+        IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
 
         List<InvoiceSummary> invoices = await base.SzukajFaktury(scope, ksefClient, cancellationToken).ConfigureAwait(false);
@@ -47,17 +45,15 @@ public class PobierzFakturyCommand : SzukajFakturCommand
             await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
 
             string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, await GetAccessToken(scope, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-            if (DodajNumerKsefDoDodatkowegoOpisuFlag)
-            {
-                invoiceXml = DodajNumerKsefDoDodatkowegoOpisu(invoiceXml, invoiceSummary.KsefNumber);
-            }
+
             await File.WriteAllTextAsync(xmlFilePath, invoiceXml, cancellationToken).ConfigureAwait(false);
 
             Console.WriteLine($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
             if (Pdf)
             {
-                byte[] pdfContent = await XML2PDFCommand.XML2PDF(invoiceXml, Quiet, false, cancellationToken).ConfigureAwait(false);
+                string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
+                byte[] pdfContent = await XML2PDFCommand.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
                 Console.WriteLine($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
@@ -67,35 +63,4 @@ public class PobierzFakturyCommand : SzukajFakturCommand
         return 0;
     }
 
-    public static string DodajNumerKsefDoDodatkowegoOpisu(string invoiceXml, string ksefNumber)
-    {
-        XDocument xml = System.Xml.Linq.XDocument.Parse(invoiceXml);
-        if (xml.Root is null)
-        {
-            throw new InvalidOperationException("XML root element not found.");
-        }
-
-        XNamespace ns = xml.Root.GetDefaultNamespace();
-
-        XElement? faElement = xml.Root.Element(ns + "Fa");
-        if (faElement is null)
-        {
-            throw new InvalidOperationException("Element <Fa> not found in invoice XML.");
-        }
-
-        XElement? faWiersz = faElement.Element(ns + "FaWiersz");
-        if (faWiersz is null)
-        {
-            throw new InvalidOperationException("Element <FaWiersz> not found in invoice XML.");
-        }
-
-        XElement dodatkowyOpis = new System.Xml.Linq.XElement(ns + "DodatkowyOpis",
-            new System.Xml.Linq.XElement(ns + "Klucz", "Numer faktury KSEF"),
-            new System.Xml.Linq.XElement(ns + "Wartosc", ksefNumber)
-        );
-
-        faWiersz.AddBeforeSelf(dodatkowyOpis);
-
-        return xml.ToString();
-    }
 }

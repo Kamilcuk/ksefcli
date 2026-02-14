@@ -18,15 +18,8 @@ public class LinkDoFakturyCommand : IWithConfigCommand
     [Value(0, Required = true, HelpText = "KSeF invoice number")]
     public string KsefNumber { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
+    public static string LinkDoFaktury(string invoiceXml, IVerificationLinkService linkSvc)
     {
-        ProfileConfig config = Config();
-        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
-        IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
-
-        string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
-        string invoiceXml = await ksefClient.GetInvoiceAsync(KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
-
         XDocument xmlDoc = XDocument.Parse(invoiceXml);
         if (xmlDoc.Root is null)
         {
@@ -45,6 +38,18 @@ public class LinkDoFakturyCommand : IWithConfigCommand
 
         string url = linkSvc.BuildInvoiceVerificationUrl(sellerNip, issueDate, invoiceHash);
 
+        return url;
+    }
+
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
+    {
+        ProfileConfig config = Config();
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+        IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
+
+        string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
+        string invoiceXml = await ksefClient.GetInvoiceAsync(KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
+        string url = LinkDoFaktury(invoiceXml, linkSvc);
         Console.WriteLine(url);
 
         return 0;
