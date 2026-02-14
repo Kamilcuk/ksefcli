@@ -5,11 +5,11 @@ DIR="$(dirname "$(readlink -f "$0")")"
 
 # Download L_lib.sh library
 if hash L_lib.sh 2>/dev/null; then
+	echo "Using L_lib.sh from PATH"
 	. L_lib.sh -s
 else
-	if [[ ! -e L_lib.sh ]]; then
-		curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
-	fi
+	echo "Downloading L_lib.sh"
+	curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
 	. "$DIR"/L_lib.sh -s
 fi
 
