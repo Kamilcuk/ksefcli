@@ -316,14 +316,22 @@ Wysyła faktury w formacie XML do KSeF.
 
 **Użycie:**
 ```bash
-kcksefcli PrzeslijFaktury -f faktura1.xml faktura2.xml
+kcksefcli PrzeslijFaktury faktura1.xml faktura2.xml --upodir /tmp/upo --upopdf
 ```
+
+**Argumenty:**
+
+| Argument      | Opis                                  | Wymagane |
+|---------------|---------------------------------------|----------|
+| `pliki`       | Ścieżki do plików XML z fakturami.    | Tak      |
 
 **Opcje:**
 
-| Opcja           | Opis                                | Wymagane |
-|-----------------|-------------------------------------|----------|
-| `-f`, `--files` | Ścieżki do plików XML z fakturami.  | Tak      |
+| Opcja              | Opis                                                | Wymagane |
+|--------------------|-----------------------------------------------------|----------|
+| `-u`, `--upodir`   | Katalog do zapisu plików UPO.                       | Nie      |
+| `--upopdf`         | Konwertuje UPO od razu na format PDF.               | Nie      |
+| `--uposesji`       | Zapisuje UPO sesji (zbiorcze UPO).                  | Nie      |
 
 ---
 
