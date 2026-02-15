@@ -50,78 +50,129 @@ public abstract class IWithConfigCommand : IGlobalCommand
     [Option("password-env", HelpText = "Environment variable containing the password for the private key")]
     public string? CmdPasswordEnv { get; set; }
 
-    private ProfileConfigWithName? _cachedProfile;
-    private TokenStore? _tokenStore;
+        private readonly Lazy<ProfileConfigWithName> _cachedProfile;
 
-    public IWithConfigCommand()
-    {
-    }
+        private readonly Lazy<TokenStore> _tokenStore;
 
+    
 
-    protected TokenStore GetTokenStore()
-    {
-        if (_tokenStore == null)
+        public IWithConfigCommand()
+
         {
-            _tokenStore = new TokenStore(TokenCache);
-        }
-        return _tokenStore;
-    }
 
-    public ProfileConfigWithName Config()
-    {
-        if (_cachedProfile == null)
-        {
-            bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
-                                   !string.IsNullOrEmpty(CmdNip) ||
-                                   !string.IsNullOrEmpty(CmdToken) ||
-                                   !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
-                                   !string.IsNullOrEmpty(CmdCertificateFile) ||
-                                   !string.IsNullOrEmpty(CmdPasswordEnv);
+            _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
 
-            if (anyCmdOptionSet)
             {
-                if (!string.IsNullOrEmpty(ConfigFile) || !string.IsNullOrEmpty(ActiveProfile))
-                {
-                    throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
-                }
 
-                bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
-                bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) || !string.IsNullOrEmpty(CmdCertificateFile) || !string.IsNullOrEmpty(CmdPasswordEnv);
+                bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
 
-                if (isTokenAuth && isCertAuth)
-                {
-                    throw new InvalidOperationException("Cannot use --token with certificate-related options (--private-key-file, --certificate-file, --password-env).");
-                }
+                                       !string.IsNullOrEmpty(CmdNip) ||
 
-                var profile = new ProfileConfig
+                                       !string.IsNullOrEmpty(CmdToken) ||
+
+                                       !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
+
+                                       !string.IsNullOrEmpty(CmdCertificateFile) ||
+
+                                       !string.IsNullOrEmpty(CmdPasswordEnv);
+
+    
+
+                if (anyCmdOptionSet)
+
                 {
-                    Environment = CmdEnvironment,
-                    Nip = CmdNip,
-                    Token = CmdToken,
-                    Certificate = (string.IsNullOrEmpty(CmdCertificateFile) || string.IsNullOrEmpty(CmdPrivateKeyFile)) ? null : new CertificateConfig
+
+                    if (!string.IsNullOrEmpty(ConfigFile) || !string.IsNullOrEmpty(ActiveProfile))
+
                     {
-                        Certificate = System.IO.File.ReadAllText(CmdCertificateFile),
-                        Private_Key = System.IO.File.ReadAllText(CmdPrivateKeyFile),
-                        Password = string.IsNullOrEmpty(CmdPasswordEnv) ? "" : System.Environment.GetEnvironmentVariable(CmdPasswordEnv) ?? "",
+
+                        throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
+
                     }
-                };
-                _cachedProfile = new ProfileConfigWithName(profile, "cmd");
-            }
-            else
-            {
-                var actualConfigFile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? ConfigFile;
-                if (string.IsNullOrEmpty(actualConfigFile))
-                {
-                    actualConfigFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+
+    
+
+                    bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
+
+                    bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) || !string.IsNullOrEmpty(CmdCertificateFile) || !string.IsNullOrEmpty(CmdPasswordEnv);
+
+    
+
+                    if (isTokenAuth && isCertAuth)
+
+                    {
+
+                        throw new InvalidOperationException("Cannot use --token with certificate-related options (--private-key-file, --certificate-file, --password-env).");
+
+                    }
+
+    
+
+                    var profile = new ProfileConfig
+
+                    {
+
+                        Environment = CmdEnvironment,
+
+                        Nip = CmdNip,
+
+                        Token = CmdToken,
+
+                        Certificate = (string.IsNullOrEmpty(CmdCertificateFile) || string.IsNullOrEmpty(CmdPrivateKeyFile)) ? null : new CertificateConfig
+
+                        {
+
+                            Certificate = System.IO.File.ReadAllText(CmdCertificateFile),
+
+                            Private_Key = System.IO.File.ReadAllText(CmdPrivateKeyFile),
+
+                            Password = string.IsNullOrEmpty(CmdPasswordEnv) ? "" : System.Environment.GetEnvironmentVariable(CmdPasswordEnv) ?? "",
+
+                        }
+
+                    };
+
+                    return new ProfileConfigWithName(profile, "cmd");
+
                 }
-                var actualActiveProfile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? ActiveProfile;
-                var config = ConfigLoader.Load(actualConfigFile, actualActiveProfile);
-                var profile = config.Profiles[config.ActiveProfile];
-                _cachedProfile = new ProfileConfigWithName(profile, config.ActiveProfile);
-            }
+
+                else
+
+                {
+
+                    var actualConfigFile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? ConfigFile;
+
+                    if (string.IsNullOrEmpty(actualConfigFile))
+
+                    {
+
+                        actualConfigFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+
+                    }
+
+                    var actualActiveProfile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? ActiveProfile;
+
+                    var config = ConfigLoader.Load(actualConfigFile, actualActiveProfile);
+
+                    var profile = config.Profiles[config.ActiveProfile];
+
+                    return new ProfileConfigWithName(profile, config.ActiveProfile);
+
+                }
+
+            });
+
+            _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
+
         }
-        return _cachedProfile;
-    }
+
+    
+
+        protected TokenStore GetTokenStore() => _tokenStore.Value;
+
+    
+
+        public ProfileConfigWithName Config() => _cachedProfile.Value;
 
     public TokenStore.Key GetTokenStoreKey()
     {
