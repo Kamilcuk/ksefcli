@@ -21,7 +21,7 @@ namespace KCKSeFCli;
 public abstract class IWithConfigCommand : IGlobalCommand
 {
     [Option('c', "config", HelpText = "Path to config file")]
-    public string ConfigFile { get; set; } = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+    public string ConfigFile { get; set; } = "";
 
     [Option('a', "active", HelpText = "Active profile name")]
     public string ActiveProfile { get; set; } = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? "";
@@ -68,7 +68,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
             if (anyCmdOptionSet)
             {
-                if ((!string.IsNullOrEmpty(ConfigFile) && ConfigFile != defaultConfigFilePath) || !string.IsNullOrEmpty(ActiveProfile))
+                if (!string.IsNullOrEmpty(ConfigFile) || !string.IsNullOrEmpty(ActiveProfile))
                 {
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
@@ -89,7 +89,12 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
-                var config = ConfigLoader.Load(ConfigFile, ActiveProfile);
+                var actualConfigFile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? ConfigFile;
+                if (string.IsNullOrEmpty(actualConfigFile))
+                {
+                    actualConfigFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+                }
+                var config = ConfigLoader.Load(actualConfigFile, ActiveProfile);
                 var profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
