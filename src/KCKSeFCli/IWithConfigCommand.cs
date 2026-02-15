@@ -95,25 +95,15 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
-                string actualConfigFileToLoad = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml")!;
-                if (!string.IsNullOrEmpty(ConfigFile))
-                {
-                    actualConfigFileToLoad = ConfigFile;
-                }
-                else if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG")))
-                {
-                    actualConfigFileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG")!;
-                }
+                string actualConfigFileToLoad =
+                    (!string.IsNullOrEmpty(ConfigFile) ? ConfigFile : null) ??
+                    System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ??
+                    System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
 
-                string actualActiveProfileToLoad = ""!;
-                if (!string.IsNullOrEmpty(ActiveProfile))
-                {
-                    actualActiveProfileToLoad = ActiveProfile;
-                }
-                else if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE")))
-                {
-                    actualActiveProfileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE")!;
-                }
+                string actualActiveProfileToLoad =
+                    (!string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : null) ??
+                    System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ??
+                    "";
 
                 var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
                 var profile = config.Profiles[config.ActiveProfile];
