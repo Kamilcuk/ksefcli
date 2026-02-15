@@ -162,18 +162,14 @@ Poniższe opcje globalne mogą być używane z każdym poleceniem `kcksefcli`. U
 `kcksefcli` umożliwia konfigurację na dwa główne sposoby. Możesz wybrać jeden z nich:
 
 1.  **Plik konfiguracyjny `kcksefcli.yaml`:** Użyj `$KCKSEFCCLI_CONFIG` lub opcji `--config` (aby wskazać plik) i `--active` (aby wybrać aktywny profil z pliku). Jeśli te opcje nie zostaną podane, `kcksefcli` będzie szukał pliku `kcksefcli.yaml` w domyślnych lokalizacjach (bieżący katalog, `$HOME/.config/kcksefcli/`).
-2.  **Opcje linii komend (ad-hoc profil `cmd`):** Użyj bezpośrednich opcji, takich jak `--environment`, `--nip`, `--token`, `--private-key-file`, `--certificate-file`, `--password-env`. Te opcje tworzą tymczasowy profil o nazwie `cmd`. **UWAGA:** Użycie któregokolwiek z tych argumentów **wyklucza** jednoczesne użycie opcji `--config` lub `--active`.
+2.  **Opcje linii komend (ad-hoc profil `cmd`):** Użyj bezpośrednich opcji, takich jak `--environment`, `--token`. Te opcje tworzą tymczasowy profil o nazwie `cmd`. **UWAGA:** Użycie któregokolwiek z tych argumentów **wyklucza** jednoczesne użycie opcji `--config` lub `--active`.
 
 | Opcja                  | Opis                                                                 | Domyślnie                                                        | Konfliktuje z             |
 |------------------------|----------------------------------------------------------------------|------------------------------------------------------------------|---------------------------|
 | `-c`, `--config`       | Ścieżka do pliku konfiguracyjnego `kcksefcli.yaml`.                  | `$KCKSEFCLI_CONFIG` lub `$HOME/.config/kcksefcli/kcksefcli.yaml` | Ad-hoc opcje profilu      |
 | `-a`, `--active`       | Nazwa aktywnego profilu z pliku konfiguracyjnego.                    | `KCKSEFCLI_ACTIVE` lub pierwszy profil                           | Ad-hoc opcje profilu      |
 | `--environment`        | Środowisko KSeF (np. `test`, `demo`, ``prod`).                       |                                                                  | `--config`, `--active`    |
-| `--nip`                | Numer NIP podmiotu.                                                  |                                                                  | `--config`, `--active`    |
-| `--token`              | Token autoryzacyjny KSeF (dla metody tokenowej).                     |                                                                  | `--config`, `--active`, `--private-key-file`, `--certificate-file`, `--password-env` |
-| `--private-key-file`   | Ścieżka do pliku z kluczem prywatnym (dla metody certyfikatowej).    |                                                                  | `--config`, `--active`, `--token` |
-| `--certificate-file`   | Ścieżka do pliku z certyfikatem publicznym (dla metody certyfikatowej). |                                                                  | `--config`, `--active`, `--token` |
-| `--password-env`       | Nazwa zmiennej środowiskowej z hasłem do klucza prywatnego.         |                                                                  | `--config`, `--active`, `--token` |
+| `--token`              | Token autoryzacyjny KSeF (dla metody tokenowej). Numer NIP jest wyodrębniany z tokena.                     |                                                                  | `--config`, `--active` |
 | `--cache`              | Ścieżka do pliku cache tokenów.                                      | `$HOME/.cache/kcksefcli/tokenstore.json`                         | Brak                      |
 | `--no-tokencache`      | Wyłącza użycie cache tokenów.                                        | `false`                                                          | Brak                      |
 
