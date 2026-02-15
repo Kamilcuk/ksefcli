@@ -45,10 +45,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
     {
         _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
         {
-            bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
-                                   isTokenAuth;
-
-            if (anyCmdOptionSet)
+            if (!string.IsNullOrEmpty(CmdEnvironment) || !string.IsNullOrEmpty(CmdToken))
             {
                 // Resolve config from command line arguments
                 if (ConfigFile != "" || ActiveProfile != "")
@@ -59,27 +56,15 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 {
                     throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token).");
                 }
-
-                string? nipToUse = null;
-                if (!string.IsNullOrEmpty(CmdToken))
+                if (string.IsNullOrEmpty(CmdToken))
                 {
-                    nipToUse = CheckNip.ExtractNipFromToken(CmdToken);
+                    throw new InvalidOperationException("You have to use --token is specifying authentication on command line with --environment.");
                 }
-
-                if (string.IsNullOrEmpty(nipToUse))
-                {
-                    throw new InvalidOperationException("You have to specify a token that contains nip.");
-                }
-
-                if (!CheckNip.IsNipValid(nipToUse))
-                {
-                    throw new InvalidOperationException($"Invalid NIP format: {nipToUse}");
-                }
-
+                string nip = CheckNip.ExtractNipFromToken(CmdToken);
                 var profile = new ProfileConfig
                 {
                     Environment = CmdEnvironment,
-                    Nip = nipToUse,
+                    Nip = nip,
                     Token = CmdToken,
                 };
                 return new ProfileConfigWithName(profile, "cmd");
