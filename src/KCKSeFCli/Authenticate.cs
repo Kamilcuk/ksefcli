@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+
 using KSeF.Client.Api.Builders.Auth;
 using KSeF.Client.Api.Services;
 using KSeF.Client.Core.Interfaces.Clients;
@@ -8,6 +9,7 @@ using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.Extensions;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace KCKSeFCli;

@@ -17,18 +17,22 @@ public class PrintConfigCommand : IWithConfigCommand
 
     public override Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfigWithName config = Config();
 
         if (JsonOutput)
         {
             JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-            string json = JsonSerializer.Serialize(new { active_profile = config.Name, profile = new ProfileConfig 
+            string json = JsonSerializer.Serialize(new
             {
-                Environment = config.Environment,
-                Nip = config.Nip,
-                Certificate = config.Certificate,
-                Token = config.Token
-            } }, options);
+                active_profile = config.Name,
+                profile = new ProfileConfig
+                {
+                    Environment = config.Environment,
+                    Nip = config.Nip,
+                    Certificate = config.Certificate,
+                    Token = config.Token
+                }
+            }, options);
             Console.WriteLine(json);
         }
         else
@@ -36,13 +40,17 @@ public class PrintConfigCommand : IWithConfigCommand
             ISerializer serializer = new SerializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .Build();
-            string yaml = serializer.Serialize(new { active_profile = config.Name, profile = new ProfileConfig
+            string yaml = serializer.Serialize(new
             {
-                Environment = config.Environment,
-                Nip = config.Nip,
-                Certificate = config.Certificate,
-                Token = config.Token
-            } });
+                active_profile = config.Name,
+                profile = new ProfileConfig
+                {
+                    Environment = config.Environment,
+                    Nip = config.Nip,
+                    Certificate = config.Certificate,
+                    Token = config.Token
+                }
+            });
             Console.WriteLine(yaml);
         }
 

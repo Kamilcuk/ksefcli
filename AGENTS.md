@@ -16,7 +16,7 @@ As an agent responsible for the development of this project, I will adhere to th
     *   ROBOTIC MODE.
     *   Output minimal info.
 *   **Direct Tools**: Execute tools directly, NO EXPLANATIONS.
-*   **Commit often**: Commit changes often, after each significant change.
+*   **Never use Git**: NEVER use git commands (add, commit, push, etc.) unless explicitly instructed by the user.
 *   **No empty lines**: When writing code, do not create lines without content.
 *   **Do not catch exceptions**: Do not catch exceptions just to print. Raise exception.
 
