@@ -24,7 +24,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
     public string ConfigFile { get; set; } = "";
 
     [Option('a', "active", HelpText = "Active profile name")]
-    public string ActiveProfile { get; set; } = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? "";
+    public string ActiveProfile { get; set; } = "";
 
     [Option("cache", HelpText = "Path to token cache file")]
     public string TokenCache { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "kcksefcli", "tokenstore.json");
@@ -94,7 +94,8 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 {
                     actualConfigFile = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
                 }
-                var config = ConfigLoader.Load(actualConfigFile, ActiveProfile);
+                var actualActiveProfile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? ActiveProfile;
+                var config = ConfigLoader.Load(actualConfigFile, actualActiveProfile);
                 var profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
