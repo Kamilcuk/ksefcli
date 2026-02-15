@@ -37,7 +37,7 @@ secret_detection:
     - ldd kcksefcli
     - stat kcksefcli
     # Run tests.
-    - ./tests/test.sh ./kcksefcli
+    - ./tests/unit.sh ./kcksefcli
   artifacts:
     paths:
       - kcksefcli

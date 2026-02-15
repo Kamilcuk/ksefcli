@@ -4,6 +4,7 @@ using System.Text;
 
 using CommandLine;
 
+using System.Globalization;
 using KSeF.Client.Api.Builders.Auth;
 using KSeF.Client.Api.Services;
 using KSeF.Client.ClientFactory;
@@ -67,7 +68,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                     Nip = nip,
                     Token = CmdToken,
                 };
-                return new ProfileConfigWithName(profile, "cmd");
+                return new ProfileConfigWithName(profile, ".__cmd__");
             }
             else
             {
@@ -105,6 +106,11 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public abstract Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken);
 
+    public static string dtisoformat(DateTime dt)
+    {
+        return dt.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz", CultureInfo.InvariantCulture);
+    }
+
     public async Task<AuthenticationOperationStatusResponse> Auth(IServiceScope scope, CancellationToken cancellationToken)
     {
         var config = Config();
@@ -114,11 +120,9 @@ public abstract class IWithConfigCommand : IGlobalCommand
             AuthMethod.Xades => await Authenticate.CertAuth(config, scope, GetCryptographicService, cancellationToken).ConfigureAwait(false),
             _ => throw new Exception($"Invalid authmethod in profile: {config.Environment}")
         };
-        Log.LogInformation($"Access token valid until: {response.AccessToken.ValidUntil} . Refresh token valid until: {response.RefreshToken.ValidUntil}");
+        Log.LogInformation($"Acquired accessToken until {dtisoformat(response.AccessToken.ValidUntil)}, refreshToken until {dtisoformat(response.RefreshToken.ValidUntil)}");
         return response;
     }
-
-
 
     public async Task<string> GetAccessToken(IServiceScope scope, CancellationToken cancellationToken)
     {
@@ -133,22 +137,29 @@ public abstract class IWithConfigCommand : IGlobalCommand
         TokenStore.Key key = GetTokenStoreKey();
         TokenStore.Data? storedToken = tokenStore.GetToken(key);
 
-        if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTime.UtcNow.AddMinutes(1))
+        if (storedToken == null)
         {
-            Log.LogInformation("No valid token found in store, starting new auth");
+            Log.LogInformation("No token found in store, starting new auth");
+        }
+        else
+        {
+            Log.LogInformation($"Stored accessToken until {dtisoformat(storedToken.Response.AccessToken.ValidUntil)}, refreshToken until {dtisoformat(storedToken.Response.RefreshToken.ValidUntil)}");
+        }
+        if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTime.UtcNow.AddMinutes(-1))
+        {
+            Log.LogInformation("Stored refresh token is nearing expiration, refreshing token");
             AuthenticationOperationStatusResponse response = await Auth(scope, cancellationToken).ConfigureAwait(false);
             tokenStore.SetToken(key, new TokenStore.Data(response));
             return response.AccessToken.Token;
         }
-
-        if (storedToken.Response.AccessToken.ValidUntil < DateTime.UtcNow.AddMinutes(10))
+        if (storedToken.Response.AccessToken.ValidUntil < DateTime.UtcNow.AddMinutes(-1))
         {
-            Log.LogInformation("Refreshing token");
-            AuthenticationOperationStatusResponse refreshedResponse = await TokenRefresh(scope, storedToken.Response.RefreshToken, cancellationToken).ConfigureAwait(false);
-            tokenStore.SetToken(key, new TokenStore.Data(refreshedResponse));
-            return refreshedResponse.AccessToken.Token;
+            Log.LogInformation("Stored access token is nearing expiration, refreshing token");
+            AuthenticationOperationStatusResponse response = await TokenRefresh(scope, storedToken.Response.RefreshToken, cancellationToken).ConfigureAwait(false);
+            tokenStore.SetToken(key, new TokenStore.Data(response));
+            return response.AccessToken.Token;
         }
-
+        Log.LogInformation($"{dtisoformat(storedToken.Response.AccessToken.ValidUntil)} {dtisoformat(DateTime.UtcNow.AddMinutes(-1))}");
         return storedToken.Response.AccessToken.Token;
     }
 

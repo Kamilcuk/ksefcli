@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 setup_integration_config() {
 	local maybe="$DIR/../.git/KSEF/kcksefcli.yaml"
@@ -46,3 +47,7 @@ clitest_z_integration_PrzeslijFaktury() {
 	L_unittest_vareq xmls 2
 	L_unittest_vareq pdfs 2
 }
+
+
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+. "$DIR"/lib.sh "$@"

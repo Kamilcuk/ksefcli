@@ -40,3 +40,5 @@ testlib_main() {
 
 	L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
 }
+
+testlib_main "$@"

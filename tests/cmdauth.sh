@@ -4,7 +4,7 @@
 clitest_cmd_token_auth() {
     local output
     output=$(cli PrintConfig --environment demo --token 'mytesttoken|nip-1234567890|123' --json)
-    L_unittest_cmd -I jq -e '.active_profile == "cmd"' <<<"$output"
+    L_unittest_cmd -I jq -e '.active_profile == ".__cmd__"' <<<"$output"
     L_unittest_cmd -I jq -e '.profile.Environment == "demo"' <<<"$output"
     L_unittest_cmd -I jq -e '.profile.Nip == "1234567890"' <<<"$output"
     L_unittest_cmd -I jq -e '.profile.Token == "mytesttoken|nip-1234567890|123"' <<<"$output"

@@ -18,13 +18,16 @@ namespace KCKSeFCli;
 public class PrzeslijFakturyCommand : IWithConfigCommand
 {
     [Value(0, Min = 1, Required = true, HelpText = "Paths to XML invoice files.")]
-    public IEnumerable<string> Pliki { get; set; }
+    public required IEnumerable<string> Pliki { get; set; }
 
     [Option('u', "upodir", Required = false, HelpText = "katalog do zapisu plikow upo")]
     public string? UpoDir { get; set; }
 
     [Option("upopdf", Required = false, HelpText = "convertuj upo od razu na pdf")]
     public bool UpoPdf { get; set; }
+
+    [Option("uposesji", Required = false, HelpText = "Zapisz UPO sesji (zbiorcze upo)")]
+    public bool UpoSesji { get; set; } = false;
 
     public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths)
     {
@@ -138,14 +141,14 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         {
             Directory.CreateDirectory(UpoDir);
 
-            if (sessionStatus.Upo is not null)
+            if (UpoSesji && sessionStatus.Upo is not null)
             {
                 // Zbiorcze UPO
                 foreach (UpoPageResponse? upo in sessionStatus.Upo.Pages)
                 {
                     Log.LogInformation($"Pobieranie zbiorczego UPO: {upo.ReferenceNumber}");
                     string upoContent = await ksefClient.GetSessionUpoAsync(referenceNumber, upo.ReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
-                    string upoPath = Path.Combine(UpoDir, $"{upo.ReferenceNumber}.xml");
+                    string upoPath = Path.Combine(UpoDir, $"uposesji-{upo.ReferenceNumber}.xml");
                     await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
                     if (UpoPdf)
                     {
@@ -173,7 +176,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                 {
                     Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefNumber}");
                     string upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
-                    string upoPath = Path.Combine(UpoDir, $"{invoice.KsefNumber}.xml");
+                    string upoPath = Path.Combine(UpoDir, $"upo-{invoice.KsefNumber}.xml");
                     await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
                     if (UpoPdf)
                     {

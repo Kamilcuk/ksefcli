@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 clitest_version() {
 	cli --version
@@ -49,3 +50,6 @@ clitest_help_nowy() {
 	L_unittest_cmd -I grep -q "Name for the new certificate" <<<"$output"
 }
 
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+. "$DIR"/cmdauth.sh
+. "$DIR"/lib.sh "$@"
