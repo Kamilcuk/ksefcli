@@ -95,7 +95,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
-                string actualConfigFileToLoad = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+                string actualConfigFileToLoad = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml")!;
                 if (!string.IsNullOrEmpty(ConfigFile))
                 {
                     actualConfigFileToLoad = ConfigFile;
@@ -105,7 +105,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                     actualConfigFileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG")!;
                 }
 
-                string actualActiveProfileToLoad = "";
+                string actualActiveProfileToLoad = ""!;
                 if (!string.IsNullOrEmpty(ActiveProfile))
                 {
                     actualActiveProfileToLoad = ActiveProfile;
