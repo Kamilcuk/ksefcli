@@ -73,6 +73,14 @@ public abstract class IWithConfigCommand : IGlobalCommand
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
 
+                bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
+                bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) || !string.IsNullOrEmpty(CmdCertificateFile) || !string.IsNullOrEmpty(CmdPasswordEnv);
+
+                if (isTokenAuth && isCertAuth)
+                {
+                    throw new InvalidOperationException("Cannot use --token with certificate-related options (--private-key-file, --certificate-file, --password-env).");
+                }
+
                 var profile = new ProfileConfig
                 {
                     Environment = CmdEnvironment,
