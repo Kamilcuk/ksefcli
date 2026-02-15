@@ -29,3 +29,20 @@ clitest_z_integration_PobierzFaktury() {
 	L_unittest_cmd ls -lah 5260215591-20260124-01006068A46A-59.{json,pdf,xml}
 	L_unittest_cmd -v _ jq . 5260215591-20260124-01006068A46A-59.json
 }
+
+clitest_z_integration_PrzeslijFaktury() {
+	setup_integration_config || return 0
+	#
+	L_with_cd_tmpdir
+	sed "s/<P_2>.*</<P_2>$(date +%s.%N)</" "$DIR"/FA_3_Przykład_1.xml > faktura1.xml
+	sed "s/<P_2>.*</<P_2>$(date +%s.%N)</" "$DIR"/FA_3_Przykład_1.xml > faktura2.xml
+	L_unittest_cmd \
+		cli PrzeslijFaktury -a mytoken --upodir . --upopdf faktura1.xml faktura2.xml
+	rm faktura1.xml faktura2.xml
+	L_unittest_cmd ls -lah
+	local xmls pdfs
+	pdfs="$(find . -maxdepth 1 -name "*.pdf" | wc -l)"
+	xmls="$(find . -maxdepth 1 -name "*.xml" | wc -l)"
+	L_unittest_vareq xmls 2
+	L_unittest_vareq pdfs 2
+}

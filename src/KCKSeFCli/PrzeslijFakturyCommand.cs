@@ -17,7 +17,7 @@ namespace KCKSeFCli;
 [Verb("PrzeslijFaktury", HelpText = "Upload invoices in XML format.")]
 public class PrzeslijFakturyCommand : IWithConfigCommand
 {
-    [Option('f', "files", Required = true, HelpText = "Paths to XML invoice files.")]
+    [Value(0, Min = 1, Required = true, HelpText = "Paths to XML invoice files.")]
     public IEnumerable<string> Pliki { get; set; }
 
     [Option('u', "upodir", Required = false, HelpText = "katalog do zapisu plikow upo")]
