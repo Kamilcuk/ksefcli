@@ -113,7 +113,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                     actualActiveProfileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? "";
                 }
 
-                var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
+                var config = ConfigLoader.Load(actualConfigFileToLoad!, actualActiveProfileToLoad!);
                 var profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
