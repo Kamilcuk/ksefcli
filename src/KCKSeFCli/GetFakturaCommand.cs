@@ -16,7 +16,6 @@ public class GetFakturaCommand : IWithConfigCommand
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        ProfileConfig config = Config();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
         string invoiceXml = await ksefClient.GetInvoiceAsync(KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);

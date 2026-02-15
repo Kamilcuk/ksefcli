@@ -15,7 +15,7 @@ public class TokenRefreshCommand : IWithConfigCommand
 {
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        ProfileConfig config = Config();
+        var config = Config();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         if (string.IsNullOrEmpty(config.Token))
         {

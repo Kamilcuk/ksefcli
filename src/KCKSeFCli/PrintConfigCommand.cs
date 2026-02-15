@@ -17,12 +17,12 @@ public class PrintConfigCommand : IWithConfigCommand
 
     public override Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        ProfileConfig config = Config();
+        var (profileName, config) = ConfigWithName();
 
         if (JsonOutput)
         {
             JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-            string json = JsonSerializer.Serialize(config, options);
+            string json = JsonSerializer.Serialize(new { active_profile = profileName, profile = config }, options);
             Console.WriteLine(json);
         }
         else
@@ -30,7 +30,7 @@ public class PrintConfigCommand : IWithConfigCommand
             ISerializer serializer = new SerializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .Build();
-            string yaml = serializer.Serialize(config);
+            string yaml = serializer.Serialize(new { active_profile = profileName, profile = config });
             Console.WriteLine(yaml);
         }
 

@@ -32,33 +32,81 @@ public abstract class IWithConfigCommand : IGlobalCommand
     [Option("no-tokencache", HelpText = "Disable token cache usage")]
     public bool NoTokenCache { get; set; }
 
-    private readonly Lazy<ProfileConfig> _cachedProfile;
-    private readonly Lazy<KCKSeFCliConfig> _cachedConfig;
+    [Option("environment", HelpText = "KSeF environment")]
+    public string? CmdEnvironment { get; set; }
+
+    [Option("nip", HelpText = "Taxpayer NIP")]
+    public string? CmdNip { get; set; }
+
+    [Option("token", HelpText = "Authentication token")]
+    public string? CmdToken { get; set; }
+
+    [Option("private-key-file", HelpText = "Path to the private key file")]
+    public string? CmdPrivateKeyFile { get; set; }
+
+    [Option("certificate-file", HelpText = "Path to the certificate file")]
+    public string? CmdCertificateFile { get; set; }
+
+    [Option("password-env", HelpText = "Environment variable containing the password for the private key")]
+    public string? CmdPasswordEnv { get; set; }
+
+    private readonly Lazy<(string, ProfileConfig)> _cachedProfileTuple;
     private readonly Lazy<TokenStore> _tokenStore;
 
     public IWithConfigCommand()
     {
-        _cachedConfig = new Lazy<KCKSeFCliConfig>(() =>
+        _cachedProfileTuple = new Lazy<(string, ProfileConfig)>(() =>
         {
-            return ConfigLoader.Load(ConfigFile, ActiveProfile);
-        });
-        _cachedProfile = new Lazy<ProfileConfig>(() =>
-        {
-            KCKSeFCliConfig config = _cachedConfig.Value;
-            return config.Profiles[config.ActiveProfile];
+            bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
+                                   !string.IsNullOrEmpty(CmdNip) ||
+                                   !string.IsNullOrEmpty(CmdToken) ||
+                                   !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
+                                   !string.IsNullOrEmpty(CmdCertificateFile) ||
+                                   !string.IsNullOrEmpty(CmdPasswordEnv);
+            
+            var defaultConfigFilePath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+
+            if (anyCmdOptionSet)
+            {
+                if ((!string.IsNullOrEmpty(ConfigFile) && ConfigFile != defaultConfigFilePath) || !string.IsNullOrEmpty(ActiveProfile))
+                {
+                    throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
+                }
+
+                var profile = new ProfileConfig
+                {
+                    Environment = CmdEnvironment,
+                    Nip = CmdNip,
+                    AuthMethod = string.IsNullOrEmpty(CmdToken) ? AuthMethod.Xades : AuthMethod.KsefToken,
+                    Token = CmdToken,
+                    Certificate = (string.IsNullOrEmpty(CmdCertificateFile) || string.IsNullOrEmpty(CmdPrivateKeyFile)) ? null : new CertificateConfig
+                    {
+                        Certificate = System.IO.File.ReadAllText(CmdCertificateFile),
+                        Private_Key = System.IO.File.ReadAllText(CmdPrivateKeyFile),
+                        Password = string.IsNullOrEmpty(CmdPasswordEnv) ? "" : System.Environment.GetEnvironmentVariable(CmdPasswordEnv) ?? "",
+                    }
+                };
+                return ("cmd", profile);
+            }
+            else
+            {
+                var config = ConfigLoader.Load(ConfigFile, ActiveProfile);
+                return (config.ActiveProfile, config.Profiles[config.ActiveProfile]);
+            }
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
     }
 
     protected TokenStore GetTokenStore() => _tokenStore.Value;
 
-    public ProfileConfig Config() => _cachedProfile.Value;
+    public ProfileConfig Config() => _cachedProfileTuple.Value.profile;
+
+    public (string profileName, ProfileConfig profile) ConfigWithName() => _cachedProfileTuple.Value;
 
     public TokenStore.Key GetTokenStoreKey()
     {
-        KCKSeFCliConfig config = _cachedConfig.Value;
-        ProfileConfig profile = Config();
-        return new TokenStore.Key(config.ActiveProfile, profile);
+        (string profileName, ProfileConfig profile) = ConfigWithName();
+        return new TokenStore.Key(profileName, profile);
     }
 
     private static string StatusInfoToString(StatusInfo statusInfo)
@@ -94,7 +142,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> Auth(IServiceScope scope, CancellationToken cancellationToken)
     {
-        ProfileConfig config = Config();
+        var config = Config();
         AuthenticationOperationStatusResponse response = config.AuthMethod switch
         {
             AuthMethod.KsefToken => await TokenAuth(scope, cancellationToken).ConfigureAwait(false),
@@ -107,7 +155,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> TokenAuth(IServiceScope scope, CancellationToken cancellationToken)
     {
-        ProfileConfig config = Config();
+        var config = Config();
         if (config.AuthMethod != AuthMethod.KsefToken)
         {
             throw new InvalidOperationException("This command requires token authentication.");
@@ -166,7 +214,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> CertAuth(IServiceScope scope, CancellationToken cancellationToken)
     {
-        ProfileConfig config = Config();
+        var config = Config();
         if (config.AuthMethod != AuthMethod.Xades)
         {
             throw new InvalidOperationException("This command requires certificate authentication.");
@@ -273,7 +321,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     private IServiceScope GetScope()
     {
-        ProfileConfig config = Config();
+        var config = Config();
         IServiceCollection services = new ServiceCollection();
         KSeF.Client.ClientFactory.Environment environment = config.Environment.ToUpper() switch
         {
