@@ -71,7 +71,7 @@ Przed rozpoczęciem pracy z `kcksefcli`, należy skonfigurować aplikację, twor
 - W katalogu bieżącym: `./kcksefcli.yaml`
 - W katalogu konfiguracyjnym użytkownika: `$HOME/.config/kcksefcli/kcksefcli.yaml`
 
-Plik ten zawiera profile, które umożliwiają zarządzanie różnymi poświadczeniami i środowiskami KSeF.
+Plik ten zawiera profile, które umożliwiają zarządzanie różnymi poświadczeniami i środowiskami KSeF. **Pamiętaj, że wartości konfiguracyjne z pliku mogą być nadpisane przez globalne opcje linii komend lub zmienne środowiskowe, zgodnie z kolejnością priorytetów opisaną w sekcji [Opcje Globalne](#opcje-globalne).**
 
 ### Struktura pliku `kcksefcli.yaml`
 
@@ -156,7 +156,26 @@ kcksefcli <polecenie> [opcje]
 
 ### Opcje Globalne
 
-### Dostępne Polecenia
+Poniższe opcje globalne mogą być używane z każdym poleceniem `kcksefcli`. Umożliwiają one nadpisywanie ustawień z pliku konfiguracyjnego `kcksefcli.yaml` lub tworzenie ad-hoc profili konfiguracyjnych bezpośrednio z linii komend.
+
+**Priorytety Konfiguracji:**
+1.  **Argumenty linii komend:** Opcje takie jak `--environment`, `--nip`, `--token`, `--private-key-file`, `--certificate-file`, `--password-env` tworzą tymczasowy profil o nazwie `cmd`. **UWAGA:** Użycie któregokolwiek z tych argumentów **wyklucza** jednoczesne użycie opcji `--config` lub `--active`.
+2.  **Zmienne środowiskowe:** Zmienne takie jak `KCKSEFCLI_CONFIG` i `KCKSEFCLI_ACTIVE` (oraz `KSEF_CERT_PASSWORD` dla hasła certyfikatu) mają niższy priorytet niż argumenty linii komend, ale wyższy niż ustawienia w pliku konfiguracyjnym.
+3.  **Plik konfiguracyjny `kcksefcli.yaml`:** Ustawienia zdefiniowane w pliku konfiguracyjnym mają najniższy priorytet.
+
+| Opcja                  | Opis                                                                 | Domyślnie                                                        | Konfliktuje z             | Wymagane |
+|------------------------|----------------------------------------------------------------------|------------------------------------------------------------------|---------------------------|----------|
+| `-c`, `--config`       | Ścieżka do pliku konfiguracyjnego `kcksefcli.yaml`.                  | `$HOME/.config/kcksefcli/kcksefcli.yaml`                         | Ad-hoc opcje profilu      | Nie      |
+| `-a`, `--active`       | Nazwa aktywnego profilu z pliku konfiguracyjnego.                    | Zmienna środowiskowa `KCKSEFCLI_ACTIVE` lub pierwszy profil      | Ad-hoc opcje profilu      | Nie      |
+| `--cache`              | Ścieżka do pliku cache tokenów.                                      | `$HOME/.cache/kcksefcli/tokenstore.json`                         | Brak                      | Nie      |
+| `--no-tokencache`      | Wyłącza użycie cache tokenów.                                        | `false`                                                          | Brak                      | Nie      |
+| `--environment`        | Środowisko KSeF (np. `test`, `demo`, ``prod`).                       |                                                                  | `--config`, `--active`    | Nie      |
+| `--nip`                | Numer NIP podmiotu.                                                  |                                                                  | `--config`, `--active`    | Nie      |
+| `--token`              | Token autoryzacyjny KSeF (dla metody tokenowej).                     |                                                                  | `--config`, `--active`, `--private-key-file`, `--certificate-file`, `--password-env` | Nie |
+| `--private-key-file`   | Ścieżka do pliku z kluczem prywatnym (dla metody certyfikatowej).    |                                                                  | `--config`, `--active`, `--token` | Nie |
+| `--certificate-file`   | Ścieżka do pliku z certyfikatem publicznym (dla metody certyfikatowej). |                                                                  | `--config`, `--active`, `--token` | Nie |
+| `--password-env`       | Nazwa zmiennej środowiskowej z hasłem do klucza prywatnego.         |                                                                  | `--config`, `--active`, `--token` | Nie |
+
 
 *   `Auth`: Uwierzytelnia przy użyciu skonfigurowanej metody.
 *   `TokenAuth`: Uwierzytelnia przy użyciu tokena sesji KSeF.
