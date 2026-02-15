@@ -8,7 +8,7 @@ public sealed class KCKSeFCliConfig
     public Dictionary<string, ProfileConfig> Profiles { get; init; } = new();
 }
 
-public sealed class ProfileConfig
+public class ProfileConfig
 {
     public string Environment { get; init; } = "";
     public string Nip { get; init; } = "";

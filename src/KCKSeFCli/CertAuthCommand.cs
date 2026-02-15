@@ -13,7 +13,7 @@ public class CertAuthCommand : IWithConfigCommand
 {
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        AuthenticationOperationStatusResponse tokenResponse = await CertAuth(scope, cancellationToken).ConfigureAwait(false);
+        AuthenticationOperationStatusResponse tokenResponse = await Authenticate.CertAuth(Config(), scope, GetCryptographicService, cancellationToken).ConfigureAwait(false);
         Console.WriteLine(JsonSerializer.Serialize(tokenResponse));
         return 0;
     }

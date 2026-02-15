@@ -66,7 +66,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
             if (anyCmdOptionSet)
             {
-                if (!string.IsNullOrEmpty(ConfigFile) || !string.IsNullOrEmpty(ActiveProfile))
+                if (ConfigFile is not null || ActiveProfile is not null)
                 {
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
@@ -96,7 +96,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             else
             {
                 // Resolve actualConfigFile: CLI -> ENV -> Hardcoded Default
-                string actualConfigFileToLoad = ConfigFile;
+                string? actualConfigFileToLoad = ConfigFile;
                 if (string.IsNullOrEmpty(actualConfigFileToLoad))
                 {
                     actualConfigFileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? "";
@@ -107,7 +107,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 }
 
                 // Resolve actualActiveProfile: CLI -> ENV
-                string actualActiveProfileToLoad = ActiveProfile;
+                string? actualActiveProfileToLoad = ActiveProfile;
                 if (string.IsNullOrEmpty(actualActiveProfileToLoad))
                 {
                     actualActiveProfileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? "";
@@ -208,7 +208,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             "TEST" => KSeF.Client.ClientFactory.Environment.Test,
             _ => throw new Exception($"Invalid environment in profile: {config.Environment}")
         };
-        services.AddSingleton<ProfileConfig>(config);
+        services.AddSingleton<ProfileConfig>((ProfileConfig)config);
         services.AddKSeFClient(options =>
         {
             options.BaseUrl = KsefEnvironmentConfig.BaseUrls[environment];

@@ -58,7 +58,7 @@ public static class Authenticate
         do
         {
             status = await ksefClient.GetAuthStatusAsync(signature.ReferenceNumber, signature.AuthenticationToken.Token).ConfigureAwait(false);
-            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm\:ss}");
+            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
@@ -118,7 +118,7 @@ public static class Authenticate
         do
         {
             status = await ksefClient.GetAuthStatusAsync(submission.ReferenceNumber, submission.AuthenticationToken.Token).ConfigureAwait(false);
-            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm\:ss}");
+            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
@@ -132,5 +132,27 @@ public static class Authenticate
         Log.LogInformation("[9] Pobieranie access token...");
         AuthenticationOperationStatusResponse tokenResponse = await ksefClient.GetAccessTokenAsync(submission.AuthenticationToken.Token).ConfigureAwait(false);
         return tokenResponse;
+    }
+
+    public static string StatusInfoToString(StatusInfo statusInfo)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append($"Code: {statusInfo.Code}, Description: {statusInfo.Description}");
+        if (statusInfo.Details != null && statusInfo.Details.Any())
+        {
+            sb.Append($", Details: [{string.Join(", ", statusInfo.Details)}]");
+        }
+        if (statusInfo.Extensions != null && statusInfo.Extensions.Any())
+        {
+            sb.Append($", Extensions: {{{string.Join(", ", statusInfo.Extensions.Select(kv => $"{kv.Key}: {kv.Value}"))}}}");
+        }
+        return sb.ToString();
+    }
+
+    public static void PrintXmlToConsole(string xml, string title)
+    {
+        Log.LogInformation($"----- {title} -----");
+        Log.LogInformation(xml);
+        Log.LogInformation($"----- KONIEC: {title} -----\n");
     }
 }

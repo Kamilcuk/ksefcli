@@ -13,7 +13,7 @@ public class TokenAuthCommand : IWithConfigCommand
 {
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
-        AuthenticationOperationStatusResponse tokenResponse = await TokenAuth(scope, cancellationToken).ConfigureAwait(false);
+        AuthenticationOperationStatusResponse tokenResponse = await Authenticate.TokenAuth(Config(), scope, GetCryptographicService, cancellationToken).ConfigureAwait(false);
         Console.Out.WriteLine(JsonSerializer.Serialize(tokenResponse));
         return 0;
     }
