@@ -80,6 +80,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 string? profileEnv = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE");
                 string actualActiveProfileToLoad = !string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : !string.IsNullOrEmpty(profileEnv) ? profileEnv : "";
 
+                Log.LogInformation($"Loading config from {actualConfigFileToLoad} with active={actualActiveProfileToLoad}");
                 var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
                 var profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
@@ -145,21 +146,21 @@ public abstract class IWithConfigCommand : IGlobalCommand
         {
             Log.LogInformation($"Stored accessToken until {dtisoformat(storedToken.Response.AccessToken.ValidUntil)}, refreshToken until {dtisoformat(storedToken.Response.RefreshToken.ValidUntil)}");
         }
-        if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTime.UtcNow.AddMinutes(-1))
+        if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTimeOffset.UtcNow.AddMinutes(-1))
         {
             Log.LogInformation("Stored refresh token is nearing expiration, refreshing token");
             AuthenticationOperationStatusResponse response = await Auth(scope, cancellationToken).ConfigureAwait(false);
             tokenStore.SetToken(key, new TokenStore.Data(response));
             return response.AccessToken.Token;
         }
-        if (storedToken.Response.AccessToken.ValidUntil < DateTime.UtcNow.AddMinutes(-1))
+        if (storedToken.Response.AccessToken.ValidUntil < DateTimeOffset.UtcNow.AddMinutes(-1))
         {
             Log.LogInformation("Stored access token is nearing expiration, refreshing token");
             AuthenticationOperationStatusResponse response = await TokenRefresh(scope, storedToken.Response.RefreshToken, cancellationToken).ConfigureAwait(false);
+            Log.LogInformation($"Acquired accessToken until {dtisoformat(response.AccessToken.ValidUntil)}, refreshToken until {dtisoformat(response.RefreshToken.ValidUntil)}");
             tokenStore.SetToken(key, new TokenStore.Data(response));
             return response.AccessToken.Token;
         }
-        Log.LogInformation($"{dtisoformat(storedToken.Response.AccessToken.ValidUntil)} {dtisoformat(DateTime.UtcNow.AddMinutes(-1))}");
         return storedToken.Response.AccessToken.Token;
     }
 
