@@ -58,8 +58,9 @@ public abstract class IWithConfigCommand : IGlobalCommand
         _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
         {
             bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
-            bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) || !string.IsNullOrEmpty(CmdCertificateFile) || !string.IsNullOrEmpty(CmdPasswordEnv);
-
+            bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
+            !string.IsNullOrEmpty(CmdCertificateFile) ||
+            !string.IsNullOrEmpty(CmdPasswordEnv);
             bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
                                    !string.IsNullOrEmpty(CmdNip) ||
                                    isTokenAuth ||
@@ -67,16 +68,23 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
             if (anyCmdOptionSet)
             {
+                // Resolve config from command line arguments
                 if (ConfigFile != "" || ActiveProfile != "")
                 {
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
-
                 if (isTokenAuth && isCertAuth)
                 {
                     throw new InvalidOperationException("Cannot use --token with certificate-related options (--private-key-file, --certificate-file, --password-env).");
                 }
-
+                if (CmdEnvironment is null || !string.IsNullOrEmpty(CmdEnvironment))
+                {
+                    throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
+                }
+                if (CmdNip is null || !string.IsNullOrEmpty(CmdNip))
+                {
+                    throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
+                }
                 var profile = new ProfileConfig
                 {
                     Environment = CmdEnvironment,
@@ -93,29 +101,20 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
-                return ResolveProfileConfigFromFiles();
+                // Resolve config from file
+                string configFileDefault = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+                string? configEnv = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG");
+                string actualConfigFileToLoad = !string.IsNullOrEmpty(ConfigFile) ? ConfigFile : !string.IsNullOrEmpty(configEnv) ? configEnv : configFileDefault;
+
+                string? profileEnv = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE");
+                string actualActiveProfileToLoad = !string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : !string.IsNullOrEmpty(profileEnv) ? profileEnv : "";
+
+                var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
+                var profile = config.Profiles[config.ActiveProfile];
+                return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
-    }
-
-    private ProfileConfigWithName ResolveProfileConfigFromFiles()
-    {
-#pragma warning disable CS8601
-        string actualConfigFileToLoad =
-            (!string.IsNullOrEmpty(ConfigFile) ? ConfigFile : null) ??
-            System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ??
-            System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
-
-        string actualActiveProfileToLoad =
-            (!string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : null) ??
-            System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ??
-            "";
-#pragma warning restore CS8601
-
-        var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
-        var profile = config.Profiles[config.ActiveProfile];
-        return new ProfileConfigWithName(profile, config.ActiveProfile);
     }
 
     protected TokenStore GetTokenStore() => _tokenStore.Value;

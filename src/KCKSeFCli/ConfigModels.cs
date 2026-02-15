@@ -43,7 +43,7 @@ public sealed class ProfileConfigWithName : ProfileConfig
         Certificate = original.Certificate;
         Token = original.Token;
     }
-    
+
     public ProfileConfigWithName(ProfileConfigWithName original)
     {
         Name = original.Name;
