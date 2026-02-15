@@ -95,25 +95,35 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
-                // Resolve actualConfigFile: CLI -> ENV -> Hardcoded Default
-                string? actualConfigFileToLoad = ConfigFile;
-                if (string.IsNullOrEmpty(actualConfigFileToLoad))
+                string actualConfigFileToLoad;
+                if (!string.IsNullOrEmpty(ConfigFile))
                 {
-                    actualConfigFileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ?? "";
+                    actualConfigFileToLoad = ConfigFile;
                 }
-                if (string.IsNullOrEmpty(actualConfigFileToLoad))
+                else if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG")))
+                {
+                    actualConfigFileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG")!;
+                }
+                else
                 {
                     actualConfigFileToLoad = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
                 }
 
-                // Resolve actualActiveProfile: CLI -> ENV
-                string? actualActiveProfileToLoad = ActiveProfile;
-                if (string.IsNullOrEmpty(actualActiveProfileToLoad))
+                string actualActiveProfileToLoad;
+                if (!string.IsNullOrEmpty(ActiveProfile))
                 {
-                    actualActiveProfileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? "";
+                    actualActiveProfileToLoad = ActiveProfile;
+                }
+                else if (!string.IsNullOrEmpty(System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE")))
+                {
+                    actualActiveProfileToLoad = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE")!;
+                }
+                else
+                {
+                    actualActiveProfileToLoad = "";
                 }
 
-                var config = ConfigLoader.Load(actualConfigFileToLoad!, actualActiveProfileToLoad!);
+                var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
                 var profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
