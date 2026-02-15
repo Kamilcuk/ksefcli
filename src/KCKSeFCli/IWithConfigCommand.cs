@@ -95,24 +95,29 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
-#pragma warning disable CS8601
-                string actualConfigFileToLoad =
-                    (!string.IsNullOrEmpty(ConfigFile) ? ConfigFile : null) ??
-                    System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ??
-                    System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
-
-                string actualActiveProfileToLoad =
-                    (!string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : null) ??
-                    System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ??
-                    "";
-#pragma warning restore CS8601
-
-                var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
-                var profile = config.Profiles[config.ActiveProfile];
-                return new ProfileConfigWithName(profile, config.ActiveProfile);
+                return ResolveProfileConfigFromFiles();
             }
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
+    }
+
+    private ProfileConfigWithName ResolveProfileConfigFromFiles()
+    {
+#pragma warning disable CS8601
+        string actualConfigFileToLoad =
+            (!string.IsNullOrEmpty(ConfigFile) ? ConfigFile : null) ??
+            System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ??
+            System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+
+        string actualActiveProfileToLoad =
+            (!string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : null) ??
+            System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ??
+            "";
+#pragma warning restore CS8601
+
+        var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
+        var profile = config.Profiles[config.ActiveProfile];
+        return new ProfileConfigWithName(profile, config.ActiveProfile);
     }
 
     protected TokenStore GetTokenStore() => _tokenStore.Value;
