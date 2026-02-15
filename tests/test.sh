@@ -16,7 +16,7 @@ fi
 # Parse command line arguments
 L_argparse dest_prefix=opt_ \
 	-- -r help="Filter tests with this regex" \
-	-- exe nargs=REMAINDER help="Path to the command to test" \
+	-- exe nargs=remainder help="Path to the command to test" \
 	---- "$@"
 
 if [[ -z "${opt_exe:-}" ]]; then
@@ -34,5 +34,6 @@ cli() {
 
 . "$DIR"/unit.sh
 . "$DIR"/integration.sh
+. "$DIR"/cmdauth.sh
 
 L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
