@@ -31,6 +31,29 @@ public sealed class CertificateConfig
     public AuthenticationTokenSubjectIdentifierTypeEnum SubjectIdentifierType => AuthenticationTokenSubjectIdentifierTypeEnum.CertificateSubject;
 }
 
+public sealed class ProfileConfigWithName : ProfileConfig
+{
+    public string Name { get; set; }
+
+    public ProfileConfigWithName(ProfileConfig original, string name)
+    {
+        Name = name;
+        Environment = original.Environment;
+        Nip = original.Nip;
+        Certificate = original.Certificate;
+        Token = original.Token;
+    }
+    
+    public ProfileConfigWithName(ProfileConfigWithName original)
+    {
+        Name = original.Name;
+        Environment = original.Environment;
+        Nip = original.Nip;
+        Certificate = original.Certificate;
+        Token = original.Token;
+    }
+}
+
 public enum AuthMethod
 {
     Xades,

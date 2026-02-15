@@ -50,12 +50,12 @@ public abstract class IWithConfigCommand : IGlobalCommand
     [Option("password-env", HelpText = "Environment variable containing the password for the private key")]
     public string? CmdPasswordEnv { get; set; }
 
-    private readonly Lazy<(string, ProfileConfig)> _cachedProfileTuple;
+    private readonly Lazy<ProfileConfigWithName> _cachedProfile;
     private readonly Lazy<TokenStore> _tokenStore;
 
     public IWithConfigCommand()
     {
-        _cachedProfileTuple = new Lazy<(string, ProfileConfig)>(() =>
+        _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
         {
             bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
                                    !string.IsNullOrEmpty(CmdNip) ||
@@ -77,7 +77,6 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 {
                     Environment = CmdEnvironment,
                     Nip = CmdNip,
-                    AuthMethod = string.IsNullOrEmpty(CmdToken) ? AuthMethod.Xades : AuthMethod.KsefToken,
                     Token = CmdToken,
                     Certificate = (string.IsNullOrEmpty(CmdCertificateFile) || string.IsNullOrEmpty(CmdPrivateKeyFile)) ? null : new CertificateConfig
                     {
@@ -86,12 +85,13 @@ public abstract class IWithConfigCommand : IGlobalCommand
                         Password = string.IsNullOrEmpty(CmdPasswordEnv) ? "" : System.Environment.GetEnvironmentVariable(CmdPasswordEnv) ?? "",
                     }
                 };
-                return ("cmd", profile);
+                return new ProfileConfigWithName(profile, "cmd");
             }
             else
             {
                 var config = ConfigLoader.Load(ConfigFile, ActiveProfile);
-                return (config.ActiveProfile, config.Profiles[config.ActiveProfile]);
+                var profile = config.Profiles[config.ActiveProfile];
+                return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
@@ -99,14 +99,12 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     protected TokenStore GetTokenStore() => _tokenStore.Value;
 
-    public ProfileConfig Config() => _cachedProfileTuple.Value.profile;
-
-    public (string profileName, ProfileConfig profile) ConfigWithName() => _cachedProfileTuple.Value;
+    public ProfileConfigWithName Config() => _cachedProfile.Value;
 
     public TokenStore.Key GetTokenStoreKey()
     {
-        (string profileName, ProfileConfig profile) = ConfigWithName();
-        return new TokenStore.Key(profileName, profile);
+        var config = Config();
+        return new TokenStore.Key(config.Name, config);
     }
 
 
@@ -189,7 +187,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             "TEST" => KSeF.Client.ClientFactory.Environment.Test,
             _ => throw new Exception($"Invalid environment in profile: {config.Environment}")
         };
-        services.AddSingleton(config);
+        services.AddSingleton<ProfileConfig>(config);
         services.AddKSeFClient(options =>
         {
             options.BaseUrl = KsefEnvironmentConfig.BaseUrls[environment];
