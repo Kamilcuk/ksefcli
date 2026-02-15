@@ -50,12 +50,26 @@ public abstract class IWithConfigCommand : IGlobalCommand
     [Option("password-env", HelpText = "Environment variable containing the password for the private key")]
     public string? CmdPasswordEnv { get; set; }
 
-    private readonly Lazy<ProfileConfigWithName> _cachedProfile;
-    private readonly Lazy<TokenStore> _tokenStore;
+    private ProfileConfigWithName? _cachedProfile;
+    private TokenStore? _tokenStore;
 
     public IWithConfigCommand()
     {
-        _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
+    }
+
+
+    protected TokenStore GetTokenStore()
+    {
+        if (_tokenStore == null)
+        {
+            _tokenStore = new TokenStore(TokenCache);
+        }
+        return _tokenStore;
+    }
+
+    public ProfileConfigWithName Config()
+    {
+        if (_cachedProfile == null)
         {
             bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
                                    !string.IsNullOrEmpty(CmdNip) ||
@@ -63,8 +77,6 @@ public abstract class IWithConfigCommand : IGlobalCommand
                                    !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
                                    !string.IsNullOrEmpty(CmdCertificateFile) ||
                                    !string.IsNullOrEmpty(CmdPasswordEnv);
-            
-            var defaultConfigFilePath = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
 
             if (anyCmdOptionSet)
             {
@@ -93,7 +105,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                         Password = string.IsNullOrEmpty(CmdPasswordEnv) ? "" : System.Environment.GetEnvironmentVariable(CmdPasswordEnv) ?? "",
                     }
                 };
-                return new ProfileConfigWithName(profile, "cmd");
+                _cachedProfile = new ProfileConfigWithName(profile, "cmd");
             }
             else
             {
@@ -105,15 +117,11 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 var actualActiveProfile = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ?? ActiveProfile;
                 var config = ConfigLoader.Load(actualConfigFile, actualActiveProfile);
                 var profile = config.Profiles[config.ActiveProfile];
-                return new ProfileConfigWithName(profile, config.ActiveProfile);
+                _cachedProfile = new ProfileConfigWithName(profile, config.ActiveProfile);
             }
-        });
-        _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
+        }
+        return _cachedProfile;
     }
-
-    protected TokenStore GetTokenStore() => _tokenStore.Value;
-
-    public ProfileConfigWithName Config() => _cachedProfile.Value;
 
     public TokenStore.Key GetTokenStoreKey()
     {
