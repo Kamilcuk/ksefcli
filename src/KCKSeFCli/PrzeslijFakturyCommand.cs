@@ -1,0 +1,195 @@
+using System.Text.Json;
+
+using CommandLine;
+
+using KSeF.Client.Core.Interfaces.Clients;
+using KSeF.Client.Core.Interfaces.Services;
+using KSeF.Client.Core.Models.Sessions;
+using KSeF.Client.Core.Models.Sessions.BatchSession;
+using KSeF.Client.Tests.Utils;
+
+using Microsoft.Extensions.DependencyInjection;
+
+
+
+namespace KCKSeFCli;
+
+[Verb("PrzeslijFaktury", HelpText = "Upload invoices in XML format.")]
+public class PrzeslijFakturyCommand : IWithConfigCommand
+{
+    [Value(0, Min = 1, Required = true, HelpText = "Paths to XML invoice files.")]
+    public required IEnumerable<string> Pliki { get; set; }
+
+    [Option('u', "upodir", Required = false, HelpText = "katalog do zapisu plikow upo")]
+    public string? UpoDir { get; set; }
+
+    [Option("upopdf", Required = false, HelpText = "convertuj upo od razu na pdf")]
+    public bool UpoPdf { get; set; }
+
+    [Option("uposesji", Required = false, HelpText = "Zapisz UPO sesji (zbiorcze upo)")]
+    public bool UpoSesji { get; set; } = false;
+
+    public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths)
+    {
+        return paths.Select(path => (
+            FileName: Path.GetFileName(path),
+            Content: File.ReadAllBytes(path)
+        ));
+    }
+
+    private sealed record OpenBatchSessionResult(
+        string ReferenceNumber,
+        OpenBatchSessionResponse OpenBatchSessionResponse,
+        List<BatchPartSendingInfo> EncryptedParts
+    );
+
+    private async Task<OpenBatchSessionResult> PrepareAndOpenBatchSessionAsync(
+            IEnumerable<(string FileName, byte[] Content)> invoices,
+            IKSeFClient ksefClient,
+        ICryptographyService cryptographyService,
+        string accessToken)
+    {
+        EncryptionData encryptionData = cryptographyService.GetEncryptionData();
+
+        Log.LogInformation("1. Przygotowanie paczki ZIP");
+        (byte[] zipBytes, FileMetadata zipMeta) =
+            BatchUtils.BuildZip(invoices, cryptographyService);
+
+        Log.LogInformation("2. Podział binarny paczki ZIP na części oraz 3. Zaszyfrowanie części paczki");
+        List<BatchPartSendingInfo> encryptedParts =
+            BatchUtils.EncryptAndSplit(zipBytes, encryptionData, cryptographyService);
+
+        Log.LogInformation("4. Otwarcie sesji wsadowej");
+        OpenBatchSessionRequest openBatchRequest =
+            BatchUtils.BuildOpenBatchRequest(zipMeta, encryptionData, encryptedParts);
+
+        OpenBatchSessionResponse openBatchSessionResponse =
+            await BatchUtils.OpenBatchAsync(ksefClient, openBatchRequest, accessToken).ConfigureAwait(false);
+
+        return new OpenBatchSessionResult(
+            openBatchSessionResponse.ReferenceNumber,
+            openBatchSessionResponse,
+            encryptedParts
+        );
+    }
+
+    private static async Task PobranieInformacjiNaTematPrzeslanychFaktur(
+            IKSeFClient ksefClient,
+            string referenceNumber,
+            string accessToken,
+            CancellationToken cancellationToken)
+    {
+        const int pageSize = 50;
+        string? continuationtoken = null;
+        do
+        {
+            SessionInvoicesResponse sessionInvoices = await ksefClient
+                                        .GetSessionInvoicesAsync(
+                                        referenceNumber,
+                                        accessToken,
+                                        pageSize,
+                                        continuationtoken,
+                                        cancellationToken).ConfigureAwait(false);
+
+            foreach (SessionInvoice sessionInvoice in sessionInvoices.Invoices)
+            {
+                Console.Out.WriteLine(JsonSerializer.Serialize(sessionInvoice, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                }));
+            }
+
+            continuationtoken = sessionInvoices.ContinuationToken;
+        }
+        while (continuationtoken != null);
+    }
+
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
+    {
+        IEnumerable<(string FileName, byte[] Content)> invoices = GetFilesWithContent(Pliki);
+
+        string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+        ICryptographyService cryptographyService = await GetCryptographicService(scope, cancellationToken).ConfigureAwait(false);
+
+        OpenBatchSessionResult result = await PrepareAndOpenBatchSessionAsync(invoices, ksefClient, cryptographyService, accessToken).ConfigureAwait(false);
+        string referenceNumber = result.ReferenceNumber;
+        Log.LogInformation($"ReferenceNumber={result.ReferenceNumber}");
+
+        Log.LogInformation("5. Przesłanie zadeklarowanych części paczki");
+        await ksefClient.SendBatchPartsAsync(result.OpenBatchSessionResponse, result.EncryptedParts).ConfigureAwait(false);
+
+        Log.LogInformation("6. Zamknięcie sesji wsadowej");
+        await ksefClient.CloseBatchSessionAsync(result.ReferenceNumber, accessToken).ConfigureAwait(false);
+
+        /* ---------------------------------------------------------------------- */
+        Log.LogInformation("sesja-sprawdzenie-stanu-i-pobranie-upo.md");
+
+        Log.LogInformation("4) Oczekiwanie na przetworzenie faktury");
+        SessionStatusResponse sessionStatus = await AsyncPollingUtils.PollWithBackoffAsync(
+            action: () => ksefClient.GetSessionStatusAsync(referenceNumber, accessToken, cancellationToken),
+            result => result is not null && result.SuccessfulInvoiceCount is not null,
+            initialDelay: TimeSpan.FromSeconds(1),
+            maxDelay: TimeSpan.FromSeconds(5),
+            maxAttempts: 30,
+            cancellationToken: cancellationToken).ConfigureAwait(false);
+
+        Log.LogInformation("3. Pobranie informacji na temat przesłanych faktur");
+        await PobranieInformacjiNaTematPrzeslanychFaktur(ksefClient, referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
+
+        if (!string.IsNullOrEmpty(UpoDir))
+        {
+            Directory.CreateDirectory(UpoDir);
+
+            if (UpoSesji && sessionStatus.Upo is not null)
+            {
+                // Zbiorcze UPO
+                foreach (UpoPageResponse? upo in sessionStatus.Upo.Pages)
+                {
+                    Log.LogInformation($"Pobieranie zbiorczego UPO: {upo.ReferenceNumber}");
+                    string upoContent = await ksefClient.GetSessionUpoAsync(referenceNumber, upo.ReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
+                    string upoPath = Path.Combine(UpoDir, $"uposesji-{upo.ReferenceNumber}.xml");
+                    await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
+                    if (UpoPdf)
+                    {
+                        Log.LogInformation($"Generowanie PDF dla zbiorczego UPO: {upo.ReferenceNumber}");
+                        byte[] pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+            }
+
+            // Indywidualne UPO
+            const int pageSize = 50;
+            string? continuationtoken = null;
+            do
+            {
+                SessionInvoicesResponse sessionInvoices = await ksefClient
+                   .GetSessionInvoicesAsync(
+                       referenceNumber,
+                       accessToken,
+                       pageSize,
+                       continuationtoken,
+                       cancellationToken).ConfigureAwait(false);
+
+                foreach (SessionInvoice? invoice in sessionInvoices.Invoices.Where(i => i.KsefNumber is not null))
+                {
+                    Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefNumber}");
+                    string upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
+                    string upoPath = Path.Combine(UpoDir, $"upo-{invoice.KsefNumber}.xml");
+                    await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
+                    if (UpoPdf)
+                    {
+                        Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefNumber}");
+                        byte[] pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
+                    }
+                }
+
+                continuationtoken = sessionInvoices.ContinuationToken;
+            } while (continuationtoken != null);
+        }
+
+        return 0;
+    }
+}

@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ -v testlib_sourced ]]; then
+	return
+fi
+testlib_sourced=1
+
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+
+cli() {
+	L_logrun "${opt_exe[@]}" "$@"
+}
+
+testlib_main() {
+	# Download L_lib.sh library
+	if hash L_lib.sh 2>/dev/null; then
+		echo "Using L_lib.sh from PATH"
+		. L_lib.sh -s
+	else
+		echo "Downloading L_lib.sh"
+		curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
+		. "$DIR"/L_lib.sh -s
+	fi
+
+	# Parse command line arguments
+	L_argparse dest_prefix=opt_ \
+		-- -r help="Filter tests with this regex" \
+		-- exe nargs=remainder help="Path to the command to test" \
+		---- "$@"
+
+	if [[ -z "${opt_exe:-}" ]]; then
+		if L_hash make; then
+			L_logrun make -C "$DIR"/.. build
+		else
+			L_logrun dotnet build "$DIR"/../src/KCKSeFCli
+		fi
+		opt_exe=("$(readlink -f "$DIR"/../cli)")
+	fi
+
+	L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
+}
+
+testlib_main "$@"

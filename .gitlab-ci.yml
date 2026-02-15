@@ -28,19 +28,19 @@ secret_detection:
   cache:
     key:
       files:
-        - src/KSeFCli/KSeFCli.csproj
+        - src/KCKSeFCli/KCKSeFCli.csproj
     paths:
       - .nuget/packages
   script:
-    - dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
-    - mv -v src/KSeFCli/bin/Release/net10.0/linux-x64/publish/ksefcli .
-    - ldd ksefcli
-    - stat ksefcli
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
+    - mv -v src/KCKSeFCli/bin/Release/net10.0/linux-x64/publish/kcksefcli .
+    - ldd kcksefcli
+    - stat kcksefcli
     # Run tests.
-    - ./test.sh ./ksefcli
+    - ./tests/unit.sh ./kcksefcli
   artifacts:
     paths:
-      - ksefcli
+      - kcksefcli
 
 .build_windows_base:
   stage: build
@@ -50,16 +50,16 @@ secret_detection:
   cache:
     key:
       files:
-        - src/KSeFCli/KSeFCli.csproj
+        - src/KCKSeFCli/KCKSeFCli.csproj
     paths:
       - .nuget/packages
   script:
-    - dotnet publish src/KSeFCli/KSeFCli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
-    - mv -v src/KSeFCli/bin/Release/net10.0/win-x64/publish/ksefcli.exe .
-    - stat ksefcli.exe
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
+    - mv -v src/KCKSeFCli/bin/Release/net10.0/win-x64/publish/kcksefcli.exe .
+    - stat kcksefcli.exe
   artifacts:
     paths:
-      - ksefcli.exe
+      - kcksefcli.exe
 
 linux_build_main:
   extends: [.build_linux_base, .build_main]
@@ -91,7 +91,7 @@ format_check:
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   script:
-    - dotnet format src/KSeFCli -v d --include "$(find src -name *.cs | paste -sd,)" --verify-no-changes
+    - dotnet format src/KCKSeFCli -v d --include "$(find src -name *.cs | paste -sd,)" --verify-no-changes
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_MERGE_REQUEST_IID
