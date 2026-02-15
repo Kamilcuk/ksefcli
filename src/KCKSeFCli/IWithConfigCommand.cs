@@ -66,7 +66,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
             if (anyCmdOptionSet)
             {
-                if (ConfigFile is not null || ActiveProfile is not null)
+                if (ConfigFile != "" || ActiveProfile != "")
                 {
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
