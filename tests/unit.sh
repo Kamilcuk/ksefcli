@@ -1,0 +1,51 @@
+#!/bin/bash
+
+clitest_version() {
+	cli --version
+}
+
+clitest_help() {
+	cli --help
+}
+
+clitest_profile_cert() {
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_test >/dev/null
+}
+
+clitest_profile_token() {
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active token_test >/dev/null
+}
+
+clitest_profile_env_pw() {
+	TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" \
+		cli PrintConfig --active cert_env_password_test >/dev/null
+}
+
+clitest_profile_inline() {
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
+}
+
+clitest_help_uniewaznij() {
+	local output
+	output=$(cli UniewaznijCertyfikat --help)
+	L_unittest_cmd -I grep -q "Certificate serial number to revoke" <<<"$output"
+}
+
+clitest_help_wylistuj() {
+	local output
+	output=$(cli WylistujCertyfikaty --help)
+	L_unittest_cmd -I grep -q "Filter by certificate name" <<<"$output"
+}
+
+clitest_help_pobierz() {
+	local output
+	output=$(cli PobierzCertyfikat --help)
+	L_unittest_cmd -I grep -q "Certificate serial number to retrieve" <<<"$output"
+}
+
+clitest_help_nowy() {
+	local output
+	output=$(cli NowyCertyfikat --help)
+	L_unittest_cmd -I grep -q "Name for the new certificate" <<<"$output"
+}
+
