@@ -57,12 +57,13 @@ public abstract class IWithConfigCommand : IGlobalCommand
     {
         _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
         {
+            bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
+            bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) || !string.IsNullOrEmpty(CmdCertificateFile) || !string.IsNullOrEmpty(CmdPasswordEnv);
+
             bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
                                    !string.IsNullOrEmpty(CmdNip) ||
-                                   !string.IsNullOrEmpty(CmdToken) ||
-                                   !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
-                                   !string.IsNullOrEmpty(CmdCertificateFile) ||
-                                   !string.IsNullOrEmpty(CmdPasswordEnv);
+                                   isTokenAuth ||
+                                   isCertAuth;
 
             if (anyCmdOptionSet)
             {
@@ -70,9 +71,6 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 {
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
-
-                bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
-                bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) || !string.IsNullOrEmpty(CmdCertificateFile) || !string.IsNullOrEmpty(CmdPasswordEnv);
 
                 if (isTokenAuth && isCertAuth)
                 {
