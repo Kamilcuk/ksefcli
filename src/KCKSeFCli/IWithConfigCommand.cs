@@ -77,13 +77,13 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 {
                     throw new InvalidOperationException("Cannot use --token with certificate-related options (--private-key-file, --certificate-file, --password-env).");
                 }
-                if (CmdEnvironment is null || !string.IsNullOrEmpty(CmdEnvironment))
+                if (string.IsNullOrEmpty(CmdEnvironment))
                 {
                     throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
                 }
-                if (CmdNip is null || !string.IsNullOrEmpty(CmdNip))
+                if (string.IsNullOrEmpty(CmdNip))
                 {
-                    throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
+                    throw new InvalidOperationException("You have to use --nip is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
                 }
                 var profile = new ProfileConfig
                 {

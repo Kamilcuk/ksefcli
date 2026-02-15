@@ -58,7 +58,7 @@ public static class Authenticate
         do
         {
             status = await ksefClient.GetAuthStatusAsync(signature.ReferenceNumber, signature.AuthenticationToken.Token).ConfigureAwait(false);
-            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm:ss}");
+            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
@@ -118,7 +118,7 @@ public static class Authenticate
         do
         {
             status = await ksefClient.GetAuthStatusAsync(submission.ReferenceNumber, submission.AuthenticationToken.Token).ConfigureAwait(false);
-            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm:ss}");
+            Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
             if (status.Status.Code != 200)
             {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
