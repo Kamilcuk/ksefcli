@@ -95,6 +95,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             }
             else
             {
+#pragma warning disable CS8601
                 string actualConfigFileToLoad =
                     (!string.IsNullOrEmpty(ConfigFile) ? ConfigFile : null) ??
                     System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG") ??
@@ -104,6 +105,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                     (!string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : null) ??
                     System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE") ??
                     "";
+#pragma warning restore CS8601
 
                 var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
                 var profile = config.Profiles[config.ActiveProfile];
