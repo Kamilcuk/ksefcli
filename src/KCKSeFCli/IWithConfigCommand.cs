@@ -35,20 +35,8 @@ public abstract class IWithConfigCommand : IGlobalCommand
     [Option("environment", HelpText = "KSeF environment")]
     public string? CmdEnvironment { get; set; }
 
-    [Option("nip", HelpText = "Taxpayer NIP")]
-    public string? CmdNip { get; set; }
-
     [Option("token", HelpText = "Authentication token")]
     public string? CmdToken { get; set; }
-
-    [Option("private-key-file", HelpText = "Path to the private key file")]
-    public string? CmdPrivateKeyFile { get; set; }
-
-    [Option("certificate-file", HelpText = "Path to the certificate file")]
-    public string? CmdCertificateFile { get; set; }
-
-    [Option("password-env", HelpText = "Environment variable containing the password for the private key")]
-    public string? CmdPasswordEnv { get; set; }
 
     private readonly Lazy<ProfileConfigWithName> _cachedProfile;
     private readonly Lazy<TokenStore> _tokenStore;
@@ -57,14 +45,8 @@ public abstract class IWithConfigCommand : IGlobalCommand
     {
         _cachedProfile = new Lazy<ProfileConfigWithName>(() =>
         {
-            bool isTokenAuth = !string.IsNullOrEmpty(CmdToken);
-            bool isCertAuth = !string.IsNullOrEmpty(CmdPrivateKeyFile) ||
-            !string.IsNullOrEmpty(CmdCertificateFile) ||
-            !string.IsNullOrEmpty(CmdPasswordEnv);
             bool anyCmdOptionSet = !string.IsNullOrEmpty(CmdEnvironment) ||
-                                   !string.IsNullOrEmpty(CmdNip) ||
-                                   isTokenAuth ||
-                                   isCertAuth;
+                                   isTokenAuth;
 
             if (anyCmdOptionSet)
             {
@@ -73,29 +55,32 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 {
                     throw new InvalidOperationException("Cannot use --config or --active with command-line profile options.");
                 }
-                if (isTokenAuth && isCertAuth)
-                {
-                    throw new InvalidOperationException("Cannot use --token with certificate-related options (--private-key-file, --certificate-file, --password-env).");
-                }
                 if (string.IsNullOrEmpty(CmdEnvironment))
                 {
-                    throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
+                    throw new InvalidOperationException("You have to use --environment is specifying authentication on command line with --token).");
                 }
-                if (string.IsNullOrEmpty(CmdNip))
+
+                string? nipToUse = null;
+                if (!string.IsNullOrEmpty(CmdToken))
                 {
-                    throw new InvalidOperationException("You have to use --nip is specifying authentication on command line with --token or --private-key-file, --certificate-file, --password-env).");
+                    nipToUse = CheckNip.ExtractNipFromToken(CmdToken);
                 }
+
+                if (string.IsNullOrEmpty(nipToUse))
+                {
+                    throw new InvalidOperationException("You have to specify a token that contains nip.");
+                }
+
+                if (!CheckNip.IsNipValid(nipToUse))
+                {
+                    throw new InvalidOperationException($"Invalid NIP format: {nipToUse}");
+                }
+
                 var profile = new ProfileConfig
                 {
                     Environment = CmdEnvironment,
-                    Nip = CmdNip,
+                    Nip = nipToUse,
                     Token = CmdToken,
-                    Certificate = (string.IsNullOrEmpty(CmdCertificateFile) || string.IsNullOrEmpty(CmdPrivateKeyFile)) ? null : new CertificateConfig
-                    {
-                        Certificate = System.IO.File.ReadAllText(CmdCertificateFile),
-                        Private_Key = System.IO.File.ReadAllText(CmdPrivateKeyFile),
-                        Password = string.IsNullOrEmpty(CmdPasswordEnv) ? "" : System.Environment.GetEnvironmentVariable(CmdPasswordEnv) ?? "",
-                    }
                 };
                 return new ProfileConfigWithName(profile, "cmd");
             }
