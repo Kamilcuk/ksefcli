@@ -12,9 +12,21 @@ public class TokenStore
         public AuthenticationOperationStatusResponse Response { get; init; }
         public Data(AuthenticationOperationStatusResponse Response)
         {
-            if (Response is null) throw new Exception("Response is null");
-            if (Response.AccessToken is null) throw new Exception("Response.AccessToken is null");
-            if (Response.RefreshToken is null) throw new Exception("Response.RefreshToken is null");
+            if (Response is null)
+            {
+                throw new Exception("Response is null");
+            }
+
+            if (Response.AccessToken is null)
+            {
+                throw new Exception("Response.AccessToken is null");
+            }
+
+            if (Response.RefreshToken is null)
+            {
+                throw new Exception("Response.RefreshToken is null");
+            }
+
             this.Response = Response;
         }
     }

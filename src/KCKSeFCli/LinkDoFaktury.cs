@@ -26,7 +26,7 @@ public class LinkDoFakturyCommand : IWithConfigCommand
             throw new InvalidDataException("Invoice XML is missing the root element.");
         }
 
-        var podmiot1 = xmlDoc.Descendants() .FirstOrDefault(e => e.Name.LocalName == "Podmiot1") ?? throw new InvalidDataException("Could not find Podmiot1 in invoice XML.");
+        XElement podmiot1 = xmlDoc.Descendants().FirstOrDefault(e => e.Name.LocalName == "Podmiot1") ?? throw new InvalidDataException("Could not find Podmiot1 in invoice XML.");
 
         XNamespace ns = podmiot1.Name.Namespace;
 

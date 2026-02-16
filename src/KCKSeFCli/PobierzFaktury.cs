@@ -23,7 +23,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("useInvoiceNumber", HelpText = "Use InvoiceNumber instead of KsefNumber for the filename to save invoices.")]
     public bool UseInvoiceNumber { get; set; }
 
-    [Option("zapiszjson", HelpText="Zapisz metadane faktury w plik .json")]
+    [Option("zapiszjson", HelpText = "Zapisz metadane faktury w plik .json")]
     public bool ZapiszJson { get; set; }
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
@@ -47,7 +47,8 @@ public class PobierzFakturyCommand : SzukajFakturCommand
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
-            if (ZapiszJson) {
+            if (ZapiszJson)
+            {
                 await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
                 Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
             }
