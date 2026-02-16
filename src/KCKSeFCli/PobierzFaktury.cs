@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 
 using CommandLine;
 
@@ -22,6 +23,9 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("useInvoiceNumber", HelpText = "Use InvoiceNumber instead of KsefNumber for the filename to save invoices.")]
     public bool UseInvoiceNumber { get; set; }
 
+    [Option("zapiszjson", HelpText="Zapisz metadane faktury w plik .json")]
+    public bool ZapiszJson { get; set; }
+
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
         XML2PDFCommand.Runner? pdfRunner = null;
@@ -35,7 +39,6 @@ public class PobierzFakturyCommand : SzukajFakturCommand
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
 
-        string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
         List<InvoiceSummary> invoices = await base.SzukajFaktury(scope, ksefClient, cancellationToken).ConfigureAwait(false);
 
         foreach (InvoiceSummary invoiceSummary in invoices)
@@ -44,11 +47,15 @@ public class PobierzFakturyCommand : SzukajFakturCommand
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
-            await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
+            if (ZapiszJson) {
+                await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
+                Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
+            }
 
+            string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
             string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
 
-            await File.WriteAllTextAsync(xmlFilePath, invoiceXml, cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n", cancellationToken).ConfigureAwait(false);
 
             Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
