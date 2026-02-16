@@ -85,7 +85,7 @@ windows_build_mr:
   artifacts:
     expire_in: 1 week
 
-format_check:
+.format_check:
   stage: build
   image: mcr.microsoft.com/dotnet/sdk:10.0
   variables:
