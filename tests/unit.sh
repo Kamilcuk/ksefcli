@@ -28,28 +28,38 @@ clitest_profile_inline() {
 
 clitest_help_uniewaznij() {
 	local output
-	output=$(cli UniewaznijCertyfikat --help)
+	L_unittest_cmd -v output cli UniewaznijCertyfikat --help
 	L_unittest_cmd -I grep -q "Certificate serial number to revoke" <<<"$output"
 }
 
 clitest_help_wylistuj() {
 	local output
-	output=$(cli WylistujCertyfikaty --help)
+	L_unittest_cmd -v output cli WylistujCertyfikaty --help
 	L_unittest_cmd -I grep -q "Filter by certificate name" <<<"$output"
 }
 
 clitest_help_pobierz() {
 	local output
-	output=$(cli PobierzCertyfikat --help)
+	L_unittest_cmd -v output cli PobierzCertyfikat --help
 	L_unittest_cmd -I grep -q "Certificate serial number to retrieve" <<<"$output"
 }
 
 clitest_help_nowy() {
 	local output
-	output=$(cli NowyCertyfikat --help)
+	L_unittest_cmd -v output cli NowyCertyfikat --help
 	L_unittest_cmd -I grep -q "Name for the new certificate" <<<"$output"
 }
+
+clitest_cmd_token_test() {
+    local output
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output \
+		cli PrintConfig -a token_test
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output \
+		cli PrintConfig -a token_no_nip_test
+}
+
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/cmdauth.sh
 . "$DIR"/lib.sh "$@"
+testlib_main "$@"

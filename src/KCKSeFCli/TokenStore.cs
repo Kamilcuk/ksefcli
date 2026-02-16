@@ -12,9 +12,21 @@ public class TokenStore
         public AuthenticationOperationStatusResponse Response { get; init; }
         public Data(AuthenticationOperationStatusResponse Response)
         {
-            System.Diagnostics.Trace.Assert(Response is not null, "Response is not null");
-            System.Diagnostics.Trace.Assert(Response.AccessToken is not null, "Response.AccessToken is not null");
-            System.Diagnostics.Trace.Assert(Response.RefreshToken is not null, "Response.RefreshToken is not null");
+            if (Response is null)
+            {
+                throw new Exception("Response is null");
+            }
+
+            if (Response.AccessToken is null)
+            {
+                throw new Exception("Response.AccessToken is null");
+            }
+
+            if (Response.RefreshToken is null)
+            {
+                throw new Exception("Response.RefreshToken is null");
+            }
+
             this.Response = Response;
         }
     }
@@ -46,14 +58,6 @@ public class TokenStore
         Log.LogInformation($"Token store loaded from: {_path}");
     }
 
-    public static TokenStore Default()
-    {
-        string defaultPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".cache", "kcksefcli", "tokenstore.json");
-        return new TokenStore(defaultPath);
-    }
-
     private Dictionary<string, Data> LoadTokens(LockedFileStream lockFile)
     {
         if (lockFile.Fs.Length == 0)
@@ -71,7 +75,7 @@ public class TokenStore
         {
             return JsonSerializer.Deserialize<Dictionary<string, Data>>(data, _jsonOptions) ?? new Dictionary<string, Data>();
         }
-        catch (JsonException)
+        catch (Exception e) when (e is JsonException || e is Exception)
         {
             Log.LogWarning($"Invalid JSON in token cache file: {_path}. Overwriting with empty data.");
             lockFile.Fs.Seek(0, SeekOrigin.Begin);

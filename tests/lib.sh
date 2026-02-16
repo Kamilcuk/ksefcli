@@ -12,16 +12,22 @@ cli() {
 	L_logrun "${opt_exe[@]}" "$@"
 }
 
-testlib_main() {
-	# Download L_lib.sh library
-	if hash L_lib.sh 2>/dev/null; then
-		echo "Using L_lib.sh from PATH"
-		. L_lib.sh -s
-	else
-		echo "Downloading L_lib.sh"
-		curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
-		. "$DIR"/L_lib.sh -s
+pull_L_lib() {
+	if [[ ! -v L_LIB_VERSION ]]; then
+		# Download L_lib.sh library
+		if hash L_lib.sh 2>/dev/null; then
+			echo "Using L_lib.sh from PATH"
+			. L_lib.sh -s
+		else
+			echo "Downloading L_lib.sh"
+			curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
+			. "$DIR"/L_lib.sh -s
+		fi
 	fi
+}
+
+testlib_main() {
+	pull_L_lib
 
 	# Parse command line arguments
 	L_argparse dest_prefix=opt_ \
@@ -41,4 +47,19 @@ testlib_main() {
 	L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
 }
 
-testlib_main "$@"
+testlib_setup_integration_config() {
+	pull_L_lib
+	if [[ -z "${KCKSEFCLI_CONFIG:-}" ]]; then
+		local i
+		for i in "$DIR/../.git/KSEF/kcksefcli.yaml" "$DIR/../.git/kcksefcli.yaml"; do
+			if [[ -r "$i" ]]; then
+				export KCKSEFCLI_CONFIG="$(readlink -f "$i")"
+				break
+			fi
+		done
+	fi
+	L_assert "Could not find KCKSEFCLI for integration tests" test -n "${KCKSEFCLI_CONFIG:-}"
+	L_log "Using KCKSEFCLI_CONFIG=$KCKSEFCLI_CONFIG for integration tests"
+	return 0
+}
+

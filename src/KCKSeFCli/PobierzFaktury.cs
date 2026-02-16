@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 
 using CommandLine;
 
@@ -22,11 +23,15 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("useInvoiceNumber", HelpText = "Use InvoiceNumber instead of KsefNumber for the filename to save invoices.")]
     public bool UseInvoiceNumber { get; set; }
 
+    [Option("zapiszjson", HelpText = "Zapisz metadane faktury w plik .json")]
+    public bool ZapiszJson { get; set; }
+
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
+        XML2PDFCommand.Runner? pdfRunner = null;
         if (Pdf)
         {
-            XML2PDFCommand.AssertNpxExists();
+            pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         }
 
         Directory.CreateDirectory(OutputDir);
@@ -42,21 +47,26 @@ public class PobierzFakturyCommand : SzukajFakturCommand
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
-            await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
+            if (ZapiszJson)
+            {
+                await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
+                Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
+            }
 
-            string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, await GetAccessToken(scope, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+            string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
+            string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
 
-            await File.WriteAllTextAsync(xmlFilePath, invoiceXml, cancellationToken).ConfigureAwait(false);
+            await File.WriteAllTextAsync(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n", cancellationToken).ConfigureAwait(false);
 
-            Console.WriteLine($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
+            Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
             if (Pdf)
             {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
-                byte[] pdfContent = await XML2PDFCommand.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
+                byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
-                Console.WriteLine($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
+                Log.LogInformation($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
             }
         }
 

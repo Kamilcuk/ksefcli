@@ -85,7 +85,13 @@ public static class ConfigLoader
             }
             else
             {
-                resolvedProfiles[profileName] = profileConfig;
+                resolvedProfiles[profileName] = new ProfileConfig
+                {
+                    Certificate = null,
+                    Environment = profileConfig.Environment,
+                    Nip = !String.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : !String.IsNullOrEmpty(profileConfig.Token) ? CheckNip.ExtractNipFromToken(profileConfig.Token) : "",
+                    Token = profileConfig.Token,
+                };
             }
         }
 
@@ -125,6 +131,11 @@ public static class ConfigLoader
     {
         bool hasCert = profile.Certificate != null;
         bool hasToken = !string.IsNullOrWhiteSpace(profile.Token);
+
+        if (!string.IsNullOrEmpty(profile.Nip))
+        {
+            CheckNip.AssertNipIsValid(profile.Nip);
+        }
 
         if (hasCert == hasToken)
         {

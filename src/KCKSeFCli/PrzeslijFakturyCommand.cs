@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Xml.Linq;
 
 using CommandLine;
 
@@ -106,6 +107,12 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
+        XML2PDFCommand.Runner? pdfRunner = null;
+        if (UpoPdf)
+        {
+            pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
+        }
+
         IEnumerable<(string FileName, byte[] Content)> invoices = GetFilesWithContent(Pliki);
 
         string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
@@ -149,11 +156,11 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                     Log.LogInformation($"Pobieranie zbiorczego UPO: {upo.ReferenceNumber}");
                     string upoContent = await ksefClient.GetSessionUpoAsync(referenceNumber, upo.ReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
                     string upoPath = Path.Combine(UpoDir, $"uposesji-{upo.ReferenceNumber}.xml");
-                    await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
+                    await File.WriteAllTextAsync(upoPath, XDocument.Parse(upoContent).ToString() + "\n", cancellationToken).ConfigureAwait(false);
                     if (UpoPdf)
                     {
                         Log.LogInformation($"Generowanie PDF dla zbiorczego UPO: {upo.ReferenceNumber}");
-                        byte[] pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
                     }
                 }
@@ -177,11 +184,11 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                     Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefNumber}");
                     string upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
                     string upoPath = Path.Combine(UpoDir, $"upo-{invoice.KsefNumber}.xml");
-                    await File.WriteAllTextAsync(upoPath, upoContent, cancellationToken).ConfigureAwait(false);
+                    await File.WriteAllTextAsync(upoPath, XDocument.Parse(upoContent).ToString() + "\n", cancellationToken).ConfigureAwait(false);
                     if (UpoPdf)
                     {
                         Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefNumber}");
-                        byte[] pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
                     }
                 }

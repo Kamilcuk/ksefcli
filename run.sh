@@ -63,9 +63,14 @@ elif (( ${#opt_cmd[@]} == 0 )); then
   opt_cmd=(dotnet run --project src/KCKSeFCli --)
 fi
 
-maybe=$PWD/.git/KSEF/kcksefcli.yaml
-if [[ -r $maybe && ! -v KCKSEFCLI_CONFIG ]]; then
-  export KCKSEFCLI_CONFIG=$maybe
+if [[ ! -v KCKSEFCLI_CONFIG ]]; then
+  for i in .git/KSEF/kcksefcli.yaml .git/kcksefcli.yaml; do
+    if [[ -r $i ]]; then
+      export KCKSEFCLI_CONFIG=$i
+      echo "Using KCKSEFCLI_CONFIG=$i"
+      break
+    fi
+  done
 fi
 
 if (( $# )); then

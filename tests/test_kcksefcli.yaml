@@ -2,7 +2,7 @@ active_profile: cert_test
 profiles:
   cert_test:
     environment: test
-    nip: '1234567890'
+    nip: '5252611332'
     certificate:
       private_key_file: './my_private_key.pem'
       certificate_file: './my_certificate.pem'
@@ -11,16 +11,19 @@ profiles:
     environment: test
     nip: '9876543210'
     token: 'test_token_value'
+  token_no_nip_test:
+    environment: test
+    token: 'test_token_value|nip-5252611332|fdnsjfa'
   cert_env_password_test:
     environment: test
-    nip: '1122334455'
+    nip: '5252611332'
     certificate:
       private_key_file: './my_private_key.pem'
       certificate_file: './my_certificate.pem'
       password_env: 'TEST_PASSWORD_ENV'
   cert_inline_test:
     environment: test
-    nip: '2233445566'
+    nip: '5252611332'
     certificate:
       private_key: |-
         -----BEGIN PRIVATE KEY-----

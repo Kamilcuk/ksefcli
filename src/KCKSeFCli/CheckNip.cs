@@ -19,30 +19,27 @@ public static partial class CheckNip
         {
             throw new InvalidOperationException("You have to specify a token that contains nip.");
         }
-        if (!CheckNip.IsNipValid(nip))
-        {
-            throw new InvalidOperationException($"Invalid NIP format: {nip}");
-        }
+        CheckNip.AssertNipIsValid(nip);
         return nip;
 
     }
 
-    public static bool IsNipValid(string? nip)
+    public static void AssertNipIsValid(string? nip)
     {
         if (string.IsNullOrEmpty(nip))
         {
-            return false;
+            throw new ArgumentException("NIP cannot be null or empty.");
         }
         nip = nip.Replace("-", string.Empty).Trim();
         if (nip.Length != 10)
         {
-            return false;
+            throw new ArgumentException($"Invalid NIP length: {nip}. NIP must be 10 digits long.");
         }
         if (!long.TryParse(nip, out _))
         {
-            return false;
+            throw new ArgumentException($"Invalid NIP format: {nip}. NIP must be a number.");
         }
-        int[] weights = { 6, 5, 7, 2, 1, 4, 3, 10, 5, 0 };
+        int[] weights = { 6, 5, 7, 2, 3, 4, 5, 6, 7 };
         int sum = 0;
         for (int i = 0; i < 9; i++)
         {
@@ -51,8 +48,11 @@ public static partial class CheckNip
         int controlSum = sum % 11;
         if (controlSum == 10)
         {
-            return false;
+            throw new ArgumentException($"Invalid NIP control sum: {nip}.");
         }
-        return controlSum == (nip[9] - '0');
+        if (controlSum != (nip[9] - '0'))
+        {
+            throw new ArgumentException($"Invalid NIP control digit: {nip}.");
+        }
     }
 }
