@@ -34,7 +34,7 @@ clitest_z_integration_PrzeslijFaktury() {
 
 clitest_z_integration_PobierzFaktury_prod() {
 	L_with_cd_tmpdir
-	L_unittest_cmd -v output cli PobierzFaktury -a dyzio-prod --from 2026-02-05 --to 2026-02-05 -s Subject2 -o /tmp --pdf
+	L_unittest_cmd -v output cli PobierzFaktury -a dyzio-prod --from 2026-02-05 --to 2026-02-05 -s Subject2 -o /tmp --pdf --zapiszjson
 }
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
