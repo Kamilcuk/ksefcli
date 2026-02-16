@@ -45,7 +45,8 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
             await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
 
-            string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, await GetAccessToken(scope, cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+            string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
+            string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
 
             await File.WriteAllTextAsync(xmlFilePath, invoiceXml, cancellationToken).ConfigureAwait(false);
 
