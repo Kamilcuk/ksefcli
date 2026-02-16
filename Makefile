@@ -10,7 +10,10 @@ all: build
 S = src/KCKSeFCli
 SOURCES := $(shell find $(S) \( -path $(S)/obj -o -path $(S)/bin \) -prune -o \( -type f \( -name '*.cs' -o -name '*.csproj' \) -print \) )
 B = $(S)/obj
-$(B)/build: $(SOURCES)
+$(B)/init: ./.gitmodules
+	git submodule update --init --recursive
+	@mkdir -p $(dir $@) && touch $@
+$(B)/build: $(B)/init $(SOURCES)
 	dotnet build $(S)
 	@mkdir -p $(dir $@) && touch $@
 $(B)/format: $(SOURCES)
