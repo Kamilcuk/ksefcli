@@ -28,19 +28,19 @@ clitest_profile_inline() {
 
 clitest_help_uniewaznij() {
 	local output
-	output=$(cli UniewaznijCertyfikat --help)
+	L_unittest_cmd -v output cli UniewaznijCertyfikat --help
 	L_unittest_cmd -I grep -q "Certificate serial number to revoke" <<<"$output"
 }
 
 clitest_help_wylistuj() {
 	local output
-	output=$(cli WylistujCertyfikaty --help)
+	L_unittest_cmd -v output cli WylistujCertyfikaty --help
 	L_unittest_cmd -I grep -q "Filter by certificate name" <<<"$output"
 }
 
 clitest_help_pobierz() {
 	local output
-	output=$(cli PobierzCertyfikat --help)
+	L_unittest_cmd -v output cli PobierzCertyfikat --help
 	L_unittest_cmd -I grep -q "Certificate serial number to retrieve" <<<"$output"
 }
 
@@ -52,9 +52,9 @@ clitest_help_nowy() {
 
 clitest_cmd_token_test() {
     local output
-	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v ouptut \
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output \
 		cli PrintConfig -a token_test
-	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v ouptut \
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output \
 		cli PrintConfig -a token_no_nip_test
 }
 
