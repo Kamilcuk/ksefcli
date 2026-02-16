@@ -3,12 +3,11 @@
 # Test case: Command-line token authentication
 clitest_cmd_token_auth() {
     local output
-    L_unittest_cmd -v output cli PrintConfig --environment demo --token 'mytesttoken|nip-1234567890|123' --json
-    
+    L_unittest_cmd -v output cli PrintConfig --environment demo --token 'mytesttoken|nip-5252611332|123' --json
     L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .active_profile ".__cmd__" <<< "$output"
     L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .Environment "demo" <<< "$output"
-    L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .Nip "1234567890" <<< "$output"
-    L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .Token "mytesttoken|nip-1234567890|123" <<< "$output"
+    L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .Nip "5252611332" <<< "$output"
+    L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .Token "mytesttoken|nip-5252611332|123" <<< "$output"
     L_unittest_cmd -I "$DIR"/jq_sed.sh - compare .AuthMethod "1" <<< "$output"
 }
 

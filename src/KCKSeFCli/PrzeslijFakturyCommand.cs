@@ -106,6 +106,12 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
+        XML2PDFCommand.Runner? pdfRunner = null;
+        if (UpoPdf)
+        {
+            pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
+        }
+
         IEnumerable<(string FileName, byte[] Content)> invoices = GetFilesWithContent(Pliki);
 
         string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
@@ -153,7 +159,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                     if (UpoPdf)
                     {
                         Log.LogInformation($"Generowanie PDF dla zbiorczego UPO: {upo.ReferenceNumber}");
-                        byte[] pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
                     }
                 }
@@ -181,7 +187,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                     if (UpoPdf)
                     {
                         Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefNumber}");
-                        byte[] pdfContent = await XML2PDFCommand.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
                     }
                 }

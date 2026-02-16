@@ -46,10 +46,20 @@ clitest_help_pobierz() {
 
 clitest_help_nowy() {
 	local output
-	output=$(cli NowyCertyfikat --help)
+	L_unittest_cmd -v output cli NowyCertyfikat --help
 	L_unittest_cmd -I grep -q "Name for the new certificate" <<<"$output"
 }
+
+clitest_cmd_token_test() {
+    local output
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v ouptut \
+		cli PrintConfig -a token_test
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v ouptut \
+		cli PrintConfig -a token_no_nip_test
+}
+
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/cmdauth.sh
 . "$DIR"/lib.sh "$@"
+testlib_main "$@"

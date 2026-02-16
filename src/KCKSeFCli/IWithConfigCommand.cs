@@ -1,19 +1,12 @@
-using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
+using System.Globalization;
 
 using CommandLine;
 
-using System.Globalization;
-using KSeF.Client.Api.Builders.Auth;
-using KSeF.Client.Api.Services;
 using KSeF.Client.ClientFactory;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
-using KSeF.Client.Core.Models;
 using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.DI;
-using KSeF.Client.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -28,7 +21,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
     public string ActiveProfile { get; set; } = "";
 
     [Option("cache", HelpText = "Path to token cache file")]
-    public string TokenCache { get; set; } = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".cache", "kcksefcli", "tokenstore.json");
+    public string TokenCache { get; set; } = System.IO.Path.Combine(IGlobalCommand.CacheDir, "tokenstore.json");
 
     [Option("no-tokencache", HelpText = "Disable token cache usage")]
     public bool NoTokenCache { get; set; }
@@ -62,7 +55,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
                     throw new InvalidOperationException("You have to use --token is specifying authentication on command line with --environment.");
                 }
                 string nip = CheckNip.ExtractNipFromToken(CmdToken);
-                var profile = new ProfileConfig
+                ProfileConfig profile = new ProfileConfig
                 {
                     Environment = CmdEnvironment,
                     Nip = nip,
@@ -73,7 +66,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
             else
             {
                 // Resolve config from file
-                string configFileDefault = System.IO.Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile), ".config", "kcksefcli", "kcksefcli.yaml");
+                string configFileDefault = Path.Combine(IGlobalCommand.ConfigDir, "kcksefcli.yaml");
                 string? configEnv = System.Environment.GetEnvironmentVariable("KCKSEFCLI_CONFIG");
                 string actualConfigFileToLoad = !string.IsNullOrEmpty(ConfigFile) ? ConfigFile : !string.IsNullOrEmpty(configEnv) ? configEnv : configFileDefault;
 
@@ -81,8 +74,8 @@ public abstract class IWithConfigCommand : IGlobalCommand
                 string actualActiveProfileToLoad = !string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : !string.IsNullOrEmpty(profileEnv) ? profileEnv : "";
 
                 Log.LogInformation($"Loading config from {actualConfigFileToLoad} with active={actualActiveProfileToLoad}");
-                var config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
-                var profile = config.Profiles[config.ActiveProfile];
+                KCKSeFCliConfig config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
+                ProfileConfig profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
         });
@@ -95,7 +88,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public TokenStore.Key GetTokenStoreKey()
     {
-        var config = Config();
+        ProfileConfigWithName config = Config();
         return new TokenStore.Key(config.Name, config);
     }
 
@@ -114,7 +107,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public async Task<AuthenticationOperationStatusResponse> Auth(IServiceScope scope, CancellationToken cancellationToken)
     {
-        var config = Config();
+        ProfileConfigWithName config = Config();
         AuthenticationOperationStatusResponse response = config.AuthMethod switch
         {
             AuthMethod.KsefToken => await Authenticate.TokenAuth(config, scope, GetCryptographicService, cancellationToken).ConfigureAwait(false),
@@ -177,7 +170,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     private IServiceScope GetScope()
     {
-        var config = Config();
+        ProfileConfigWithName config = Config();
         IServiceCollection services = new ServiceCollection();
         KSeF.Client.ClientFactory.Environment environment = config.Environment.ToUpper() switch
         {

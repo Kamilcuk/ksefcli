@@ -41,4 +41,18 @@ testlib_main() {
 	L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
 }
 
-testlib_main "$@"
+testlib_setup_integration_config() {
+	if [[ -z "${KCKSEFCLI_CONFIG:-}" ]]; then
+		local i
+		for i in "$DIR/../.git/KSEF/kcksefcli.yaml" "$DIR/../.git/kcksefcli.yaml"; do
+			if [[ -r "$i" ]]; then
+				export KCKSEFCLI_CONFIG="$(readlink -f "$i")"
+				break
+			fi
+		done
+	fi
+	L_assert "Could not find KCKSEFCLI for integration tests" test -n "${KCKSEFCLI_CONFIG:-}"
+	L_log "Using KCKSEFCLI_CONFIG=$KCKSEFCLI_CONFIG for integration tests"
+	return 0
+}
+

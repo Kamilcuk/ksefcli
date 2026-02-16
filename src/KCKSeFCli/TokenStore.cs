@@ -46,14 +46,6 @@ public class TokenStore
         Log.LogInformation($"Token store loaded from: {_path}");
     }
 
-    public static TokenStore Default()
-    {
-        string defaultPath = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".cache", "kcksefcli", "tokenstore.json");
-        return new TokenStore(defaultPath);
-    }
-
     private Dictionary<string, Data> LoadTokens(LockedFileStream lockFile)
     {
         if (lockFile.Fs.Length == 0)

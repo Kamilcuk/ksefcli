@@ -24,9 +24,10 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
+        XML2PDFCommand.Runner? pdfRunner = null;
         if (Pdf)
         {
-            XML2PDFCommand.AssertNpxExists();
+            pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         }
 
         Directory.CreateDirectory(OutputDir);
@@ -53,7 +54,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
             if (Pdf)
             {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
-                byte[] pdfContent = await XML2PDFCommand.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
+                byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
                 Console.WriteLine($"Saved PDF for {xmlFilePath} to {outputPdfPath}");

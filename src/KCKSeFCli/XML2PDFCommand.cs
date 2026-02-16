@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using CommandLine;
 
 namespace KCKSeFCli;
@@ -51,7 +53,9 @@ public class XML2PDFCommand : IGlobalCommand
         }
 
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCode, cancellationToken).ConfigureAwait(false);
+
+        Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
+        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCode, cancellationToken).ConfigureAwait(false);
 
         await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
 
@@ -60,44 +64,99 @@ public class XML2PDFCommand : IGlobalCommand
         return 0;
     }
 
-    public static async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCode, CancellationToken cancellationToken)
+    public class Runner
     {
-        AssertNpxExists();
-        using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
-        await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
-        using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
-        string scriptPath = Path.Combine(AppContext.BaseDirectory, "run-pdf-generator.mjs");
-        List<string> commandArgs = new() { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator", upo ? "upo" : "invoice", tempXml.Path, tempPdf.Path };
+        private readonly string[] _command;
 
-        System.Collections.Generic.Dictionary<string, string> options = new();
-        if (!string.IsNullOrEmpty(nrKSeF))
+        internal Runner(string[] command)
         {
-            options.Add("nrKSeF", nrKSeF);
-        }
-        if (!string.IsNullOrEmpty(qrCode))
-        {
-            options.Add("qrCode", qrCode);
+            _command = command;
         }
 
-        if (options.Count > 0)
+        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCode, CancellationToken cancellationToken)
         {
-            commandArgs.Add(System.Text.Json.JsonSerializer.Serialize(options));
-        }
+            using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
+            await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
+            using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
 
-        Subprocess nodeScript = new(
-            CommandAndArgs: commandArgs.ToArray(),
-            Quiet: quiet
-        );
-        await nodeScript.CheckCallAsync(cancellationToken).ConfigureAwait(false);
-        byte[] pdfBytes = await File.ReadAllBytesAsync(tempPdf.Path, cancellationToken).ConfigureAwait(false);
-        return pdfBytes;
+            List<string> commandArgs = new(_command);
+            commandArgs.AddRange(new[] { upo ? "upo" : "invoice", tempXml.Path, tempPdf.Path });
+
+            System.Collections.Generic.Dictionary<string, string> options = new();
+            if (!string.IsNullOrEmpty(nrKSeF))
+            {
+                options.Add("nrKSeF", nrKSeF);
+            }
+            if (!string.IsNullOrEmpty(qrCode))
+            {
+                options.Add("qrCode", qrCode);
+            }
+
+            if (options.Count > 0)
+            {
+                commandArgs.Add(System.Text.Json.JsonSerializer.Serialize(options));
+            }
+
+            Subprocess nodeScript = new(
+                CommandAndArgs: commandArgs.ToArray(),
+                Quiet: quiet
+            );
+            await nodeScript.CheckCallAsync(cancellationToken).ConfigureAwait(false);
+            byte[] pdfBytes = await File.ReadAllBytesAsync(tempPdf.Path, cancellationToken).ConfigureAwait(false);
+            return pdfBytes;
+        }
     }
 
-    public static void AssertNpxExists()
+    private static void AssertNpxExists()
     {
         if (!Subprocess.CheckCommandExists("npx"))
         {
             throw new InvalidOperationException("Command `npx` not found. Please install Node.js and npm to use this functionality.");
         }
+    }
+
+    public static async Task<Runner> GetRunner(CancellationToken cancellationToken)
+    {
+        string? url = null;
+        string? fileName = null;
+
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+        {
+            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.0.0/ksef-pdf-generator-linux";
+            fileName = "ksef-pdf-generator-linux";
+        }
+        else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+        {
+            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.0.0/ksef-pdf-generator-win.exe";
+            fileName = "ksef-pdf-generator-win.exe";
+        }
+
+        string[] runnerCommand;
+
+        if (url is null || fileName is null)
+        {
+            AssertNpxExists();
+            runnerCommand = new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator" };
+        }
+        else
+        {
+            Directory.CreateDirectory(IGlobalCommand.CacheDir);
+            string destinationPath = Path.Combine(IGlobalCommand.CacheDir, fileName);
+
+            await Downloader.DownloadFileWithTimestampCheckAsync(url, destinationPath, cancellationToken).ConfigureAwait(false);
+
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
+            {
+                Process p = new System.Diagnostics.Process
+                {
+                    StartInfo = { FileName = "chmod", Arguments = $"+x \"{destinationPath}\"" }
+                };
+                p.Start();
+                await p.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            runnerCommand = new[] { destinationPath };
+        }
+
+        return new Runner(runnerCommand);
     }
 }
