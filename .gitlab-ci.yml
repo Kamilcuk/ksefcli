@@ -61,18 +61,6 @@ secret_detection:
     paths:
       - kcksefcli.exe
 
-linux_build_main:
-  extends: [.build_linux_base, .build_main]
-
-linux_build_mr:
-  extends: [.build_linux_base, .build_mr]
-
-windows_build_main:
-  extends: [.build_windows_base, .build_main]
-
-windows_build_mr:
-  extends: [.build_windows_base, .build_mr]
-
 .build_main:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -95,3 +83,29 @@ windows_build_mr:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     - if: $CI_MERGE_REQUEST_IID
+
+.integration_tests:
+  stage: test
+  image: busybox
+  script:
+    - ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
+  environment:
+    name: integration_tests
+
+###############################################################################
+
+linux_build_main:
+  extends: [.build_main, .build_linux_base]
+windows_build_main:
+  extends: [.build_main, .build_windows_base]
+integration_tests_main:
+  extends: [.build_main, .integration_tests]
+  needs: [linux_build_main]
+
+linux_build_mr:
+  extends: [.build_mr, .build_linux_base]
+windows_build_mr:
+  extends: [.build_mr, .build_windows_base]
+integration_tests_mr:
+  extends: [.build_mr, .integration_tests]
+  needs: [linux_build_mr]
