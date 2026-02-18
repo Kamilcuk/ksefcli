@@ -76,3 +76,5 @@ ksefcli.yaml
 *.env
 *.ksefcli.yaml
 openapi.json
+secrets
+secret
