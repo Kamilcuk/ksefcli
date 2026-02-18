@@ -1,62 +1,99 @@
-using System.Diagnostics;
 using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
+using HumanDateParser;
 
 namespace KCKSeFCli;
 
 public static class ParseDate
 {
-    public static async Task<DateTime> Parse(string dateString)
+    private static DateTime? ParseRelativeDate(string dateString)
     {
-        // Try parsing using standard C# DateTime.Parse
+        var regex = new Regex(@"^-(?<number>\d+)(?<unit>day|days|dzien|dzień|dni|week|weeks|tydzień|tygodni)$", RegexOptions.IgnoreCase);
+        var match = regex.Match(dateString);
+        if (match.Success)
+        {
+            int number = int.Parse(match.Groups["number"].Value);
+            string unit = match.Groups["unit"].Value.ToLower();
+
+            DateTime baseDate = DateTime.Now;
+            DateTime calculatedDate;
+
+            if (unit == "day" || unit == "days" || unit == "dzien" || unit == "dzień" || unit == "dni")
+            {
+                calculatedDate = baseDate.AddDays(-number);
+                Log.LogDebug($"Parsed '{dateString}' using Regex (days): {calculatedDate}");
+                return calculatedDate;
+            }
+            else if (unit == "week" || unit == "weeks" || unit == "tydzień" || unit == "tygodni")
+            {
+                calculatedDate = baseDate.AddDays(-number * 7);
+                Log.LogDebug($"Parsed '{dateString}' using Regex (weeks): {calculatedDate}");
+                return calculatedDate;
+            }
+        }
+        return null;
+    }
+
+    public static async Task<DateTime> Parse(string dateString, CancellationToken cancellationToken)
+    {
+        // 1. Try parsing using standard C# DateTime.Parse
         if (DateTime.TryParse(dateString, out DateTime result))
         {
+            Log.LogDebug($"Parsed '{dateString}' using DateTime.TryParse: {result}");
             return result;
         }
 
         // Try parsing with specific formats if standard parsing fails
         string[] formats = {
-            "yyyy-MM-dd",
-            "yyyy-MM-dd HH:mm:ss",
-            "dd-MM-yyyy",
-            "dd-MM-yyyy HH:mm:ss",
-            "yyyy/MM/dd",
-            "yyyy/MM/dd HH:mm:ss"
+            "yyyy-MM-dd", "yyyy-MM-dd HH:mm:ss", "dd-MM-yyyy", "dd-MM-yyyy HH:mm:ss",
+            "yyyy/MM/dd", "yyyy/MM/dd HH:mm:ss"
         };
         if (DateTime.TryParseExact(dateString, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out result))
         {
+            Log.LogDebug($"Parsed '{dateString}' using DateTime.TryParseExact: {result}");
             return result;
         }
 
-        // If C# parsing fails, try using the 'date' shell command for relative dates
+        // 2. Parse relative dates
+        DateTime? relativeDate = ParseRelativeDate(dateString);
+        if (relativeDate.HasValue)
+        {
+            return relativeDate.Value;
+        }
+
+        // 3. Use HumanDateParser
         try
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo
-            {
-                FileName = "date",
-                Arguments = $@"-d ""{dateString}"" +%s",
-                RedirectStandardOutput = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
+            var parsed = DateParser.Parse(dateString);
+            Log.LogDebug($"Parsed '{dateString}' using HumanDateParser: {parsed}");
+            return parsed;
+        }
+        catch
+        {
+            // HumanDateParser failed, proceed to fallback
+        }
 
-            using Process process = Process.Start(startInfo) ?? throw new InvalidOperationException("Failed to start date process.");
-            await process.WaitForExitAsync().ConfigureAwait(false);
-
-            if (process.StandardOutput is null)
+        // 4. Fallback to running GNU date
+        try
+        {
+            var cmd = new[] { "date", "-d", dateString, "+%s.%N" }; 
+            var subprocess = new Subprocess(CommandAndArgs: cmd, Quiet: true);
+            byte[] outputBytes = await subprocess.CheckOutputAsync(cancellationToken).ConfigureAwait(false);
+            string output = Encoding.UTF8.GetString(outputBytes).Trim();
+            
+            if (double.TryParse(output, NumberStyles.Float, CultureInfo.InvariantCulture, out double unixTimestampSeconds))
             {
-                throw new InvalidOperationException("Failed to access StandardOutput from date process.");
-            }
-            string output = await process.StandardOutput.ReadToEndAsync().ConfigureAwait(false);
-            if (long.TryParse(output.Trim(), out long unixTimestamp))
-            {
-                DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds(unixTimestamp);
-                return dateTimeOffset.LocalDateTime; // Convert to local time
+                DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds((long)unixTimestampSeconds);
+                dateTimeOffset = dateTimeOffset.AddSeconds(unixTimestampSeconds - (long)unixTimestampSeconds);
+                result = dateTimeOffset.ToLocalTime().DateTime; // Explicitly convert to local time
+                Log.LogDebug($"Parsed '{dateString}' using GNU date: {result}");
+                return result;
             }
         }
         catch (Exception ex)
         {
-            // Log or handle the exception if shell command execution fails
-            Console.Error.WriteLine($"Error parsing date with shell command: {ex.Message}");
+            Log.LogDebug($"GNU date fallback failed for '{dateString}': {ex.Message}");
         }
 
         throw new FormatException($"Could not parse date string: {dateString}");

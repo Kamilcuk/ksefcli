@@ -69,7 +69,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand
             .WithCertificateName(CertificateName)
             .WithCertificateType(type)
             .WithCsr(csrBase64)
-            .WithValidFrom(string.IsNullOrEmpty(ValidFrom) ? DateTimeOffset.UtcNow : await ParseDate.Parse(ValidFrom).ConfigureAwait(false))
+            .WithValidFrom(string.IsNullOrEmpty(ValidFrom) ? DateTimeOffset.UtcNow : await ParseDate.Parse(ValidFrom, cancellationToken).ConfigureAwait(false))
             .Build();
 
         CertificateEnrollmentResponse enrollmentResponse = await ksefClient.SendCertificateEnrollmentAsync(sendRequest, accessToken, cancellationToken).ConfigureAwait(false);

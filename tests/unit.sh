@@ -62,4 +62,5 @@ clitest_cmd_token_test() {
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/cmdauth.sh
 . "$DIR"/lib.sh "$@"
+. "$DIR"/test_parsedate.sh
 testlib_main "$@"

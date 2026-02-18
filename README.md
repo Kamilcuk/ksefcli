@@ -25,6 +25,18 @@
   - [`LinkDoFaktury`](#linkdofaktury)
   - [`QRDoFaktury`](#qrdofaktury)
   - [`XML2PDF`](#xml2pdf)
+  - [`PrintConfig`](#printconfig)
+  - [`SelfUpdate`](#selfupdate)
+  - [`NowyCertyfikat`](#nowycertyfikat)
+  - [`ParseDate`](#parsedate)
+  - [`PobierzCertyfikat`](#pobierzcertyfikat)
+  - [`UniewaznijCertyfikat`](#uniewaznijcertyfikat)
+  - [`WylistujCertyfikaty`](#wylistujcertyfikaty)
+  - [`SprawdzLimitCertyfikatow`](#sprawdzlimitcertyfikatow)
+  - [`QRWeryfikacjiFaktury`](#qrweryfikacjifaktury)
+  - [`WystawFaktureOffline`](#wystawfaktureoffline)
+  - [`PokazLimity`](#pokazlimity)
+  - [`LinkWeryfikacjiFaktury`](#linkweryfikacjifaktury)
 - [Rozwój](#rozwój)
 - [Uwierzytelnianie w KSeF](#uwierzytelnianie-w-ksef)
 - [Autor i Licencja](#autor-i-licencja)
@@ -267,8 +279,8 @@ kcksefcli SzukajFaktur --from "-7days" --subjectType Subject2
 | Opcja                                   | Opis                                                                                                                                     | Domyślnie    | Wymagane |
 |-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|--------------|----------|
 | `-s`, `--subjectType`                   | Typ podmiotu dla kryteriów filtrowania. Możliwe wartości: `Subject1` (sprzedawca), `Subject2` (nabywca), `Subject3`, `SubjectAuthorized`. | `Subject1`   | Tak      |
-| `--from`                                | Data początkowa. Może być datą (np. `2023-01-01`) lub datą względną (np. `-2days`, `'last monday'`).                                       |              | Tak      |
-| `--to`                                  | Data końcowa. Może być datą (np. `2023-01-31`) lub datą względną (np. `today`, `-1day`).                                                   |              | Nie      |
+| `--from`                                | Data początkowa. Szczegóły formatu daty: zobacz [ParseDate](#parsedate).                                       |              | Tak      |
+| `--to`                                  | Data końcowa. Szczegóły formatu daty: zobacz [ParseDate](#parsedate).                                                   |              | Nie      |
 | `--dateType`                            | Typ daty używany w zakresie dat. Możliwe wartości: `Issue`, `Invoicing`, `PermanentStorage`.                                               | `Issue`      | Tak      |
 | `--pageOffset`                          | Przesunięcie strony dla paginacji.                                                                                                       | `0`          | Nie      |
 | `--pageSize`                            | Rozmiar strony dla paginacji.                                                                                                            | `10`         | Nie      |
@@ -302,11 +314,14 @@ kcksefcli PobierzFaktury --from "-7days" --subjectType Subject2 -o /tmp/faktury 
 **Opcje:**
 To polecenie akceptuje wszystkie opcje z `SzukajFaktur` oraz dodatkowo:
 
-| Opcja                | Opis                                                            | Wymagane |
-|----------------------|-----------------------------------------------------------------|----------|
-| `-o`, `--outputdir`  | Katalog wyjściowy do zapisania faktur.                          | Tak      |
-| `-p`, `--pdf`        | Zapisz również wersję PDF faktury.                              | Nie      |
-| `--useInvoiceNumber` | Użyj `InvoiceNumber` zamiast `KsefNumber` jako nazwy pliku.     | Nie      |
+| Opcja                  | Opis                                                            | Wymagane | Domyślnie |
+|------------------------|-----------------------------------------------------------------|----------|-----------|
+| `-o`, `--outputdir`    | Katalog wyjściowy do zapisania faktur.                          | Tak      |           |
+| `-p`, `--pdf`          | Zapisz również wersję PDF faktury.                              | Nie      |           |
+| `--useInvoiceNumber`   | Użyj `InvoiceNumber` zamiast `KsefNumber` jako nazwy pliku.     | Nie      |           |
+| `--zapiszjson`         | Zapisz metadane faktury w plik .json.                           | Nie      |           |
+| `--retry-attempts`     | Liczba ponownych prób przy limicie zapytań.                     | Nie      | 5         |
+| `--no-local-rate-limit`| Wyłącza lokalny limit zapytań.                                  | Nie      |           |
 
 ---
 
@@ -332,6 +347,7 @@ kcksefcli PrzeslijFaktury faktura1.xml faktura2.xml --upodir /tmp/upo --upopdf
 | `-u`, `--upodir`   | Katalog do zapisu plików UPO.                       | Nie      |
 | `--upopdf`         | Konwertuje UPO od razu na format PDF.               | Nie      |
 | `--uposesji`       | Zapisuje UPO sesji (zbiorcze UPO).                  | Nie      |
+| `--offlinemode`    | Ustawia tryb offline dla sesji.                     | Nie      |
 
 ---
 
@@ -426,6 +442,207 @@ kcksefcli XML2PDF faktura.xml faktura.pdf
 |---------------|-----------------------------|----------|
 | `input-file`  | Wejściowy plik XML.         | Tak      |
 | `output-file` | Wyjściowy plik PDF.         | Nie      |
+
+**Opcje:**
+
+| Opcja       | Opis                                     |
+|-------------|------------------------------------------|
+| `--upo`     | Użyj szablonu UPO.                       |
+| `--nrKSeF`  | Numer KSeF faktury do osadzenia w PDF.   |
+| `--qrCode`  | URL kodu QR do osadzenia w PDF.          |
+| `--qrCode2` | Drugi URL kodu QR do osadzenia w PDF.    |
+
+---
+
+### `ParseDate`
+
+Parsuje ciąg znaków daty i wypisuje go w formacie ISO 8601 lub jako liczbę sekund od epoki Uniksa.
+
+Kolejność parsowania:
+1.  Standardowe parsowanie C# (`DateTime.TryParse`, `DateTime.TryParseExact`).
+2.  Względne daty w formacie `-<liczba>(day|days|dzien|dzień|dni|week|weeks|tydzień|tygodni)`.
+3.  Biblioteka `HumanDateParser` (np. `1 month ago`).
+4.  Narzędzie systemowe GNU `date` (fallback).
+
+**Użycie:**
+```bash
+kcksefcli ParseDate "<ciąg-daty>" [--seconds]
+```
+
+**Przykłady użycia:**
+```bash
+$ kcksefcli ParseDate "2024-01-02"
+2024-01-02T00:00:00.000000
+$ kcksefcli ParseDate "-1week"
+2024-02-11T10:30:00.000000
+$ kcksefcli ParseDate "yesterday" --seconds
+1708137600.000000
+```
+
+**Argumenty:**
+
+| Argument        | Opis                               | Wymagane |
+|-----------------|------------------------------------|----------|
+| `dateString`    | Ciąg znaków daty do sparsowania.   | Tak      |
+
+**Opcje:**
+
+| Opcja       | Opis                                                 |
+|-------------|------------------------------------------------------|
+| `--seconds` | Wypisuje zmiennoprzecinkową liczbę sekund od epoki Uniksa. |
+
+---
+
+### `PobierzCertyfikat`
+
+Pobiera treść certyfikatu KSeF na podstawie numeru seryjnego.
+
+**Użycie:**
+```bash
+kcksefcli PobierzCertyfikat <numer-seryjny>
+```
+
+**Argumenty:**
+
+| Argument        | Opis                                      | Wymagane |
+|-----------------|-------------------------------------------|----------|
+| `numer-seryjny` | Numer seryjny certyfikatu.                | Tak      |
+
+**Opcje:**
+
+| Opcja               | Opis                                 |
+|---------------------|--------------------------------------|
+| `-o`, `--outputFile`| Ścieżka zapisu certyfikatu.          |
+
+---
+
+### `UniewaznijCertyfikat`
+
+Unieważnia certyfikat KSeF.
+
+**Użycie:**
+```bash
+kcksefcli UniewaznijCertyfikat <numer-seryjny>
+```
+
+**Argumenty:**
+
+| Argument        | Opis                                      | Wymagane |
+|-----------------|-------------------------------------------|----------|
+| `numer-seryjny` | Numer seryjny certyfikatu.                | Tak      |
+
+**Opcje:**
+
+| Opcja      | Opis                                                                                                          | Domyślnie |
+|------------|---------------------------------------------------------------------------------------------------------------|-----------|
+| `--reason` | Powód unieważnienia: `KeyCompromise`, `AffiliationChanged`, `Superseded`, `CessationOfOperation`, `Other`.    | `Other`   |
+
+---
+
+### `WylistujCertyfikaty`
+
+Listuje metadane certyfikatów KSeF.
+
+**Użycie:**
+```bash
+kcksefcli WylistujCertyfikaty
+```
+
+**Opcje:**
+
+| Opcja            | Opis                                      |
+|------------------|-------------------------------------------|
+| `--name`         | Filtrowanie po nazwie certyfikatu.        |
+| `--serialNumber` | Filtrowanie po numerze seryjnym.          |
+
+---
+
+### `SprawdzLimitCertyfikatow`
+
+Sprawdza dostępne limity certyfikatów.
+
+**Użycie:**
+```bash
+kcksefcli SprawdzLimitCertyfikatow
+```
+
+---
+
+### `QRWeryfikacjiFaktury`
+
+Generuje kod QR weryfikacyjny (KOD II) dla faktury i zapisuje go do pliku.
+
+**Użycie:**
+```bash
+kcksefcli QRWeryfikacjiFaktury faktura.xml kod.png
+```
+
+**Argumenty:**
+
+| Argument      | Opis                                   | Wymagane |
+|---------------|----------------------------------------|----------|
+| `InputFile`   | Ścieżka do pliku XML z fakturą.        | Tak      |
+| `OutputPath`  | Ścieżka wyjściowa dla pliku QR (np. jpg). | Tak      |
+
+**Opcje:**
+
+| Opcja            | Opis                           | Domyślnie |
+|------------------|--------------------------------|-----------|
+| `-p`, `--pixels` | Piksele na moduł dla kodu QR.  | `5`       |
+
+---
+
+### `WystawFaktureOffline`
+
+Konwertuje fakturę KSeF XML na PDF, dodając kod QR weryfikacji offline (KOD II).
+
+**Użycie:**
+```bash
+kcksefcli WystawFaktureOffline faktura.xml faktura.pdf
+```
+
+**Argumenty:**
+
+| Argument      | Opis                                   | Wymagane |
+|---------------|----------------------------------------|----------|
+| `InputFile`   | Ścieżka do pliku XML z fakturą.        | Tak      |
+| `OutputFile`  | Ścieżka wyjściowa dla pliku PDF.       | Nie      |
+
+**Opcje:**
+
+| Opcja      | Opis                                     |
+|------------|------------------------------------------|
+| `--nrKSeF` | Numer KSeF faktury do osadzenia w PDF.   |
+
+---
+
+### `PokazLimity`
+
+Pokazuje limity dla bieżącego kontekstu, podmiotu oraz status uprawnień do załączników.
+
+**Użycie:**
+```bash
+kcksefcli PokazLimity
+```
+
+---
+
+### `LinkWeryfikacjiFaktury`
+
+Generuje link weryfikacji faktury (KOD II).
+
+**Użycie:**
+```bash
+kcksefcli LinkWeryfikacjiFaktury faktura.xml
+```
+
+**Argumenty:**
+
+| Argument   | Opis                             | Wymagane |
+|------------|----------------------------------|----------|
+| `FilePath` | Ścieżka do pliku XML z fakturą.  | Tak      |
+
+
 
 ## Rozwój
 

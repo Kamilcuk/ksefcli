@@ -8,6 +8,7 @@
     <AssemblyName>kcksefcli</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="HumanDateParser" Version="1.1.0" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux">
       <Version>*</Version>
       <IncludeAssets>none</IncludeAssets>

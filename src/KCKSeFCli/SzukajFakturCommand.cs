@@ -171,11 +171,11 @@ public class SzukajFakturCommand : IWithConfigCommand
             throw new InvalidEnumArgumentException($"Invalid DateType: {settings.DateType}");
         }
 
-        DateTime parsedFromDate = await ParseDate.Parse(settings.From).ConfigureAwait(false);
+        DateTime parsedFromDate = await ParseDate.Parse(settings.From, cancellationToken).ConfigureAwait(false);
         DateTime? parsedToDate = null;
         if (settings.To is not null)
         {
-            parsedToDate = await ParseDate.Parse(settings.To).ConfigureAwait(false);
+            parsedToDate = await ParseDate.Parse(settings.To, cancellationToken).ConfigureAwait(false);
         }
 
         InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters

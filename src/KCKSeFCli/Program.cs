@@ -23,6 +23,7 @@ public class Program
             typeof(LinkDoFakturyCommand),
             typeof(LinkWeryfikacjiFaktury),
             typeof(NowyCertyfikatCommand),
+            typeof(ParseDateCommand),
             typeof(PobierzCertyfikatCommand),
             typeof(PobierzFakturyCommand),
             typeof(PokazLimityCommand),
