@@ -86,7 +86,7 @@ secret_detection:
 
 .integration_tests:
   stage: test
-  image: busybox
+  image: bash:5.0
   script:
     - ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
   environment:
