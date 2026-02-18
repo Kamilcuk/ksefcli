@@ -11,7 +11,6 @@ using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace KCKSeFCli;
 

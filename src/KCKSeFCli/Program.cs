@@ -16,24 +16,25 @@ public class Program
         });
 
         ParserResult<object> result = parser.ParseArguments(args,
+            typeof(AuthCommand),
+            typeof(CertAuthCommand),
             typeof(GetFakturaCommand),
+            typeof(LinkDoFakturyCommand),
+            typeof(LinkWeryfikacjiFaktury),
+            typeof(NowyCertyfikatCommand),
+            typeof(PobierzCertyfikatCommand),
+            typeof(PobierzFakturyCommand),
+            typeof(PrintConfigCommand),
+            typeof(PrzeslijFakturyCommand),
+            typeof(QRDoFakturyCommand),
+            typeof(SelfUpdateCommand),
+            typeof(SprawdzLimitCertyfikatowCommand),
             typeof(SzukajFakturCommand),
             typeof(TokenAuthCommand),
             typeof(TokenRefreshCommand),
-            typeof(CertAuthCommand),
-            typeof(AuthCommand),
-            typeof(PrzeslijFakturyCommand),
-            typeof(PobierzFakturyCommand),
-            typeof(LinkDoFakturyCommand),
-            typeof(QRDoFakturyCommand),
-            typeof(XML2PDFCommand),
-            typeof(SelfUpdateCommand),
-            typeof(PrintConfigCommand),
-            typeof(SprawdzLimitCertyfikatowCommand),
             typeof(UniewaznijCertyfikatCommand),
             typeof(WylistujCertyfikatyCommand),
-            typeof(PobierzCertyfikatCommand),
-            typeof(NowyCertyfikatCommand)
+            typeof(XML2PDFCommand)
         );
 
         CancellationTokenSource cts = new CancellationTokenSource();
