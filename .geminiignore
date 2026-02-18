@@ -1,0 +1,4 @@
+.git/*
+secret*
+secrets*
+.env*

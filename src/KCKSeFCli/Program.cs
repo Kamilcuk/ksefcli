@@ -25,6 +25,7 @@ public class Program
             typeof(NowyCertyfikatCommand),
             typeof(PobierzCertyfikatCommand),
             typeof(PobierzFakturyCommand),
+            typeof(PokazLimityCommand),
             typeof(PrintConfigCommand),
             typeof(PrzeslijFakturyCommand),
             typeof(QRDoFakturyCommand),

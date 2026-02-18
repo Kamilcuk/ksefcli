@@ -6,8 +6,10 @@ using CommandLine;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Invoices;
+using KSeF.Client.Tests.Core.Utils.RateLimit;
 
 using Microsoft.Extensions.DependencyInjection;
+
 
 namespace KCKSeFCli;
 
@@ -25,6 +27,12 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
     [Option("zapiszjson", HelpText = "Zapisz metadane faktury w plik .json")]
     public bool ZapiszJson { get; set; }
+
+    [Option("retry-attempts", Default = 5, HelpText = "Number of retry attempts on rate limit.")]
+    public int RetryAttempts { get; set; }
+
+    [Option("no-local-rate-limit", HelpText = "Disable local rate limiting.")]
+    public bool NoLocalRateLimit { get; set; }
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
     {
@@ -54,7 +62,15 @@ public class PobierzFakturyCommand : SzukajFakturCommand
             }
 
             string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
-            string invoiceXml = await ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
+
+            ILimitsClient? limitsClient = NoLocalRateLimit ? null : scope.ServiceProvider.GetRequiredService<ILimitsClient>();
+            string invoiceXml = await KsefRateLimitWrapper.ExecuteWithRetryAsync(
+                (ct) => ksefClient.GetInvoiceAsync(invoiceSummary.KsefNumber, accessToken, ct),
+                KsefApiEndpoint.InvoiceGetByNumber,
+                limitsClient,
+                RetryAttempts,
+                accessToken,
+                cancellationToken).ConfigureAwait(false);
 
             await File.WriteAllTextAsync(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n", cancellationToken).ConfigureAwait(false);
 
