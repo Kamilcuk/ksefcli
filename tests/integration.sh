@@ -37,6 +37,13 @@ clitest_z_integration_PobierzFaktury_prod() {
 	L_unittest_cmd -v output cli PobierzFaktury -a dyzio-prod --from 2026-02-05 --to 2026-02-05 -s Subject2 -o /tmp --pdf --zapiszjson
 }
 
+clitest_z_integration_WystawFaktureOffline() {
+	L_with_cd_tmpdir
+	sed "s/<P_2>.*</<P_2>$(date +%s.%N)</" "$DIR"/FA_3_Przykład_1.xml > faktura_testowa.xml
+	L_unittest_cmd cli WystawFaktureOffline -a offline ./faktura_testowa.xml ./faktura_testowa.pdf
+	L_unittest_cmd ls -la ./faktura_testowa.pdf
+}
+
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/lib.sh "$@"
 testlib_setup_integration_config

@@ -15,7 +15,8 @@ public class Program
             with.EnableDashDash = true;
         });
 
-        ParserResult<object> result = parser.ParseArguments(args,
+        Type[] commandTypes = new[]
+        {
             typeof(AuthCommand),
             typeof(CertAuthCommand),
             typeof(GetFakturaCommand),
@@ -27,6 +28,7 @@ public class Program
             typeof(PrintConfigCommand),
             typeof(PrzeslijFakturyCommand),
             typeof(QRDoFakturyCommand),
+            typeof(QRWeryfikacjiFakturyCommand),
             typeof(SelfUpdateCommand),
             typeof(SprawdzLimitCertyfikatowCommand),
             typeof(SzukajFakturCommand),
@@ -34,8 +36,12 @@ public class Program
             typeof(TokenRefreshCommand),
             typeof(UniewaznijCertyfikatCommand),
             typeof(WylistujCertyfikatyCommand),
+            typeof(WystawFaktureOfflineCommand),
             typeof(XML2PDFCommand)
-        );
+        }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();
+
+        ParserResult<object> result = parser.ParseArguments(args, commandTypes);
+
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (s, e) =>
