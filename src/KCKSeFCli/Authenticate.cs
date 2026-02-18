@@ -11,6 +11,7 @@ using KSeF.Client.Core.Models.Authorization;
 using KSeF.Client.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace KCKSeFCli;
 
@@ -153,8 +154,8 @@ public static class Authenticate
 
     public static void PrintXmlToConsole(string xml, string title)
     {
-        Log.LogInformation($"----- {title} -----");
-        Log.LogInformation(xml);
-        Log.LogInformation($"----- KONIEC: {title} -----\n");
+        Log.LogDebug($"----- {title} -----");
+        Log.LogDebug(xml);
+        Log.LogDebug($"----- KONIEC: {title} -----\n");
     }
 }
