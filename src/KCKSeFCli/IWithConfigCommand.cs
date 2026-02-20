@@ -100,7 +100,7 @@ public abstract class IWithConfigCommand : IGlobalCommand
 
     public abstract Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken);
 
-    public static string Dtisoformat(DateTime dt)
+    public static string Dtisoformat(DateTimeOffset dt)
     {
         return dt.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz", CultureInfo.InvariantCulture);
     }
