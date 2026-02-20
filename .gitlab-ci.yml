@@ -16,62 +16,10 @@ workflow:
 stages:
   - build
   - test
+  - release
 
 secret_detection:
   stage: build
-
-.build_linux_base:
-  stage: build
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  cache:
-    key:
-      files:
-        - src/KCKSeFCli/KCKSeFCli.csproj
-    paths:
-      - .nuget/packages
-  script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64
-    - mv -v src/KCKSeFCli/bin/Release/net10.0/linux-x64/publish/kcksefcli .
-    - ldd kcksefcli
-    - stat kcksefcli
-    # Run tests.
-    - ./tests/unit.sh ./kcksefcli
-  artifacts:
-    paths:
-      - kcksefcli
-
-.build_windows_base:
-  stage: build
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  cache:
-    key:
-      files:
-        - src/KCKSeFCli/KCKSeFCli.csproj
-    paths:
-      - .nuget/packages
-  script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64
-    - mv -v src/KCKSeFCli/bin/Release/net10.0/win-x64/publish/kcksefcli.exe .
-    - stat kcksefcli.exe
-  artifacts:
-    paths:
-      - kcksefcli.exe
-
-.build_main:
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  artifacts:
-    expire_in: never
-
-.build_mr:
-  rules:
-    - if: $CI_MERGE_REQUEST_IID
-  artifacts:
-    expire_in: 1 week
 
 .format_check:
   stage: build
@@ -80,33 +28,66 @@ secret_detection:
     GIT_SUBMODULE_STRATEGY: recursive
   script:
     - dotnet format src/KCKSeFCli -v d --include "$(find src -name *.cs | paste -sd,)" --verify-no-changes
+
+.build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  cache:
+    key:
+      files:
+        - src/KCKSeFCli/KCKSeFCli.csproj
+    paths:
+      - .nuget/packages
+
+.release_main_expire_never:
+  stage: release
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_MERGE_REQUEST_IID
+  artifacts:
+    expire_in: never
 
-.integration_tests:
+linux_build:
+  extends: .build
+  script:
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 -o dist
+    - mv -v ./dist/kcksefcli .
+    - ldd ./kcksefcli
+    - stat ./kcksefcli
+    # Run tests.
+    - time ./tests/unit.sh ./kcksefcli
+  artifacts:
+    paths:
+      - ./kcksefcli
+    expire_in: 1 week
+
+integration_tests:
   stage: test
-  image: bash:5.0
+  image: debian:13
+  needs: [linux_build]
   script:
     - ./kcksefcli --help
-    - ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
+    - time ./tests/unit.sh ./kcksefcli
+    - time ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
   environment:
     name: integration_tests
 
-###############################################################################
-
 linux_build_main:
-  extends: [.build_main, .build_linux_base]
-windows_build_main:
-  extends: [.build_main, .build_windows_base]
-integration_tests_main:
-  extends: [.build_main, .integration_tests]
-  needs: [linux_build_main]
+  extends: .release_main_expire_never
+  script:
+    - echo "Publishing linux binary from previous stages"
+  artifacts:
+    paths:
+      - ./kcksefcli
 
-linux_build_mr:
-  extends: [.build_mr, .build_linux_base]
-windows_build_mr:
-  extends: [.build_mr, .build_windows_base]
-integration_tests_mr:
-  extends: [.build_mr, .integration_tests]
-  needs: [linux_build_mr]
+windows_build_main:
+  extends: [.release_main_expire_never, .build]
+  dependencies: []
+  script:
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 -o dist
+    - mv -v dist/kcksefcli.exe .
+    - stat ./kcksefcli.exe
+  artifacts:
+    paths:
+      - ./kcksefcli.exe
