@@ -32,7 +32,7 @@ secret_detection:
     paths:
       - .nuget/packages
   script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64
     - mv -v src/KCKSeFCli/bin/Release/net10.0/linux-x64/publish/kcksefcli .
     - ldd kcksefcli
     - stat kcksefcli
@@ -54,7 +54,7 @@ secret_detection:
     paths:
       - .nuget/packages
   script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64
     - mv -v src/KCKSeFCli/bin/Release/net10.0/win-x64/publish/kcksefcli.exe .
     - stat kcksefcli.exe
   artifacts:
@@ -88,6 +88,7 @@ secret_detection:
   stage: test
   image: bash:5.0
   script:
+    - ./kcksefcli --help
     - ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
   environment:
     name: integration_tests

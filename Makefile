@@ -37,7 +37,7 @@ test-format:
 
 ###############################################################################
 
-GITLAB_BUILD_CMD := $(shell sed -n 's/.*- \(dotnet publish\)/\1/p' .gitlab-ci.yml)
+GITLAB_BUILD_CMD := $(shell sed -n '/.*- \(dotnet publish\)/{s//\1/;p;q}' .gitlab-ci.yml)
 build-static:
 	$(GITLAB_BUILD_CMD)
 docker-build-static:
