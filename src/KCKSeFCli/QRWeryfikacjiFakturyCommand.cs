@@ -33,7 +33,7 @@ public class QRWeryfikacjiFakturyCommand : IWithConfigCommand
         }
         byte[] certBytes = Encoding.UTF8.GetBytes(config.Certificate.Certificate!);
         X509Certificate2 publicCert = certBytes.LoadCertificate();
-        X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password);
+        X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password ?? string.Empty);
 
         string invoiceXml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
 
