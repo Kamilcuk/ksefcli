@@ -13,16 +13,29 @@ cli() {
 	L_logrun "${opt_exe[@]}" "$@"
 }
 
+fatal() {
+	echo "$@" >&2
+	exit 123
+}
+
 pull_L_lib() {
 	if [[ ! -v L_LIB_VERSION ]]; then
 		# Download L_lib.sh library
-		if hash L_lib.sh 2>/dev/null; then
+		if [[ -e L_lib.sh ]]; then
+			echo "Using preexisting $DIR/L_lib.sh"
+			."$DIR"/L_lib.sh -s
+		elif hash L_lib.sh 2>/dev/null; then
 			echo "Using L_lib.sh from PATH"
 			. L_lib.sh -s
-		else
+		elif hash curl 2>/dev/null; then
 			echo "Downloading L_lib.sh"
 			curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
 			. "$DIR"/L_lib.sh -s
+		elif hash wget 2>/dev/null; then
+			wget -O "$DIR"/L_lib.sh https://raw.githubusercontent.com/Kamilcuk/L_lib/refs/heads/v1/bin/L_lib.sh
+			. "$DIR"/L_lib.sh -s
+		else
+			fatal "Could not download or find L_lib.sh"
 		fi
 	fi
 }
