@@ -61,6 +61,7 @@ testlib_main() {
 	if [[ "$(type "${opt_exe[0]}")" == *"function"* ]]; then
 		L_fatal "First argument is the executabl to test. Use -r <regex> to filter tests to execute"
 	fi
+	opt_exe=$(readlink -f "${opt_exe[0]}") || exit 234
 
 	L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
 }
