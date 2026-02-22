@@ -21,9 +21,9 @@ fatal() {
 pull_L_lib() {
 	if [[ ! -v L_LIB_VERSION ]]; then
 		# Download L_lib.sh library
-		if [[ -e L_lib.sh ]]; then
+		if [[ -r "$DIR"/L_lib.sh ]]; then
 			echo "Using preexisting $DIR/L_lib.sh"
-			."$DIR"/L_lib.sh -s
+			. "$DIR"/L_lib.sh -s
 		elif hash L_lib.sh 2>/dev/null; then
 			echo "Using L_lib.sh from PATH"
 			. L_lib.sh -s
