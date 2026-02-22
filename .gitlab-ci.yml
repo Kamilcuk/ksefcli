@@ -63,9 +63,10 @@ linux_build:
 
 integration_tests:
   stage: test
-  image: debian:13
+  image: cgr.dev/chainguard/wolfi-base
   needs: [linux_build]
   script:
+    - apk add --no-cache bash ca-certificates
     - ./kcksefcli --help
     - time ./tests/unit.sh ./kcksefcli
     - time ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
