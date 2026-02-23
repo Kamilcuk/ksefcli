@@ -9,7 +9,7 @@
     <AssemblyName>kcksefcli</AssemblyName>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
-    <StaticLink>true</StaticLink>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <InvariantGlobalization>true</InvariantGlobalization>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
