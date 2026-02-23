@@ -6,5 +6,5 @@ Kupujący:
 Pozycje:
   - Nazwa: "Usługa IT"
     Jednostka: "godz"
-    ProcentVat: 23
+    StawkaPodatku: 23
     WartoscBrutto: 1230.00

@@ -69,7 +69,7 @@ integration_tests:
     - apk add --no-cache bash ca-certificates libstdc++ coreutils
     - ./kcksefcli --help
     - time ./tests/unit.sh ./kcksefcli
-    - time ./tests/integration.sh -r WystawFaktureOffline ./kcksefcli
+    - time ./tests/ci.sh ./kcksefcli
   environment:
     name: integration_tests
 

@@ -73,9 +73,9 @@ clitest_dodaj_pozycje() {
         --stawka-vat 23
 
     local p13_1 p14_1 p15
-    L_unittest_cmd -v p13_1 cli XMLExtract test_invoice_out.xml "/Faktura/Fa/P_13_1"
-    L_unittest_cmd -v p14_1 cli XMLExtract test_invoice_out.xml "/Faktura/Fa/P_14_1"
-    L_unittest_cmd -v p15 cli XMLExtract test_invoice_out.xml "/Faktura/Fa/P_15"
+    L_unittest_cmd -v p13_1 cli XMLExtract -s test_invoice_out.xml "/Faktura/Fa/P_13_1"
+    L_unittest_cmd -v p14_1 cli XMLExtract -s test_invoice_out.xml "/Faktura/Fa/P_14_1"
+    L_unittest_cmd -v p15 cli XMLExtract -s test_invoice_out.xml "/Faktura/Fa/P_15"
 
     L_unittest_vareq p13_1 "2666.66"
     L_unittest_vareq p14_1 "613.33"

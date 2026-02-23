@@ -70,7 +70,7 @@ public class NowaFakturaCommand : IGlobalCommand
             }
             catch (HttpRequestException ex)
             {
-                Console.Error.WriteLine($"Warning: Could not fetch NIP info for {Nip}: {ex.Message}");
+                Log.LogWarning($"Warning: Could not fetch NIP info for {Nip}: {ex.Message}");
             }
         }
     }
@@ -106,7 +106,7 @@ public class NowaFakturaCommand : IGlobalCommand
 
         if (!File.Exists(InputFile))
         {
-            Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
+            Log.LogError($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
@@ -123,20 +123,20 @@ public class NowaFakturaCommand : IGlobalCommand
 
         var xml = GenerateXml(spec);
         await File.WriteAllTextAsync(OutputFile, xml, cancellationToken).ConfigureAwait(false);
-        Console.WriteLine($"Successfully created invoice and saved to: {OutputFile}");
+        Log.LogInformation($"Successfully created invoice and saved to: {OutputFile}");
 
         if (!BezWalidacji)
         {
             if (XmlValidator.Validate(xml, out var errors))
             {
-                Console.WriteLine("Validation successful.");
+                Log.LogInformation("Validation successful.");
             }
             else
             {
-                Console.Error.WriteLine("Validation failed:");
+                Log.LogError("Validation failed:");
                 foreach (var error in errors)
                 {
-                    Console.Error.WriteLine(error);
+                    Log.LogError(error);
                 }
                 return 1;
             }
