@@ -40,5 +40,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Resources\WorkSans-Regular.ttf" />
     <EmbeddedResource Include="Resources\WorkSans-Regular.ttf.LICENSE.txt" />
+    <EmbeddedResource Include="Resources\schemat_FA(3)_v1-0E.xsd" />
   </ItemGroup>
 </Project>

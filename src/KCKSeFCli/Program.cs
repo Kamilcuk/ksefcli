@@ -39,6 +39,7 @@ public class Program
             typeof(UniewaznijCertyfikatCommand),
             typeof(WylistujCertyfikatyCommand),
             typeof(WystawFaktureOfflineCommand),
+            typeof(WeryfikujXMLCommand),
             typeof(XML2PDFCommand)
         }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();
 

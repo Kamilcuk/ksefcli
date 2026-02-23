@@ -64,6 +64,10 @@ clitest_xml2pdf_qrcodes() {
 	L_unittest_cmd ls -la out.pdf
 }
 
+clitest_weryfikuj_xml() {
+	L_unittest_cmd cli WeryfikujXML "$DIR"/FA_3_Przykład_1.xml
+}
+
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/cmdauth.sh
