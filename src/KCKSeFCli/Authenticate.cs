@@ -92,7 +92,7 @@ public static class Authenticate
 
         byte[] certBytes = Encoding.UTF8.GetBytes(config.Certificate!.Certificate!);
         X509Certificate2 publicCert = certBytes.LoadCertificate();
-        X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password);
+        X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password ?? string.Empty);
 
         Log.LogInformation("[2] Pobieranie wyzwania (challenge) z KSeF...");
         AuthenticationChallengeResponse challengeResponse = await ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
@@ -136,7 +136,7 @@ public static class Authenticate
         return tokenResponse;
     }
 
-    public static string StatusInfoToString(StatusInfo statusInfo)
+    public static string StatusInfoToString(OperationStatusInfo statusInfo)
     {
         StringBuilder sb = new StringBuilder();
         sb.Append($"Code: {statusInfo.Code}, Description: {statusInfo.Description}");
@@ -144,17 +144,13 @@ public static class Authenticate
         {
             sb.Append($", Details: [{string.Join(", ", statusInfo.Details)}]");
         }
-        if (statusInfo.Extensions != null && statusInfo.Extensions.Any())
-        {
-            sb.Append($", Extensions: {{{string.Join(", ", statusInfo.Extensions.Select(kv => $"{kv.Key}: {kv.Value}"))}}}");
-        }
         return sb.ToString();
     }
 
     public static void PrintXmlToConsole(string xml, string title)
     {
-        Log.LogInformation($"----- {title} -----");
-        Log.LogInformation(xml);
-        Log.LogInformation($"----- KONIEC: {title} -----\n");
+        Log.LogDebug($"----- {title} -----");
+        Log.LogDebug(xml);
+        Log.LogDebug($"----- KONIEC: {title} -----\n");
     }
 }

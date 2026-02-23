@@ -3,8 +3,10 @@ using System.Xml.Linq;
 
 using CommandLine;
 
+using KSeF.Client.Api.Builders.Batch;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
+using KSeF.Client.Core.Models.Invoices;
 using KSeF.Client.Core.Models.Sessions;
 using KSeF.Client.Core.Models.Sessions.BatchSession;
 using KSeF.Client.Tests.Utils;
@@ -30,6 +32,9 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
     [Option("uposesji", Required = false, HelpText = "Zapisz UPO sesji (zbiorcze upo)")]
     public bool UpoSesji { get; set; } = false;
 
+    [Option("offlinemode", Required = false, HelpText = "Ustaw jeśli chcesz ustawic offline mode")]
+    public bool OfflineModeOption { get; set; } = false;
+
     public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths)
     {
         return paths.Select(path => (
@@ -43,6 +48,51 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         OpenBatchSessionResponse OpenBatchSessionResponse,
         List<BatchPartSendingInfo> EncryptedParts
     );
+
+    private const SystemCode DefaultSystemCode = SystemCode.FA3;
+    private const string DefaultSchemaVersion = "1-0E";
+    private const string DefaultValue = "FA";
+
+    /// <summary>
+    /// Buduje żądanie otwarcia sesji wsadowej z kodem formularza i listą zaszyfrowanych partów.
+    /// </summary>
+    /// <param name="zipMeta">Metadane pliku ZIP.</param>
+    /// <param name="encryption">Dane szyfrowania.</param>
+    /// <param name="encryptedParts">Lista zaszyfrowanych partów.</param>
+    /// <param name="systemCode">Kod systemowy formularza.</param>
+    /// <param name="schemaVersion">Wersja schematu.</param>
+    /// <param name="value">Wartość formularza.</param>
+    /// <returns>Obiekt żądania otwarcia sesji wsadowej.</returns>
+    private static OpenBatchSessionRequest BuildOpenBatchRequest(
+        FileMetadata zipMeta,
+        EncryptionData encryption,
+        IEnumerable<BatchPartSendingInfo> encryptedParts,
+        SystemCode systemCode = DefaultSystemCode,
+        string schemaVersion = DefaultSchemaVersion,
+        string value = DefaultValue,
+        bool offlineMode = false)
+    {
+        IOpenBatchSessionRequestBuilderBatchFile builder = OpenBatchSessionRequestBuilder
+            .Create()
+            .WithFormCode(systemCode: SystemCodeHelper.GetSystemCode(systemCode), schemaVersion: schemaVersion, value: value)
+            .WithOfflineMode(offlineMode)
+            .WithBatchFile(fileSize: zipMeta.FileSize, fileHash: zipMeta.HashSHA);
+
+        foreach (BatchPartSendingInfo p in encryptedParts)
+        {
+            builder = builder.AddBatchFilePart(
+                ordinalNumber: p.OrdinalNumber,
+                fileSize: p.Metadata.FileSize,
+                fileHash: p.Metadata.HashSHA);
+        }
+
+        return builder
+            .EndBatchFile()
+            .WithEncryption(
+                encryptedSymmetricKey: encryption.EncryptionInfo.EncryptedSymmetricKey,
+                initializationVector: encryption.EncryptionInfo.InitializationVector)
+            .Build();
+    }
 
     private async Task<OpenBatchSessionResult> PrepareAndOpenBatchSessionAsync(
             IEnumerable<(string FileName, byte[] Content)> invoices,
@@ -61,8 +111,11 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
             BatchUtils.EncryptAndSplit(zipBytes, encryptionData, cryptographyService);
 
         Log.LogInformation("4. Otwarcie sesji wsadowej");
-        OpenBatchSessionRequest openBatchRequest =
-            BatchUtils.BuildOpenBatchRequest(zipMeta, encryptionData, encryptedParts);
+        OpenBatchSessionRequest openBatchRequest = BuildOpenBatchRequest(zipMeta, encryptionData, encryptedParts,
+         DefaultSystemCode,
+         DefaultSchemaVersion,
+         DefaultValue,
+         OfflineModeOption);
 
         OpenBatchSessionResponse openBatchSessionResponse =
             await BatchUtils.OpenBatchAsync(ksefClient, openBatchRequest, accessToken).ConfigureAwait(false);

@@ -3,7 +3,7 @@
 # USE ./run.sh GetFaktura --options...
 set -euo pipefail
 
-fatal() { echo "$@" >&2; exit 2; }
+fatal() { L_fatal "$@"; }
 
 quote_to() {
   printf -v "$1" "%q " "${@:2}"
@@ -63,15 +63,9 @@ elif (( ${#opt_cmd[@]} == 0 )); then
   opt_cmd=(dotnet run --project src/KCKSeFCli --)
 fi
 
-if [[ ! -v KCKSEFCLI_CONFIG ]]; then
-  for i in .git/KSEF/kcksefcli.yaml .git/kcksefcli.yaml; do
-    if [[ -r $i ]]; then
-      export KCKSEFCLI_CONFIG=$i
-      echo "Using KCKSEFCLI_CONFIG=$i"
-      break
-    fi
-  done
-fi
+DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+. "$DIR"/tests/lib.sh
+testlib_setup_integration_config
 
 if (( $# )); then
   cli_run "$@"

@@ -16,74 +16,10 @@ workflow:
 stages:
   - build
   - test
+  - release
 
 secret_detection:
   stage: build
-
-.build_linux_base:
-  stage: build
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  cache:
-    key:
-      files:
-        - src/KCKSeFCli/KCKSeFCli.csproj
-    paths:
-      - .nuget/packages
-  script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
-    - mv -v src/KCKSeFCli/bin/Release/net10.0/linux-x64/publish/kcksefcli .
-    - ldd kcksefcli
-    - stat kcksefcli
-    # Run tests.
-    - ./tests/unit.sh ./kcksefcli
-  artifacts:
-    paths:
-      - kcksefcli
-
-.build_windows_base:
-  stage: build
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  variables:
-    GIT_SUBMODULE_STRATEGY: recursive
-  cache:
-    key:
-      files:
-        - src/KCKSeFCli/KCKSeFCli.csproj
-    paths:
-      - .nuget/packages
-  script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:InvariantGlobalization=true
-    - mv -v src/KCKSeFCli/bin/Release/net10.0/win-x64/publish/kcksefcli.exe .
-    - stat kcksefcli.exe
-  artifacts:
-    paths:
-      - kcksefcli.exe
-
-linux_build_main:
-  extends: [.build_linux_base, .build_main]
-
-linux_build_mr:
-  extends: [.build_linux_base, .build_mr]
-
-windows_build_main:
-  extends: [.build_windows_base, .build_main]
-
-windows_build_mr:
-  extends: [.build_windows_base, .build_mr]
-
-.build_main:
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  artifacts:
-    expire_in: never
-
-.build_mr:
-  rules:
-    - if: $CI_MERGE_REQUEST_IID
-  artifacts:
-    expire_in: 1 week
 
 .format_check:
   stage: build
@@ -92,6 +28,66 @@ windows_build_mr:
     GIT_SUBMODULE_STRATEGY: recursive
   script:
     - dotnet format src/KCKSeFCli -v d --include "$(find src -name *.cs | paste -sd,)" --verify-no-changes
+
+.build:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+    NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
+  cache:
+    key: "nuget-packages"
+    paths:
+      - .nuget/packages
+
+.release_main_expire_never:
+  stage: release
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    - if: $CI_MERGE_REQUEST_IID
+  artifacts:
+    expire_in: never
+
+linux_build:
+  extends: .build
+  script:
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 -o dist -v n
+    - mv -v ./dist/kcksefcli .
+    - ldd ./kcksefcli
+    - stat ./kcksefcli
+    # Run tests.
+    - time ./tests/unit.sh ./kcksefcli
+  artifacts:
+    paths:
+      - ./kcksefcli
+    expire_in: 1 week
+
+integration_tests:
+  stage: test
+  image: cgr.dev/chainguard/wolfi-base
+  needs: [linux_build]
+  script:
+    - ./tests/setup-wolfie.sh
+    - ./kcksefcli --help
+    - time ./tests/unit.sh ./kcksefcli
+    - time ./tests/ci.sh ./kcksefcli
+  environment:
+    name: integration_tests
+
+linux_build_main:
+  extends: .release_main_expire_never
+  script:
+    - echo "Publishing linux binary from previous stages"
+  artifacts:
+    paths:
+      - ./kcksefcli
+
+windows_build_main:
+  extends: [.release_main_expire_never, .build]
+  dependencies: []
+  script:
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 -o dist -v n
+    - mv -v dist/kcksefcli.exe .
+    - stat ./kcksefcli.exe
+  artifacts:
+    paths:
+      - ./kcksefcli.exe

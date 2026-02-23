@@ -15,26 +15,41 @@ public class Program
             with.EnableDashDash = true;
         });
 
-        ParserResult<object> result = parser.ParseArguments(args,
+        Type[] commandTypes = new[]
+        {
+            typeof(AuthCommand),
+            typeof(CertAuthCommand),
+            typeof(DodajPozycjeNaFakturzeCommand),
             typeof(GetFakturaCommand),
+            typeof(LinkDoFakturyCommand),
+            typeof(LinkWeryfikacjiFaktury),
+            typeof(NowyCertyfikatCommand),
+            typeof(NowaFakturaCommand),
+            typeof(ParseDateCommand),
+            typeof(PobierzCertyfikatCommand),
+            typeof(PobierzInfoONipCommand),
+            typeof(PobierzFakturyCommand),
+            typeof(PokazLimityCommand),
+            typeof(PrintConfigCommand),
+            typeof(PrzeslijFakturyCommand),
+            typeof(QRDoFakturyCommand),
+            typeof(QRWeryfikacjiFakturyCommand),
+            typeof(SelfUpdateCommand),
+            typeof(SprawdzLimitCertyfikatowCommand),
             typeof(SzukajFakturCommand),
             typeof(TokenAuthCommand),
             typeof(TokenRefreshCommand),
-            typeof(CertAuthCommand),
-            typeof(AuthCommand),
-            typeof(PrzeslijFakturyCommand),
-            typeof(PobierzFakturyCommand),
-            typeof(LinkDoFakturyCommand),
-            typeof(QRDoFakturyCommand),
-            typeof(XML2PDFCommand),
-            typeof(SelfUpdateCommand),
-            typeof(PrintConfigCommand),
-            typeof(SprawdzLimitCertyfikatowCommand),
             typeof(UniewaznijCertyfikatCommand),
+            typeof(WeryfikujXMLCommand),
             typeof(WylistujCertyfikatyCommand),
-            typeof(PobierzCertyfikatCommand),
-            typeof(NowyCertyfikatCommand)
-        );
+            typeof(WystawFaktureOfflineCommand),
+            typeof(WystawPodobnaFaktureCommand),
+            typeof(XMLExtractCommand),
+            typeof(XML2PDFCommand)
+        }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();
+
+        ParserResult<object> result = parser.ParseArguments(args, commandTypes);
+
 
         CancellationTokenSource cts = new CancellationTokenSource();
         Console.CancelKeyPress += (s, e) =>

@@ -19,8 +19,11 @@ public class XML2PDFCommand : IGlobalCommand
     [Option("nrKSeF", Required = false, HelpText = "KSeF invoice number to embed in PDF.")]
     public string? NrKSeF { get; set; }
 
-    [Option("qrCode", Required = false, HelpText = "QR code to embed in PDF.")]
-    public string? QrCode { get; set; }
+    [Option("qrCode", Required = false, HelpText = "URL of QR code to embed in PDF.")]
+    public string? QrCodeUrl { get; set; }
+
+    [Option("qrCode2", Required = false, HelpText = "Second URL of QR code to embed in PDF.")]
+    public string? QrCode2Url { get; set; }
 
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
     {
@@ -55,7 +58,12 @@ public class XML2PDFCommand : IGlobalCommand
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
 
         Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCode, cancellationToken).ConfigureAwait(false);
+        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, cancellationToken).ConfigureAwait(false);
+
+        if (QrCode2Url is not null)
+        {
+            pdfContent = AddQrToPdf.AddQrCode(pdfContent, QrCode2Url);
+        }
 
         await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
 
@@ -73,7 +81,7 @@ public class XML2PDFCommand : IGlobalCommand
             _command = command;
         }
 
-        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCode, CancellationToken cancellationToken)
+        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCodeUrl, CancellationToken cancellationToken)
         {
             using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
             await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
@@ -87,9 +95,9 @@ public class XML2PDFCommand : IGlobalCommand
             {
                 options.Add("nrKSeF", nrKSeF);
             }
-            if (!string.IsNullOrEmpty(qrCode))
+            if (!string.IsNullOrEmpty(qrCodeUrl))
             {
-                options.Add("qrCode", qrCode);
+                options.Add("qrCode", qrCodeUrl);
             }
 
             if (options.Count > 0)

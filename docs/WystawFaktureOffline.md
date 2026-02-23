@@ -1,0 +1,33 @@
+[Powrót do strony głównej](../README.md)
+
+# Polecenie: `WystawFaktureOffline`
+
+Konwertuje fakturę KSeF XML na PDF, dodając kod QR weryfikacji offline (KOD II).
+
+> **Ważne wymaganie:** Aby poprawnie wygenerować podpisany kod QR w trybie offline, musisz posiadać w konfiguracji aktywnego profilu poprawny certyfikat (sekcja `certificate` w `kcksefcli.yaml`), który został uprzednio wygenerowany w systemie KSeF z przeznaczeniem do **wystawiania faktur w trybie offline**. Bez dostępu do klucza prywatnego tego certyfikatu, narzędzie nie będzie w stanie podpisać sumy kontrolnej dokumentu zgodnie ze specyfikacją KOD II.
+
+**Użycie:**
+```bash
+kcksefcli WystawFaktureOffline faktura.xml faktura.pdf
+```
+
+**Argumenty:**
+
+| Argument      | Opis                                   | Wymagane |
+|---------------|----------------------------------------|----------|
+| `InputFile`   | Ścieżka do pliku XML z fakturą.        | Tak      |
+| `OutputFile`  | Ścieżka wyjściowa dla pliku PDF.       | Nie      |
+
+**Opcje:**
+
+| Opcja      | Opis                                     |
+|------------|------------------------------------------|
+| `--nrKSeF` | Numer KSeF faktury do osadzenia w PDF.   |
+
+---
+
+
+## Konfiguracja i Uwierzytelnianie
+
+To polecenie łączy się z serwerami KSeF i w pełni obsługuje system profili, opcje konfiguracji (`kcksefcli.yaml`) oraz automatycznej pamięci podręcznej (cache) tokenów sesyjnych.
+Szczegółowe informacje o zarządzaniu sesją, przełączaniu profili i środowisk znajdują się w pliku: [**Konfiguracja**](Configuration.md).

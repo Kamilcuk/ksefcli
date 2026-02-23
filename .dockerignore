@@ -1,6 +1,8 @@
 # Binaries and object files
 **/bin/
 **/obj/
+!src/KCKSeFCli/bin/Debug/net10.0/linux-x64/kcksefcli
+!cli
 
 # Project-specific temporary files
 **/*.user
