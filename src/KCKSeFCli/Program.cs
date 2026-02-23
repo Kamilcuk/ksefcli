@@ -19,12 +19,15 @@ public class Program
         {
             typeof(AuthCommand),
             typeof(CertAuthCommand),
+            typeof(DodajPozycjeNaFakturzeCommand),
             typeof(GetFakturaCommand),
             typeof(LinkDoFakturyCommand),
             typeof(LinkWeryfikacjiFaktury),
             typeof(NowyCertyfikatCommand),
+            typeof(NowaFakturaCommand),
             typeof(ParseDateCommand),
             typeof(PobierzCertyfikatCommand),
+            typeof(PobierzInfoONipCommand),
             typeof(PobierzFakturyCommand),
             typeof(PokazLimityCommand),
             typeof(PrintConfigCommand),
@@ -37,9 +40,10 @@ public class Program
             typeof(TokenAuthCommand),
             typeof(TokenRefreshCommand),
             typeof(UniewaznijCertyfikatCommand),
+            typeof(WeryfikujXMLCommand),
             typeof(WylistujCertyfikatyCommand),
             typeof(WystawFaktureOfflineCommand),
-            typeof(WeryfikujXMLCommand),
+            typeof(XMLExtractCommand),
             typeof(XML2PDFCommand)
         }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();
 
