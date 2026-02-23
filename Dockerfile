@@ -11,12 +11,15 @@ ARG RUNTIME=linux-x64
 RUN dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r $RUNTIME -o dist
 
 FROM cgr.dev/chainguard/wolfi-base AS test
-RUN apk add --no-cache bash ca-certificates libstdc++ coreutils
+RUN apk add --no-cache bash ca-certificates libstdc++ coreutils libfontconfig1
 ARG EXE ./kcksefcli
 COPY ${EXE} ${EXE}
 ENV EXE=${EXE}
 RUN ${EXE} --help
 COPY tests tests
 RUN time ./tests/unit.sh ${EXE}
-# RUN time ./tests/integration.sh -r WystawFaktureOffline ${EXE}
+
+FROM test AS itest
+COPY secrets/ secrets/
+RUN time ./tests/integration.sh -r WystawFaktureOffline ${EXE}
 

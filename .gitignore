@@ -79,3 +79,5 @@ openapi.json
 secrets
 secret
 dist
+./tests/*.pdf
+

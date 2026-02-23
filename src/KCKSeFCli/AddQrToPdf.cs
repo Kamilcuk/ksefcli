@@ -40,8 +40,7 @@ public static class AddQrToPdf
 
     public static byte[] AddQrCode(byte[] inputPdfBytes, string qrCodeUrl, string? label = null)
     {
-        GlobalFontSettings.UseWindowsFontsUnderWindows = true;
-        GlobalFontSettings.UseWindowsFontsUnderWsl2 = true;
+        GlobalFontSettings.FontResolver = new FallbackFontResolver();
 
         using MemoryStream inputStream = new MemoryStream(inputPdfBytes);
         using MemoryStream outputStream = new MemoryStream();
@@ -53,8 +52,8 @@ public static class AddQrToPdf
             using (XGraphics gfx = XGraphics.FromPdfPage(newPage))
             {
                 double currentY = 50;
-                XFont font = new XFont("Arial", 7, XFontStyleEx.Regular);
-                XFont linkFont = new XFont("Arial", 7, XFontStyleEx.Underline);
+                XFont font = new XFont("Work Sans", 7, XFontStyleEx.Regular);
+                XFont linkFont = new XFont("Work Sans", 7, XFontStyleEx.Underline);
                 XBrush brush = XBrushes.Black;
                 XBrush linkBrush = XBrushes.Blue;
 
