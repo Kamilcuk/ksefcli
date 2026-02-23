@@ -43,6 +43,7 @@ public class Program
             typeof(WeryfikujXMLCommand),
             typeof(WylistujCertyfikatyCommand),
             typeof(WystawFaktureOfflineCommand),
+            typeof(WystawPodobnaFaktureCommand),
             typeof(XMLExtractCommand),
             typeof(XML2PDFCommand)
         }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();

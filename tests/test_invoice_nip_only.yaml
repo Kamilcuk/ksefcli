@@ -1,0 +1,10 @@
+Sprzedawca:
+  Nip: "5260202588"
+Kupujący:
+  Nazwa: "Klient Kupujący"
+  Adres: "ul. Krzywa 2, 00-002 Kraków"
+Pozycje:
+  - Nazwa: "Usługa IT"
+    Jednostka: "godz"
+    ProcentVat: 23
+    WartoscBrutto: 1230.00

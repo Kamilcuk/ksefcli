@@ -1,12 +1,22 @@
 Sprzedawca:
-  Nip: "1111111111"
+  Nip: "5260250274"
   Nazwa: "Firma Sprzedawca"
   Adres: "ul. Prosta 1, 00-001 Warszawa"
 Kupujący:
   Nazwa: "Klient Kupujący"
   Adres: "ul. Krzywa 2, 00-002 Kraków"
+DataWykonania: "2026-02-15"
+DodatkowyOpis:
+  - Klucz: "Klucz1"
+    Wartosc: "Wartosc1"
 Pozycje:
   - Nazwa: "Usługa IT"
     Jednostka: "godz"
-    ProcentVat: 23
+    Ilosc: 1
+    StawkaPodatku: "23%"
     WartoscBrutto: 1230.00
+  - Nazwa: "Usługa OO"
+    Jednostka: "usł"
+    Ilosc: 1
+    StawkaPodatku: "odwrotne obciążenie"
+    WartoscBrutto: 1000.00

@@ -73,9 +73,9 @@ clitest_dodaj_pozycje() {
         --stawka-vat 23
 
     local p13_1 p14_1 p15
-    L_unittest_cmd -v p13_1 cli XMLExtract test_invoice_out.xml "/ns:Faktura/ns:Fa/ns:P_13_1" --namespaces "ns=http://crd.gov.pl/wzor/2025/06/25/13775/"
-    L_unittest_cmd -v p14_1 cli XMLExtract test_invoice_out.xml "/ns:Faktura/ns:Fa/ns:P_14_1" --namespaces "ns=http://crd.gov.pl/wzor/2025/06/25/13775/"
-    L_unittest_cmd -v p15 cli XMLExtract test_invoice_out.xml "/ns:Faktura/ns:Fa/ns:P_15" --namespaces "ns=http://crd.gov.pl/wzor/2025/06/25/13775/"
+    L_unittest_cmd -v p13_1 cli XMLExtract test_invoice_out.xml "/Faktura/Fa/P_13_1"
+    L_unittest_cmd -v p14_1 cli XMLExtract test_invoice_out.xml "/Faktura/Fa/P_14_1"
+    L_unittest_cmd -v p15 cli XMLExtract test_invoice_out.xml "/Faktura/Fa/P_15"
 
     L_unittest_vareq p13_1 "2666.66"
     L_unittest_vareq p14_1 "613.33"
@@ -87,6 +87,20 @@ clitest_nowa_faktura() {
     L_unittest_cmd cli NowaFaktura "$DIR"/test_invoice.yaml invoice.xml
     L_unittest_cmd ls -la invoice.xml
 }
+
+clitest_nowa_faktura_nip_lookup() {
+    L_with_cd_tmpdir
+    L_unittest_cmd cli NowaFaktura "$DIR"/test_invoice_nip_only.yaml invoice_nip_lookup.xml
+    
+    local seller_name
+    L_unittest_cmd -v seller_name cli XMLExtract -s invoice_nip_lookup.xml "/Faktura/Podmiot1/DaneIdentyfikacyjne/Nazwa"
+    L_unittest_vareq seller_name "'KAMYK' SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
+    
+    local seller_address
+    L_unittest_cmd -v seller_address cli XMLExtract -s invoice_nip_lookup.xml "/Faktura/Podmiot1/Adres/AdresL1"
+    L_unittest_vareq seller_address "LITERACKA 21/24, 01-864 WARSZAWA"
+}
+
 
 clitest_pobierz_info_o_nip() {
     local output
@@ -112,10 +126,37 @@ EOF
     L_unittest_vareq output "NestedValue"
 }
 
+clitest_xml_extract_namespace() {
+    L_with_cd_tmpdir
+
+    cat <<EOF > test_ns.xml
+<Root xmlns="http://example.com/schema" xmlns:meta="http://example.com/meta">
+    <Element1>Value1</Element1>
+    <Element2>
+        <NestedElement>NestedValue</NestedElement>
+    </Element2>
+    <meta:Info>MetaValue</meta:Info>
+</Root>
+EOF
+
+    # With --strip-namespaces: plain XPath, no prefixes needed
+    local output
+    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/Root/Element1" --strip-namespaces
+    L_unittest_vareq output "Value1"
+    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/Root/Element2/NestedElement" --strip-namespaces
+    L_unittest_vareq output "NestedValue"
+    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/Root/Info" --strip-namespaces
+    L_unittest_vareq output "MetaValue"
+
+    # Without --strip-namespaces: must use prefixes
+    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/default:Root/default:Element1"
+    L_unittest_vareq output "Value1"
+    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/default:Root/meta:Info"
+    L_unittest_vareq output "MetaValue"
+}
 
 
-
-
+###############################################################################
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/cmdauth.sh

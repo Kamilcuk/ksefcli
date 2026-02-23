@@ -4,6 +4,13 @@ using System.Text.Json;
 
 namespace KCKSeFCli;
 
+public record NipInfo(
+    string Nip,
+    string? Regon,
+    string? Address,
+    string? Name
+);
+
 [Verb("PobierzInfoONip", HelpText = "Retrieve NIP information from the government API.")]
 public class PobierzInfoONipCommand : IGlobalCommand
 {
@@ -44,5 +51,49 @@ public class PobierzInfoONipCommand : IGlobalCommand
         var response = await client.GetAsync(url, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public static async Task<NipInfo?> GetNipDetailsAsync(string nip, string date, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var jsonResponse = await FetchNipInfo(nip, date, cancellationToken).ConfigureAwait(false);
+            using (JsonDocument document = JsonDocument.Parse(jsonResponse))
+            {
+                if (document.RootElement.TryGetProperty("result", out JsonElement resultElement) && resultElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (resultElement.TryGetProperty("subject", out JsonElement subjectElement))
+                    {
+                        string? name = null;
+                        string? regon = null;
+                        string? address = null;
+
+                        if (subjectElement.TryGetProperty("name", out JsonElement nameElement))
+                        {
+                            name = nameElement.GetString();
+                        }
+                        if (subjectElement.TryGetProperty("regon", out JsonElement regonElement))
+                        {
+                            regon = regonElement.GetString();
+                        }
+                        if (subjectElement.TryGetProperty("residenceAddress", out JsonElement residenceAddressElement) && residenceAddressElement.ValueKind != JsonValueKind.Null)
+                        {
+                            address = residenceAddressElement.GetString();
+                        }
+                        else if (subjectElement.TryGetProperty("workingAddress", out JsonElement workingAddressElement) && workingAddressElement.ValueKind != JsonValueKind.Null)
+                        {
+                            address = workingAddressElement.GetString();
+                        }
+
+                        return new NipInfo(nip, regon, address, name);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error parsing NIP info for {nip}: {ex.Message}");
+        }
+        return null;
     }
 }
