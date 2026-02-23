@@ -14,43 +14,50 @@
   - [Opcje Globalne](#opcje-globalne)
   - [Dostępne Polecenia](#dostępne-polecenia)
 - [Polecenia](#polecenia)
-  - [`Auth`](#auth)
-  - [`TokenAuth`](#tokenauth)
-  - [`CertAuth`](#certauth)
-  - [`TokenRefresh`](#tokenrefresh)
-  - [`GetFaktura`](#getfaktura)
-  - [`SzukajFaktur`](#szukajfaktur)
-  - [`PobierzFaktury`](#pobierzfaktury)
-  - [`PrzeslijFaktury`](#przeslijfaktury)
-  - [`LinkDoFaktury`](#linkdofaktury)
-  - [`QRDoFaktury`](#qrdofaktury)
-  - [`XML2PDF`](#xml2pdf)
-  - [`PrintConfig`](#printconfig)
-  - [`SelfUpdate`](#selfupdate)
-  - [`NowyCertyfikat`](#nowycertyfikat)
-  - [`ParseDate`](#parsedate)
-  - [`PobierzCertyfikat`](#pobierzcertyfikat)
-  - [`UniewaznijCertyfikat`](#uniewaznijcertyfikat)
-  - [`WylistujCertyfikaty`](#wylistujcertyfikaty)
-  - [`SprawdzLimitCertyfikatow`](#sprawdzlimitcertyfikatow)
-  - [`QRWeryfikacjiFaktury`](#qrweryfikacjifaktury)
-  - [`WystawFaktureOffline`](#wystawfaktureoffline)
-  - [`PokazLimity`](#pokazlimity)
-  - [`LinkWeryfikacjiFaktury`](#linkweryfikacjifaktury)
+  - [`Auth`](docs/Auth.md)
+  - [`CertAuth`](docs/CertAuth.md)
+  - [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
+  - [`GetFaktura`](docs/GetFaktura.md)
+  - [`LinkDoFaktury`](docs/LinkDoFaktury.md)
+  - [`LinkWeryfikacjiFaktury`](docs/LinkWeryfikacjiFaktury.md)
+  - [`NowyCertyfikat`](docs/NowyCertyfikat.md)
+  - [`NowaFaktura`](docs/NowaFaktura.md)
+  - [`ParseDate`](docs/ParseDate.md)
+  - [`PobierzCertyfikat`](docs/PobierzCertyfikat.md)
+  - [`PobierzInfoONip`](docs/PobierzInfoONip.md)
+  - [`PobierzFaktury`](docs/PobierzFaktury.md)
+  - [`PokazLimity`](docs/PokazLimity.md)
+  - [`PrintConfig`](docs/PrintConfig.md)
+  - [`PrzeslijFaktury`](docs/PrzeslijFaktury.md)
+  - [`QRDoFaktury`](docs/QRDoFaktury.md)
+  - [`QRWeryfikacjiFaktury`](docs/QRWeryfikacjiFaktury.md)
+  - [`SelfUpdate`](docs/SelfUpdate.md)
+  - [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md)
+  - [`SzukajFaktur`](docs/SzukajFaktur.md)
+  - [`TokenAuth`](docs/TokenAuth.md)
+  - [`TokenRefresh`](docs/TokenRefresh.md)
+  - [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md)
+  - [`WeryfikujXML`](docs/WeryfikujXML.md)
+  - [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md)
+  - [`WystawFaktureOffline`](docs/WystawFaktureOffline.md)
+  - [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
+  - [`XMLExtract`](docs/XMLExtract.md)
+  - [`XML2PDF`](docs/XML2PDF.md)
 - [Rozwój](#rozwój)
 - [Uwierzytelnianie w KSeF](#uwierzytelnianie-w-ksef)
 - [Autor i Licencja](#autor-i-licencja)
 
 ## Instalacja
 
-Możesz pobrać statycznie linkowaną binarkę `kcksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `/usr/local/bin`).
+Możesz pobrać statycznie linkowaną binarkę `kcksefcli` bezpośrednio z artefaktów GitLab CI/CD, a następnie umieścić ją w katalogu znajdującym się w `PATH` (np. `~/.local/bin`).
 
 Poniższy link jest przeznaczony dla systemu Linux.
 
 ```bash
-curl -LsS https://gitlab.com/kamcuk/kcksefcli/builds/artifacts/main/download?job=linux_build_main | zcat > kcksefcli
-chmod +x kcksefcli
-sudo mv kcksefcli /usr/local/bin/
+mkdir -p ~/.local/bin
+curl -LsS https://gitlab.com/kamcuk/kcksefcli/builds/artifacts/main/download?job=linux_build_main | zcat > ~/.local/bin/kcksefcli
+chmod +x ~/.local/bin/kcksefcli
+export PATH="$HOME/.local/bin:$PATH"
 ```
 
 ### Bezpośrednie linki do pobrania
@@ -67,6 +74,11 @@ $ kcksefcli SzukajFaktur -q -c kcksefcli.yaml --from "-1week" --to "now" --invoi
 12312312312-20260117-XXXXXXXXXXXX-5C
 ```
 
+Pobieranie wszystkich faktur zakupowych z ostatniego miesiąca do wskazanego katalogu w formacie XML i PDF:
+```bash
+$ kcksefcli PobierzFaktury --from "-1month" --subjectType Subject2 --outputdir ./faktury_zakupowe --pdf
+```
+
 Przesyłanie faktury z użyciem konkretnego profilu:
 ```bash
 $ kcksefcli PrzeslijFaktury -c kcksefcli.yaml -f d03900-001.xml  -a firma2
@@ -78,85 +90,7 @@ $ kcksefcli SzukajFaktur -c kcksefcli.yaml --from "-1week" --to "now" > /tmp/1.j
 ```
 
 ## Konfiguracja
-
-Przed rozpoczęciem pracy z `kcksefcli`, należy skonfigurować aplikację, tworząc plik `kcksefcli.yaml` w jednym z następujących miejsc:
-- W katalogu bieżącym: `./kcksefcli.yaml`
-- W katalogu konfiguracyjnym użytkownika: `$HOME/.config/kcksefcli/kcksefcli.yaml`
-
-Plik ten zawiera profile, które umożliwiają zarządzanie różnymi poświadczeniami i środowiskami KSeF. **Pamiętaj, że wartości konfiguracyjne z pliku mogą być nadpisane przez globalne opcje linii komend lub zmienne środowiskowe, zgodnie z kolejnością priorytetów opisaną w sekcji [Opcje Globalne](#opcje-globalne).**
-
-### Struktura pliku `kcksefcli.yaml`
-
-```yaml
-active_profile: <nazwa_aktywnego_profilu>
-profiles:
-  <nazwa_profilu_1>:
-    environment: <srodowisko>
-    nip: <nip_podmiotu>
-    token: <token_autoryzacyjny>
-    certificate:
-      private_key: <zawartosc_klucza_prywatnego>
-      private_key_file: <sciezka_do_klucza_prywatnego>
-      certificate: <zawartosc_certyfikatu_publicznego>
-      certificate_file: <sciezka_do_certyfikatu_publicznego>
-      password: <haslo_do_klucza_prywatnego>
-      password_env: <zmienna_srodowiskowa_z_haslem>
-  <nazwa_profilu_2>:
-    # ...
-```
-
-### Opcje Konfiguracyjne
-
-*   `active_profile`: (Opcjonalnie) Nazwa profilu, który będzie używany domyślnie, jeśli nie zostanie podany za pomocą opcji `--profile`. Jeśli zdefiniowany jest tylko jeden profil, `active_profile` jest ignorowane.
-*   `profiles`: Mapa profili konfiguracyjnych.
-    *   `<nazwa_profilu>`: Dowolna nazwa identyfikująca profil (np. `dyzio`, `firma_xyz_test`).
-        *   `environment`: Środowisko KSeF (`test`, `demo`, `prod`).
-        *   `nip`: Numer Identyfikacji Podatkowej (NIP) podmiotu, którego dotyczy profil.
-        *   Należy zdefiniować **jedną** z poniższych metod uwierzytelniania:
-            *   `token`: Token autoryzacyjny sesji.
-            *   `certificate`: Dane certyfikatu kwalifikowanego.
-                *   `private_key`: Zawartość klucza prywatnego.
-                *   `private_key_file`: Ścieżka do klucza prywatnego (plik `.pem` lub `.pfx`). Można użyć `~` jako skrótu do katalogu domowego.
-                *   `certificate`: Zawartość certyfikatu publicznego.
-                *   `certificate_file`: Ścieżka do certyfikatu publicznego. Można użyć `~` jako skrótu do katalogu domowego.
-                *   `password`: Hasło do klucza prywatnego.
-                *   `password_env`: Nazwa zmiennej środowiskowej, która przechowuje hasło do klucza prywatnego.
-                *   `password_file`: Ścieżka do pliku z hasłem do klucza prywatnego.
-
-### Przykład Konfiguracji
-
-Poniższy przykład demonstruje konfigurację z wieloma profilami dla różnych podmiotów i środowisk.
-
-```yaml
----
-active_profile: firma1
-profiles:
-  firma1:
-    environment: test
-    nip: '12312312312'
-    token: fdsafa
-  firma2:
-    environment: demo
-    nip: '12312312312'
-    token: fdsfa
-  firma3:
-    environment: prod
-    nip: '23434545676'
-    token: fdasfa
-  cert_auth_example:
-    environment: prod
-    nip: '1234567890'
-    certificate:
-      private_key_file: '~/certs/my_private_key.pem'
-      certificate_file: '~/certs/my_certificate.pem'
-      password_env: 'MY_PASSWORD_ENV'
-
-```
-
-W tym przykładzie:
-- Domyślnym profilem jest `firma1`.
-- Zdefiniowano trzy profile (`firma1`, `firma2`, `firma3`) używające uwierzytelniania tokenem na środowisku testowym dla dwóch różnych NIP-ów.
-- Profil `cert_auth_example` używa uwierzytelniania certyfikatem na środowisku produkcyjnym. Hasło do certyfikatu zostanie odczytane ze zmiennej środowiskowej `MY_PASSWORD_ENV`.
+Szczegóły konfiguracji opisano w pliku [Konfiguracja](docs/Configuration.md).
 
 ## Użycie
 
@@ -166,483 +100,41 @@ Ogólna składnia poleceń `kcksefcli` jest następująca:
 kcksefcli <polecenie> [opcje]
 ```
 
-### Opcje Globalne
-
-Poniższe opcje globalne mogą być używane z każdym poleceniem `kcksefcli`. Umożliwiają one nadpisywanie ustawień z pliku konfiguracyjnego `kcksefcli.yaml` lub tworzenie ad-hoc profili konfiguracyjnych bezpośrednio z linii komend.
-
-**Wybór Metody Konfiguracji (wyłączające się wzajemnie):**
-`kcksefcli` umożliwia konfigurację na dwa główne sposoby. Możesz wybrać jeden z nich:
-
-1.  **Plik konfiguracyjny `kcksefcli.yaml`:** Użyj `$KCKSEFCCLI_CONFIG` lub opcji `--config` (aby wskazać plik) i `--active` (aby wybrać aktywny profil z pliku). Jeśli te opcje nie zostaną podane, `kcksefcli` będzie szukał pliku `kcksefcli.yaml` w domyślnych lokalizacjach (bieżący katalog, `$HOME/.config/kcksefcli/`).
-2.  **Opcje linii komend (ad-hoc profil `cmd`):** Użyj bezpośrednich opcji, takich jak `--environment`, `--token`. Te opcje tworzą tymczasowy profil o nazwie `cmd`. **UWAGA:** Użycie któregokolwiek z tych argumentów **wyklucza** jednoczesne użycie opcji `--config` lub `--active`.
-
-| Opcja                  | Opis                                                                 | Domyślnie                                                        | Konfliktuje z             |
-|------------------------|----------------------------------------------------------------------|------------------------------------------------------------------|---------------------------|
-| `-c`, `--config`       | Ścieżka do pliku konfiguracyjnego `kcksefcli.yaml`.                  | `$KCKSEFCLI_CONFIG` lub `$HOME/.config/kcksefcli/kcksefcli.yaml` | Ad-hoc opcje profilu      |
-| `-a`, `--active`       | Nazwa aktywnego profilu z pliku konfiguracyjnego.                    | `KCKSEFCLI_ACTIVE` lub pierwszy profil                           | Ad-hoc opcje profilu      |
-| `--environment`        | Środowisko KSeF (np. `test`, `demo`, ``prod`).                       |                                                                  | `--config`, `--active`    |
-| `--token`              | Token autoryzacyjny KSeF (dla metody tokenowej). Numer NIP jest wyodrębniany z tokena.                     |                                                                  | `--config`, `--active` |
-| `--cache`              | Ścieżka do pliku cache tokenów.                                      | `$HOME/.cache/kcksefcli/tokenstore.json`                         | Brak                      |
-| `--no-tokencache`      | Wyłącza użycie cache tokenów.                                        | `false`                                                          | Brak                      |
+Szczegółowy opis konfiguracji profili, globalnych opcji i pamięci podręcznej znajdziesz w dokumencie: [**Konfiguracja**](docs/Configuration.md).
 
 
-*   `Auth`: Uwierzytelnia przy użyciu skonfigurowanej metody.
-*   `TokenAuth`: Uwierzytelnia przy użyciu tokena sesji KSeF.
-*   `CertAuth`: Uwierzytelnia przy użyciu certyfikatu kwalifikowanego.
-*   `TokenRefresh`: Odświeża istniejący token sesji.
-*   `SzukajFaktur`: Wyszukuje faktury na podstawie określonych kryteriów.
-*   `PobierzFaktury`: Pobiera faktury na podstawie kryteriów wyszukiwania.
-*   `GetFaktura`: Pobiera pojedynczą fakturę po jej numerze KSeF.
-*   `PrzeslijFaktury`: Wysyła faktury do KSeF.
-*   `LinkDoFaktury`: Generuje link weryfikacyjny dla faktury.
-*   `QRDoFaktury`: Generuje kod QR dla linku weryfikacyjnego faktury.
-*   `PrintConfig`: Prints the active configuration in YAML or JSON format.
-*   `SelfUpdate`: Aktualizuje narzędzie kcksefcli do najnowszej wersji.
-*   `XML2PDF`: Konwertuje fakturę KSeF w formacie XML na format PDF.
 
 ## Polecenia
 
----
-
-### `Auth`
-
-Uwierzytelnia użytkownika na podstawie metody zdefiniowanej w aktywnym profilu (token lub certyfikat) i zwraca token dostępowy.
-
-**Użycie:**
-```bash
-kcksefcli -a moj_profil Auth
-```
-
----
-
-### `TokenAuth`
-
-Wymusza uwierzytelnienie za pomocą tokena sesyjnego z aktywnego profilu. Profil musi zawierać klucz `token`.
-
-**Użycie:**
-```bash
-kcksefcli -a profil_z_tokenem TokenAuth
-```
-
----
-
-### `CertAuth`
-
-Wymusza uwierzytelnienie za pomocą certyfikatu kwalifikowanego z aktywnego profilu. Profil musi zawierać sekcję `certificate`.
-
-**Użycie:**
-```bash
-kcksefcli -a profil_z_certyfikatem CertAuth
-```
-
----
-
-### `TokenRefresh`
-
-Odświeża istniejący token sesji.
-
-**Użycie:**
-```bash
-kcksefcli -a moj_profil TokenRefresh
-```
-
----
-
-### `GetFaktura`
-
-Pobiera pojedynczą fakturę w formacie XML.
-
-**Użycie:**
-```bash
-kcksefcli GetFaktura <ksef-numer>
-```
-
-**Argumenty:**
-
-| Argument      | Opis                  | Wymagane |
-|---------------|-----------------------|----------|
-| `ksef-numer`  | Numer KSeF faktury.   | Tak      |
-
----
-
-### `SzukajFaktur`
-
-Wyszukuje faktury na podstawie podanych kryteriów. Odpowiada endpointowi `GET /online/Query/Invoice/Sync`.
-
-**Użycie:**
-```bash
-kcksefcli SzukajFaktur --from "-7days" --subjectType Subject2
-```
-
-**Opcje:**
-
-| Opcja                                   | Opis                                                                                                                                     | Domyślnie    | Wymagane |
-|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------|--------------|----------|
-| `-s`, `--subjectType`                   | Typ podmiotu dla kryteriów filtrowania. Możliwe wartości: `Subject1` (sprzedawca), `Subject2` (nabywca), `Subject3`, `SubjectAuthorized`. | `Subject1`   | Tak      |
-| `--from`                                | Data początkowa. Szczegóły formatu daty: zobacz [ParseDate](#parsedate).                                       |              | Tak      |
-| `--to`                                  | Data końcowa. Szczegóły formatu daty: zobacz [ParseDate](#parsedate).                                                   |              | Nie      |
-| `--dateType`                            | Typ daty używany w zakresie dat. Możliwe wartości: `Issue`, `Invoicing`, `PermanentStorage`.                                               | `Issue`      | Tak      |
-| `--pageOffset`                          | Przesunięcie strony dla paginacji.                                                                                                       | `0`          | Nie      |
-| `--pageSize`                            | Rozmiar strony dla paginacji.                                                                                                            | `10`         | Nie      |
-| `--restrictToPermanentStorageHwmDate`   | Ogranicza filtrowanie do `PermanentStorageHwmDate`. Dotyczy tylko `dateType` = `PermanentStorage`.                                     |              | Nie      |
-| `--ksefNumber`                          | Numer KSeF faktury (dokładne dopasowanie).                                                                                               |              | Nie      |
-| `--invoiceNumber`                       | Numer faktury nadany przez wystawcę (dokładne dopasowanie).                                                                              |              | Nie      |
-| `--amountType`                          | Typ filtru kwotowego. Możliwe wartości: `Brutto`, `Netto`, `Vat`.                                                                          |              | Nie      |
-| `--amountFrom`                          | Minimalna wartość kwoty.                                                                                                                 |              | Nie      |
-| `--amountTo`                            | Maksymalna wartość kwoty.                                                                                                                |              | Nie      |
-| `--sellerNip`                           | NIP sprzedawcy (dokładne dopasowanie).                                                                                                   |              | Nie      |
-| `--buyerIdentifierType`                 | Typ identyfikatora nabywcy. Możliwe wartości: `Nip`, `VatUe`, `Other`, `None`.                                                            |              | Nie      |
-| `--buyerIdValue`                        | Wartość identyfikatora nabywcy (dokładne dopasowanie).                                                                                   |              | Nie      |
-| `--currencyCodes`                       | Kody walut, oddzielone przecinkami (np. `PLN,EUR`).                                                                                       |              | Nie      |
-| `--invoicingMode`                       | Tryb fakturowania: `Online` lub `Offline`.                                                                                               |              | Nie      |
-| `--isSelfInvoicing`                     | Czy faktura jest samofakturowaniem.                                                                                                      |              | Nie      |
-| `--formType`                            | Typ dokumentu. Możliwe wartości: `FA`, `PEF`, `RR`.                                                                                      |              | Nie      |
-| `--invoiceTypes`                        | Typy faktur, oddzielone przecinkami (np. `Vat`, `Zal`, `Kor`).                                                                             |              | Nie      |
-| `--hasAttachment`                       | Czy faktura posiada załącznik.                                                                                                           |              | Nie      |
-
----
-
-### `PobierzFaktury`
-
-Pobiera wiele faktur na podstawie kryteriów wyszukiwania. Rozszerza polecenie `SzukajFaktur` o opcje zapisywania plików.
-
-**Użycie:**
-```bash
-kcksefcli PobierzFaktury --from "-7days" --subjectType Subject2 -o /tmp/faktury --pdf
-```
-
-**Opcje:**
-To polecenie akceptuje wszystkie opcje z `SzukajFaktur` oraz dodatkowo:
-
-| Opcja                  | Opis                                                            | Wymagane | Domyślnie |
-|------------------------|-----------------------------------------------------------------|----------|-----------|
-| `-o`, `--outputdir`    | Katalog wyjściowy do zapisania faktur.                          | Tak      |           |
-| `-p`, `--pdf`          | Zapisz również wersję PDF faktury.                              | Nie      |           |
-| `--useInvoiceNumber`   | Użyj `InvoiceNumber` zamiast `KsefNumber` jako nazwy pliku.     | Nie      |           |
-| `--zapiszjson`         | Zapisz metadane faktury w plik .json.                           | Nie      |           |
-| `--retry-attempts`     | Liczba ponownych prób przy limicie zapytań.                     | Nie      | 5         |
-| `--no-local-rate-limit`| Wyłącza lokalny limit zapytań.                                  | Nie      |           |
-
----
-
-### `PrzeslijFaktury`
-
-Wysyła faktury w formacie XML do KSeF.
-
-**Użycie:**
-```bash
-kcksefcli PrzeslijFaktury faktura1.xml faktura2.xml --upodir /tmp/upo --upopdf
-```
-
-**Argumenty:**
-
-| Argument      | Opis                                  | Wymagane |
-|---------------|---------------------------------------|----------|
-| `pliki`       | Ścieżki do plików XML z fakturami.    | Tak      |
-
-**Opcje:**
-
-| Opcja              | Opis                                                | Wymagane |
-|--------------------|-----------------------------------------------------|----------|
-| `-u`, `--upodir`   | Katalog do zapisu plików UPO.                       | Nie      |
-| `--upopdf`         | Konwertuje UPO od razu na format PDF.               | Nie      |
-| `--uposesji`       | Zapisuje UPO sesji (zbiorcze UPO).                  | Nie      |
-| `--offlinemode`    | Ustawia tryb offline dla sesji.                     | Nie      |
-
----
-
-### `LinkDoFaktury`
-
-Generuje link weryfikacyjny dla pojedynczej faktury.
-
-**Użycie:**
-```bash
-kcksefcli LinkDoFaktury <ksef-numer>
-```
-
-**Argumenty:**
-
-| Argument      | Opis                  | Wymagane |
-|---------------|-----------------------|----------|
-| `ksef-numer`  | Numer KSeF faktury.   | Tak      |
-
----
-
-### `QRDoFaktury`
-
-Generuje kod QR dla linku weryfikacyjnego faktury i zapisuje go do pliku.
-
-**Użycie:**
-```bash
-kcksefcli QRDoFaktury <ksef-numer> faktura-qr.png
-```
-
-**Argumenty:**
-
-| Argument        | Opis                                      | Wymagane |
-|-----------------|-------------------------------------------|----------|
-| `ksef-numer`    | Numer KSeF faktury.                       | Tak      |
-| `output-path`   | Ścieżka pliku wyjściowego dla kodu QR.    | Tak      |
-
-**Opcje:**
-
-| Opcja            | Opis                                 | Domyślnie |
-|------------------|--------------------------------------|-----------|
-| `-p`, `--pixels` | Piksele na moduł dla kodu QR.        | `5`       |
-
----
-
-### `PrintConfig`
-
-Wypisuje aktywną konfigurację w formacie YAML (domyślnie) lub JSON (z opcją `--json`).
-
-**Użycie:**
-```bash
-kcksefcli PrintConfig [--json]
-```
-
-**Opcje:**
-
-| Opcja       | Opis                                | Domyślnie |
-|-------------|-------------------------------------|-----------|
-| `--json`    | Wypisuje konfigurację w formacie JSON. | `false`   |
-
----
-
-### `SelfUpdate`
-
-Aktualizuje narzędzie `kcksefcli` do najnowszej stabilnej wersji, pobierając binarkę z repozytorium GitLab CI/CD.
-
-**Użycie:**
-```bash
-kcksefcli SelfUpdate [--url <adres-url-binarki>]
-```
-
-**Opcje:**
-
-| Opcja            | Opis                                                                                   | Domyślnie |
-|------------------|----------------------------------------------------------------------------------------|-----------|
-| `-d`, `--destination` | Zapisuje nową wersję do określonej ścieżki zamiast zastępować bieżący plik wykonywalny. | Bieżący plik wykonywalny |
-| `--url`          | Określa niestandardowy adres URL do pobrania binarnego pliku aktualizacji.              | Automatycznie wykrywany na podstawie platformy |
-
----
-
-### `XML2PDF`
-
-Konwertuje fakturę KSeF w formacie XML na plik PDF.
-
-**Użycie:**
-```bash
-kcksefcli XML2PDF faktura.xml faktura.pdf
-```
-
-**Argumenty:**
-
-| Argument      | Opis                        | Wymagane |
-|---------------|-----------------------------|----------|
-| `input-file`  | Wejściowy plik XML.         | Tak      |
-| `output-file` | Wyjściowy plik PDF.         | Nie      |
-
-**Opcje:**
-
-| Opcja       | Opis                                     |
-|-------------|------------------------------------------|
-| `--upo`     | Użyj szablonu UPO.                       |
-| `--nrKSeF`  | Numer KSeF faktury do osadzenia w PDF.   |
-| `--qrCode`  | URL kodu QR do osadzenia w PDF.          |
-| `--qrCode2` | Drugi URL kodu QR do osadzenia w PDF.    |
-
----
-
-### `ParseDate`
-
-Parsuje ciąg znaków daty i wypisuje go w formacie ISO 8601 lub jako liczbę sekund od epoki Uniksa.
-
-Kolejność parsowania:
-1.  Standardowe parsowanie C# (`DateTime.TryParse`, `DateTime.TryParseExact`).
-2.  Względne daty w formacie `-<liczba>(day|days|dzien|dzień|dni|week|weeks|tydzień|tygodni)`.
-3.  Biblioteka `HumanDateParser` (np. `1 month ago`).
-4.  Narzędzie systemowe GNU `date` (fallback).
-
-**Użycie:**
-```bash
-kcksefcli ParseDate "<ciąg-daty>" [--seconds]
-```
-
-**Przykłady użycia:**
-```bash
-$ kcksefcli ParseDate "2024-01-02"
-2024-01-02T00:00:00.000000
-$ kcksefcli ParseDate "-1week"
-2024-02-11T10:30:00.000000
-$ kcksefcli ParseDate "yesterday" --seconds
-1708137600.000000
-```
-
-**Argumenty:**
-
-| Argument        | Opis                               | Wymagane |
-|-----------------|------------------------------------|----------|
-| `dateString`    | Ciąg znaków daty do sparsowania.   | Tak      |
-
-**Opcje:**
-
-| Opcja       | Opis                                                 |
-|-------------|------------------------------------------------------|
-| `--seconds` | Wypisuje zmiennoprzecinkową liczbę sekund od epoki Uniksa. |
-
----
-
-### `PobierzCertyfikat`
-
-Pobiera treść certyfikatu KSeF na podstawie numeru seryjnego.
-
-**Użycie:**
-```bash
-kcksefcli PobierzCertyfikat <numer-seryjny>
-```
-
-**Argumenty:**
-
-| Argument        | Opis                                      | Wymagane |
-|-----------------|-------------------------------------------|----------|
-| `numer-seryjny` | Numer seryjny certyfikatu.                | Tak      |
-
-**Opcje:**
-
-| Opcja               | Opis                                 |
-|---------------------|--------------------------------------|
-| `-o`, `--outputFile`| Ścieżka zapisu certyfikatu.          |
-
----
-
-### `UniewaznijCertyfikat`
-
-Unieważnia certyfikat KSeF.
-
-**Użycie:**
-```bash
-kcksefcli UniewaznijCertyfikat <numer-seryjny>
-```
-
-**Argumenty:**
-
-| Argument        | Opis                                      | Wymagane |
-|-----------------|-------------------------------------------|----------|
-| `numer-seryjny` | Numer seryjny certyfikatu.                | Tak      |
-
-**Opcje:**
-
-| Opcja      | Opis                                                                                                          | Domyślnie |
-|------------|---------------------------------------------------------------------------------------------------------------|-----------|
-| `--reason` | Powód unieważnienia: `KeyCompromise`, `AffiliationChanged`, `Superseded`, `CessationOfOperation`, `Other`.    | `Other`   |
-
----
-
-### `WylistujCertyfikaty`
-
-Listuje metadane certyfikatów KSeF.
-
-**Użycie:**
-```bash
-kcksefcli WylistujCertyfikaty
-```
-
-**Opcje:**
-
-| Opcja            | Opis                                      |
-|------------------|-------------------------------------------|
-| `--name`         | Filtrowanie po nazwie certyfikatu.        |
-| `--serialNumber` | Filtrowanie po numerze seryjnym.          |
-
----
-
-### `SprawdzLimitCertyfikatow`
-
-Sprawdza dostępne limity certyfikatów.
-
-**Użycie:**
-```bash
-kcksefcli SprawdzLimitCertyfikatow
-```
-
----
-
-### `QRWeryfikacjiFaktury`
-
-Generuje kod QR weryfikacyjny (KOD II) dla faktury i zapisuje go do pliku.
-
-**Użycie:**
-```bash
-kcksefcli QRWeryfikacjiFaktury faktura.xml kod.png
-```
-
-**Argumenty:**
-
-| Argument      | Opis                                   | Wymagane |
-|---------------|----------------------------------------|----------|
-| `InputFile`   | Ścieżka do pliku XML z fakturą.        | Tak      |
-| `OutputPath`  | Ścieżka wyjściowa dla pliku QR (np. jpg). | Tak      |
-
-**Opcje:**
-
-| Opcja            | Opis                           | Domyślnie |
-|------------------|--------------------------------|-----------|
-| `-p`, `--pixels` | Piksele na moduł dla kodu QR.  | `5`       |
-
----
-
-### `WystawFaktureOffline`
-
-Konwertuje fakturę KSeF XML na PDF, dodając kod QR weryfikacji offline (KOD II).
-
-**Użycie:**
-```bash
-kcksefcli WystawFaktureOffline faktura.xml faktura.pdf
-```
-
-**Argumenty:**
-
-| Argument      | Opis                                   | Wymagane |
-|---------------|----------------------------------------|----------|
-| `InputFile`   | Ścieżka do pliku XML z fakturą.        | Tak      |
-| `OutputFile`  | Ścieżka wyjściowa dla pliku PDF.       | Nie      |
-
-**Opcje:**
-
-| Opcja      | Opis                                     |
-|------------|------------------------------------------|
-| `--nrKSeF` | Numer KSeF faktury do osadzenia w PDF.   |
-
----
-
-### `PokazLimity`
-
-Pokazuje limity dla bieżącego kontekstu, podmiotu oraz status uprawnień do załączników.
-
-**Użycie:**
-```bash
-kcksefcli PokazLimity
-```
-
----
-
-### `LinkWeryfikacjiFaktury`
-
-Generuje link weryfikacji faktury (KOD II).
-
-**Użycie:**
-```bash
-kcksefcli LinkWeryfikacjiFaktury faktura.xml
-```
-
-**Argumenty:**
-
-| Argument   | Opis                             | Wymagane |
-|------------|----------------------------------|----------|
-| `FilePath` | Ścieżka do pliku XML z fakturą.  | Tak      |
-
-
+- [`Auth`](docs/Auth.md)
+- [`CertAuth`](docs/CertAuth.md)
+- [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
+- [`GetFaktura`](docs/GetFaktura.md)
+- [`LinkDoFaktury`](docs/LinkDoFaktury.md)
+- [`LinkWeryfikacjiFaktury`](docs/LinkWeryfikacjiFaktury.md)
+- [`NowyCertyfikat`](docs/NowyCertyfikat.md)
+- [`NowaFaktura`](docs/NowaFaktura.md)
+- [`ParseDate`](docs/ParseDate.md)
+- [`PobierzCertyfikat`](docs/PobierzCertyfikat.md)
+- [`PobierzInfoONip`](docs/PobierzInfoONip.md)
+- [`PobierzFaktury`](docs/PobierzFaktury.md)
+- [`PokazLimity`](docs/PokazLimity.md)
+- [`PrintConfig`](docs/PrintConfig.md)
+- [`PrzeslijFaktury`](docs/PrzeslijFaktury.md)
+- [`QRDoFaktury`](docs/QRDoFaktury.md)
+- [`QRWeryfikacjiFaktury`](docs/QRWeryfikacjiFaktury.md)
+- [`SelfUpdate`](docs/SelfUpdate.md)
+- [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md)
+- [`SzukajFaktur`](docs/SzukajFaktur.md)
+- [`TokenAuth`](docs/TokenAuth.md)
+- [`TokenRefresh`](docs/TokenRefresh.md)
+- [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md)
+- [`WeryfikujXML`](docs/WeryfikujXML.md)
+- [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md)
+- [`WystawFaktureOffline`](docs/WystawFaktureOffline.md)
+- [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
+- [`XMLExtract`](docs/XMLExtract.md)
+- [`XML2PDF`](docs/XML2PDF.md)
 
 ## Rozwój
 
