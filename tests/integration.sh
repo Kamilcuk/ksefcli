@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+clitest_xml2pdf_qrcodes() {
+	L_with_cd_tmpdir
+	L_unittest_cmd cli XML2PDF "$DIR"/FA_3_Przykład_1.xml out.pdf --nrKSeF "1234567890-20260223-1234567890AB" --qrCode "http://someurl" --qrCode2 "https://someuerl"
+	L_unittest_cmd ls -la out.pdf
+}
+
 clitest_z_integration_SprawdzLimitCertyfikatow() {
 	local output
 	L_unittest_cmd -v output cli SprawdzLimitCertyfikatow -a mytoken
