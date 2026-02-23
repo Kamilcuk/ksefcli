@@ -43,3 +43,11 @@ build-static:
 docker-build-static:
 	docker run -ti --rm -u "$(shell id -u):$(shell id -g)" -v $(CURDIR):$(CURDIR) -w $(CURDIR) \
 		mcr.microsoft.com/dotnet/sdk:10.0 $(GITLAB_BUILD_CMD)
+
+.PHONY: nix-fix
+nix-fix:
+	for f in $$(find src/KCKSeFCli/bin dist out out-self -type f -executable -name kcksefcli 2>/dev/null); do \
+		echo "Patching $$f..."; \
+		patchelf --remove-rpath "$$f"; \
+		patchelf --set-interpreter /lib64/ld-linux-x86-64.so.2 "$$f"; \
+	done
