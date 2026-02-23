@@ -2,6 +2,10 @@
 
 # Polecenie: `QRWeryfikacjiFaktury`
 
+> [!NOTE]
+> To polecenie działa w trybie **offline** i **nie łączy się** bezpośrednio z serwerami KSeF. Wykorzystuje dane klucza prywatnego certyfikatu zdefiniowane w profilu (`kcksefcli.yaml`), aby złożyć odpowiedni podpis bez wywoływania zapytań sieciowych.
+
+
 Generuje kod QR weryfikacyjny (KOD II) dla faktury i zapisuje go do pliku.
 
 **Użycie:**
@@ -27,5 +31,5 @@ kcksefcli QRWeryfikacjiFaktury faktura.xml kod.png
 
 ## Konfiguracja i Uwierzytelnianie
 
-To polecenie łączy się z serwerami KSeF i w pełni obsługuje system profili, opcje konfiguracji (`kcksefcli.yaml`) oraz automatycznej pamięci podręcznej (cache) tokenów sesyjnych.
+To polecenie **nie łączy się** z serwerami KSeF, działa w pełni lokalnie. System profili i obsługa plików (`kcksefcli.yaml`) jest jednak potrzebna po to, aby uzyskać dostęp do zdefiniowanego w profilu klucza prywatnego, by poprawnie podpisać wystawiony element offline.
 Szczegółowe informacje o zarządzaniu sesją, przełączaniu profili i środowisk znajdują się w pliku: [**Konfiguracja**](Configuration.md).

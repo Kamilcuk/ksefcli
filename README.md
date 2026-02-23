@@ -91,6 +91,7 @@ $ kcksefcli SzukajFaktur -c kcksefcli.yaml --from "-1week" --to "now" > /tmp/1.j
 
 ## Konfiguracja
 Szczegóły konfiguracji opisano w pliku [Konfiguracja](docs/Configuration.md).
+**Utworzenie pliku konfiguracyjnego z poświadczeniami jest niezbędne, aby korzystać z komend łączących się bezpośrednio z serwerami KSeF.**
 
 ## Użycie
 
@@ -140,24 +141,22 @@ Szczegółowy opis konfiguracji profili, globalnych opcji i pamięci podręcznej
 
 Rozwój odbywa się na GitLabie.
 
-Aby skonfigurować środowisko deweloperskie, wykonaj następujące kroki:
+Aby skonfigurować środowisko deweloperskie i uruchomić aplikację, wykonaj następujące kroki:
 
-1.  Sklonuj repozytorium:
-    ```bash
-    git clone https://gitlab.com/kamcuk/kcksefcli.git
-    ```
-2.  Zainstaluj zależności .NET:
-    ```bash
-    dotnet restore
-    ```
-3.  Zbuduj projekt:
-    ```bash
-    dotnet build
-    ```
-4.  Uruchom aplikację:
-    ```bash
-    dotnet run -- <polecenie> [opcje]
-    ```
+```bash
+# Sklonuj repozytorium
+git clone https://gitlab.com/kamcuk/kcksefcli.git
+cd kcksefcli
+
+# Inicjalizacja i pobranie zawartości niezbędnych submodułów (zależności)
+git submodule update --init --recursive
+
+# Pobranie paczek .NET i budowa projektu
+dotnet build
+
+# Uruchomienie aplikacji
+dotnet run --project src/KCKSeFCli -- <polecenie> [opcje]
+```
 
 ## Uwierzytelnianie w KSeF
 

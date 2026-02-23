@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/KCKSeFCli/KCKSeFCli.csproj" />
+  </Folder>
+  <Folder Name="/thirdparty/" />
+  <Folder Name="/thirdparty/ksef-client-csharp/">
+    <Project Path="thirdparty/ksef-client-csharp/KSeF.Client.ClientFactory/KSeF.Client.ClientFactory.csproj" />
+    <Project Path="thirdparty/ksef-client-csharp/KSeF.Client.Core/KSeF.Client.Core.csproj" />
+    <Project Path="thirdparty/ksef-client-csharp/KSeF.Client.Tests.Core/KSeF.Client.Tests.Core.csproj" />
+    <Project Path="thirdparty/ksef-client-csharp/KSeF.Client.Tests.Utils/KSeF.Client.Tests.Utils.csproj" />
+    <Project Path="thirdparty/ksef-client-csharp/KSeF.Client/KSeF.Client.csproj" />
+  </Folder>
+</Solution>
