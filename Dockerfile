@@ -11,7 +11,8 @@ ARG RUNTIME=linux-x64
 RUN dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r $RUNTIME -o dist
 
 FROM cgr.dev/chainguard/wolfi-base AS test
-RUN apk add --no-cache bash ca-certificates libstdc++ coreutils libfontconfig1
+COPY tests/setup-wolfie.sh tests/setup-wolfie.sh
+RUN ./tests/setup-wolfie.sh
 ARG EXE ./kcksefcli
 COPY ${EXE} ${EXE}
 ENV EXE=${EXE}
