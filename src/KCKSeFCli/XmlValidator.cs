@@ -5,44 +5,54 @@ using System.Xml.Schema;
 namespace KCKSeFCli;
 
 public static class XmlValidator {
-    public static bool Validate(string xml, out List<string> errors) {
-        errors = new List<string>();
-        try {
-            XmlSchemaSet schemas = new XmlSchemaSet {
-                XmlResolver = new XmlUrlResolver()
-            };
-            Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            using (Stream? stream = assembly.GetManifestResourceStream("KCKSeFCli.Resources.schemat_FA(3)_v1-0E.xsd")) {
-                if (stream == null) {
-                    errors.Add("Embedded schema not found.");
-                    return false;
-                }
-                schemas.Add(null, XmlReader.Create(stream));
+    private static XmlSchemaSet? _schema;
+
+    private static XmlSchemaSet GetSchema() {
+        if (_schema != null)
+            return _schema;
+
+        _schema = new XmlSchemaSet();
+        Assembly assembly = Assembly.GetExecutingAssembly();
+        string resourceName = "KCKSeFCli.Resources.schemat.xsd";
+        using (var stream = assembly.GetManifestResourceStream(resourceName)) {
+            if (stream == null)
+                throw new Exception($"Embedded resource not found: {resourceName}");
+            using (XmlReader reader = XmlReader.Create(stream)) {
+                _schema.Add("http://crd.gov.pl/wzor/2025/06/25/13775/", reader);
             }
+        }
+        return _schema;
+    }
 
-            XmlReaderSettings settings = new XmlReaderSettings {
-                Schemas = schemas,
-                ValidationType = ValidationType.Schema,
-                ValidationFlags = XmlSchemaValidationFlags.ProcessInlineSchema |
-                                  XmlSchemaValidationFlags.ProcessSchemaLocation |
-                                  XmlSchemaValidationFlags.ReportValidationWarnings,
-                XmlResolver = new XmlUrlResolver(),
-            };
-            List<string> validationEvents = new List<string>();
-            settings.ValidationEventHandler += (sender, e) => {
-                validationEvents.Add($"{e.Severity}: {e.Message}");
-            };
+    public static bool Validate(string xml, out List<string> errors) {
+        List<string> localErrors = new List<string>();
+        XmlReaderSettings settings = new XmlReaderSettings {
+            Schemas = GetSchema(),
+            ValidationType = ValidationType.Schema,
+            ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings,
+        };
+        settings.ValidationEventHandler += (sender, args) => localErrors.Add(args.Message);
 
-            using (StringReader stringReader = new StringReader(xml))
-            using (XmlReader reader = XmlReader.Create(stringReader, settings)) {
+        try {
+            using (XmlReader reader = XmlReader.Create(new StringReader(xml), settings)) {
                 while (reader.Read()) { }
             }
-
-            errors.AddRange(validationEvents);
-            return errors.Count == 0;
-        } catch (Exception ex) {
-            errors.Add($"Validation exception: {ex.Message}");
-            return false;
+        } catch (XmlException ex) {
+            localErrors.Add(ex.Message);
         }
+
+        errors = localErrors;
+        return errors.Count == 0;
+    }
+
+    public static bool ValidateLog(string xml, out List<string> errors) {
+        bool isValid = Validate(xml, out errors);
+        if (!isValid) {
+            Log.LogError("XML validation failed:");
+            foreach (string error in errors) {
+                Log.LogError(error);
+            }
+        }
+        return isValid;
     }
 }

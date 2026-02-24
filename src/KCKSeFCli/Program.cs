@@ -14,8 +14,8 @@ public class Program {
 
         Type[] commandTypes = new[]
         {
-            typeof(AuthCommand),
-            typeof(CertAuthCommand),
+            typeof(TestAuthCommand),
+            typeof(TestCertAuthCommand),
             typeof(DodajPozycjeNaFakturzeCommand),
             typeof(GetFakturaCommand),
             typeof(LinkDoFakturyCommand),
@@ -34,13 +34,14 @@ public class Program {
             typeof(SelfUpdateCommand),
             typeof(SprawdzLimitCertyfikatowCommand),
             typeof(SzukajFakturCommand),
-            typeof(TokenAuthCommand),
+            typeof(TestTokenAuthCommand),
             typeof(TokenRefreshCommand),
             typeof(UniewaznijCertyfikatCommand),
             typeof(WeryfikujXMLCommand),
             typeof(WylistujCertyfikatyCommand),
             typeof(WystawFaktureOfflineCommand),
             typeof(WystawPodobnaFaktureCommand),
+            typeof(WystawKorekteCommand),
             typeof(XMLExtractCommand),
             typeof(XML2PDFCommand)
         }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();

@@ -16,15 +16,10 @@ public class WeryfikujXMLCommand : IGlobalCommand {
         }
 
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
-        if (XmlValidator.Validate(xmlContent, out List<string>? errors)) {
-            Console.WriteLine("XML validation completed successfully.");
+        if (XmlValidator.ValidateLog(xmlContent, out _)) {
+            Log.LogInformation("XML validation successful.");
             return 0;
-        } else {
-            Console.Error.WriteLine("XML validation failed:");
-            foreach (string error in errors) {
-                Console.Error.WriteLine(error);
-            }
-            return 1;
         }
+        return 1;
     }
 }

@@ -1,7 +1,5 @@
 // XML KSeF file may not have a namespace.
 using System.Globalization;
-using System.Text;
-using System.Xml;
 using System.Xml.Linq;
 
 using CommandLine;
@@ -111,13 +109,9 @@ public class NowaFakturaCommand : IGlobalCommand {
         Log.LogInformation($"Successfully created invoice and saved to: {OutputFile}");
 
         if (!BezWalidacji) {
-            if (XmlValidator.Validate(xml, out List<string>? errors)) {
+            if (XmlValidator.ValidateLog(xml, out _)) {
                 Log.LogInformation("Validation successful.");
             } else {
-                Log.LogError("Validation failed:");
-                foreach (string error in errors) {
-                    Log.LogError(error);
-                }
                 return 1;
             }
         }
@@ -307,43 +301,6 @@ public class NowaFakturaCommand : IGlobalCommand {
             )
         );
 
-        foreach (XElement el in doc.Descendants()) {
-            SetDefaultXmlNamespace(el, ns);
-        }
-
-        using MemoryStream ms = new MemoryStream();
-        // Use UTF8 without BOM to avoid "Data at the root level is invalid" parsing errors in XmlReader
-        XmlWriterSettings settings = new XmlWriterSettings { Indent = true, Encoding = new UTF8Encoding(false) };
-        using (XmlWriter writer = XmlWriter.Create(ms, settings)) {
-            doc.Save(writer);
-        }
-        string xml = Encoding.UTF8.GetString(ms.ToArray());
-
-        return xml;
+        return MyXml.XmlToString(doc, ns);
     }
-
-    public static void SetDefaultXmlNamespace(XElement xelem, XNamespace xmlns) {
-        if (xelem.Name.NamespaceName == string.Empty) {
-            xelem.Name = xmlns + xelem.Name.LocalName;
-        }
-
-        foreach (XElement e in xelem.Elements()) {
-            SetDefaultXmlNamespace(e, xmlns);
-        }
-    }
-
-    public static XElement WithDefaultXmlNamespace(XElement xelem, XNamespace xmlns) {
-        XName name;
-        if (xelem.Name.NamespaceName == string.Empty) {
-            name = xmlns + xelem.Name.LocalName;
-        } else {
-            name = xelem.Name;
-        }
-
-        return new XElement(name,
-                        from e in xelem.Elements()
-                        select WithDefaultXmlNamespace(e, xmlns));
-    }
-
-
 }
