@@ -1,0 +1,3 @@
+<Test xmlns:ns1="http://example.com/ns1">
+    <ns1:Element>Value</ns1:Element>
+</Test>

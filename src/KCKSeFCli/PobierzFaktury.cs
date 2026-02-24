@@ -14,8 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("PobierzFaktury", HelpText = "Download invoices based on search criteria.")]
-public class PobierzFakturyCommand : SzukajFakturCommand
-{
+public class PobierzFakturyCommand : SzukajFakturCommand {
     [Option('o', "outputdir", Required = true, HelpText = "Output directory to save files to.")]
     public required string OutputDir { get; set; }
 
@@ -25,8 +24,8 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("useInvoiceNumber", HelpText = "Use InvoiceNumber instead of KsefNumber for the filename to save invoices.")]
     public bool UseInvoiceNumber { get; set; }
 
-    [Option("zapiszjson", HelpText = "Zapisz metadane faktury w plik .json")]
-    public bool ZapiszJson { get; set; }
+    [Option("no-json", HelpText = "Nie zapisuj metadanych faktury w plikach .json")]
+    public bool NoJson { get; set; }
 
     [Option("retry-attempts", Default = 5, HelpText = "Number of retry attempts on rate limit.")]
     public int RetryAttempts { get; set; }
@@ -34,11 +33,9 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("no-local-rate-limit", HelpText = "Disable local rate limiting.")]
     public bool NoLocalRateLimit { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         XML2PDFCommand.Runner? pdfRunner = null;
-        if (Pdf)
-        {
+        if (Pdf) {
             pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         }
 
@@ -49,16 +46,14 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
         List<InvoiceSummary> invoices = await base.SzukajFaktury(scope, ksefClient, cancellationToken).ConfigureAwait(false);
 
-        foreach (InvoiceSummary invoiceSummary in invoices)
-        {
+        foreach (InvoiceSummary invoiceSummary in invoices) {
             string fileName = UseInvoiceNumber ? invoiceSummary.InvoiceNumber : invoiceSummary.KsefNumber;
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
-            if (ZapiszJson)
-            {
+            if (!NoJson) {
                 await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
-                Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
+                Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
             }
 
             string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
@@ -74,15 +69,14 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
             await File.WriteAllTextAsync(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n", cancellationToken).ConfigureAwait(false);
 
-            Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
+            Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
-            if (Pdf)
-            {
+            if (Pdf) {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
                 byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
-                Log.LogInformation($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
+                Log.Information($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
             }
         }
 

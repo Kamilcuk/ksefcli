@@ -9,8 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("QRDoFaktury", HelpText = "Generate a QR code for an invoice and save it to a file")]
-public class QRDoFakturyCommand : IWithConfigCommand
-{
+public class QRDoFakturyCommand : IWithConfigCommand {
     [Value(0, Required = true, HelpText = "KSeF invoice number")]
     public string KsefNumber { get; set; }
 
@@ -20,8 +19,7 @@ public class QRDoFakturyCommand : IWithConfigCommand
     [Option('p', "pixels", Default = 5, HelpText = "Pixels per module for the QR code")]
     public int PixelsPerModule { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
 

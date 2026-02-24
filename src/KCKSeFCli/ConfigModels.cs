@@ -2,14 +2,12 @@ using KSeF.Client.Core.Models.Authorization;
 
 namespace KCKSeFCli;
 
-public sealed class KCKSeFCliConfig
-{
+public sealed class KCKSeFCliConfig {
     public string ActiveProfile { get; init; } = "";
     public Dictionary<string, ProfileConfig> Profiles { get; init; } = new();
 }
 
-public class ProfileConfig
-{
+public class ProfileConfig {
     public string Environment { get; init; } = "";
     public string Nip { get; init; } = "";
     public CertificateConfig? Certificate { get; init; }
@@ -18,8 +16,7 @@ public class ProfileConfig
     public AuthMethod AuthMethod => Certificate != null ? AuthMethod.Xades : AuthMethod.KsefToken;
 }
 
-public sealed class CertificateConfig
-{
+public sealed class CertificateConfig {
     public string? Private_Key { get; init; }
     public string? Private_Key_File { get; init; }
     public string? Certificate { get; init; }
@@ -31,12 +28,10 @@ public sealed class CertificateConfig
     public AuthenticationTokenSubjectIdentifierTypeEnum SubjectIdentifierType => AuthenticationTokenSubjectIdentifierTypeEnum.CertificateSubject;
 }
 
-public sealed class ProfileConfigWithName : ProfileConfig
-{
+public sealed class ProfileConfigWithName : ProfileConfig {
     public string Name { get; set; }
 
-    public ProfileConfigWithName(ProfileConfig original, string name)
-    {
+    public ProfileConfigWithName(ProfileConfig original, string name) {
         Name = name;
         Environment = original.Environment;
         Nip = original.Nip;
@@ -44,8 +39,7 @@ public sealed class ProfileConfigWithName : ProfileConfig
         Token = original.Token;
     }
 
-    public ProfileConfigWithName(ProfileConfigWithName original)
-    {
+    public ProfileConfigWithName(ProfileConfigWithName original) {
         Name = original.Name;
         Environment = original.Environment;
         Nip = original.Nip;
@@ -54,8 +48,7 @@ public sealed class ProfileConfigWithName : ProfileConfig
     }
 }
 
-public enum AuthMethod
-{
+public enum AuthMethod {
     Xades,
     KsefToken
 }

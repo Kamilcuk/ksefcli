@@ -63,7 +63,20 @@ testlib_main() {
 	fi
 	opt_exe=$(readlink -f "${opt_exe[0]}") || exit 234
 
-	L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"}
+	local cmd=(L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"})
+
+	# Create a global temporary directory.
+	L_with_tmpdir_to TMPD
+	export TMPD
+
+	if [[ -v KCLLM ]]; then
+		# When running from GEMINI, we do not need to print everything all at once every line.
+		# Just give GEMINI enouhg context to work with.
+		tmp=$( "${cmd[@]}" 2>&1 )
+		tail -n 100 <<<"$tmp"
+	else
+		"${cmd[@]}"
+	fi
 }
 
 testlib_setup_integration_config() {

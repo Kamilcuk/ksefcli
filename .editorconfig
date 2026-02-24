@@ -15,8 +15,56 @@ indent_size = 4
 max_line_length = 100
 dotnet_sort_system_directives_first = true
 
-# Optional: keep single-line statements compact
+# Horizontal Compression / Single Line
 csharp_preserve_single_line_statements = true
+csharp_style_allow_embedded_statements_on_same_line_general = true
+csharp_style_allow_blank_lines_between_consecutive_braces = false
+csharp_style_allow_blank_line_after_token_in_conditional_expression = false
+csharp_style_allow_blank_line_after_token_in_arrow_expression = false
+# Expression Bodies (Arrow =>)
+csharp_style_expression_bodied_methods = true
+csharp_style_expression_bodied_constructors = true
+csharp_style_expression_bodied_operators = true
+csharp_style_expression_bodied_properties = true
+csharp_style_expression_bodied_indexers = true
+csharp_style_expression_bodied_accessors = true
+csharp_style_expression_bodied_lambdas = true
+csharp_style_expression_bodied_local_functions = true
+# Formatting
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+csharp_new_line_before_members_in_object_initializers = false
+csharp_new_line_before_members_in_anonymous_types = false
+csharp_new_line_between_query_expression_clauses = false
+
+# Expression Bodies (Arrow Syntax =>)
+csharp_style_expression_bodied_methods = true
+csharp_style_expression_bodied_constructors = true
+csharp_style_expression_bodied_operators = true
+csharp_style_expression_bodied_properties = true
+csharp_style_expression_bodied_indexers = true
+csharp_style_expression_bodied_accessors = true
+csharp_style_expression_bodied_lambdas = true
+csharp_style_expression_bodied_local_functions = true
+
+# Horizontal Compression
+csharp_preserve_single_line_statements = true
+csharp_style_allow_embedded_statements_on_same_line_general = true
+csharp_style_allow_blank_lines_between_consecutive_braces = false
+csharp_style_allow_braces_on_same_line = true
+
+# Pattern Matching & Inlining
+csharp_style_pattern_matching_over_as_with_null_check = true
+csharp_style_pattern_matching_over_is_with_cast_check = true
+csharp_style_inlined_variable_declaration = true
+
+# Initializers & Null Syntax
+dotnet_style_object_initializer = true
+dotnet_style_collection_initializer = true
+dotnet_style_null_propagation = true
+dotnet_style_coalesce_expression = true
 
 # organise using
 dotnet_diagnostic.IDE0005.severity = warning
@@ -31,9 +79,9 @@ csharp_style_var_elsewhere = false
 dotnet_diagnostic.IDE0008.severity = error   # użyj typu zamiast 'var'
 dotnet_diagnostic.CA2007.severity = error
 
-# --- Klamry preferowane ---
-csharp_prefer_braces = true
-dotnet_diagnostic.IDE0011.severity = warning
+# # --- Klamry preferowane ---
+# csharp_prefer_braces = true
+# dotnet_diagnostic.IDE0011.severity = warning
 
 # --- Jawne modyfikatory (z wyj. interfejsów) ---
 dotnet_style_require_accessibility_modifiers = for_non_interface_members

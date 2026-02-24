@@ -1,57 +1,61 @@
+using System.Reflection;
 using System.Xml;
 using System.Xml.Schema;
 
 namespace KCKSeFCli;
 
-public static class XmlValidator
-{
-    public static bool Validate(string xml, out List<string> errors)
-    {
-        errors = new List<string>();
-        try
-        {
-            var schemas = new XmlSchemaSet
-            {
-                XmlResolver = new XmlUrlResolver()
-            };
-            var assembly = System.Reflection.Assembly.GetExecutingAssembly();
-            using (var stream = assembly.GetManifestResourceStream("KCKSeFCli.Resources.schemat_FA(3)_v1-0E.xsd"))
-            {
-                if (stream == null)
-                {
-                    errors.Add("Embedded schema not found.");
-                    return false;
-                }
-                schemas.Add(null, XmlReader.Create(stream));
-            }
+public static class XmlValidator {
+    private static XmlSchemaSet? _schema;
 
-            var settings = new XmlReaderSettings
-            {
-                Schemas = schemas,
-                ValidationType = ValidationType.Schema,
-                ValidationFlags = XmlSchemaValidationFlags.ProcessInlineSchema |
-                                  XmlSchemaValidationFlags.ProcessSchemaLocation |
-                                  XmlSchemaValidationFlags.ReportValidationWarnings,
-                XmlResolver = new XmlUrlResolver(),
-            };
-            var validationEvents = new List<string>();
-            settings.ValidationEventHandler += (sender, e) => {
-                validationEvents.Add($"{e.Severity}: {e.Message}");
-            };
-            
-            using (var stringReader = new StringReader(xml))
-            using (var reader = XmlReader.Create(stringReader, settings))
-            {
+    private static XmlSchemaSet GetSchema() {
+        if (_schema != null)
+            return _schema;
+
+        _schema = new XmlSchemaSet() {
+            XmlResolver = new XmlUrlResolver()
+        };
+        Assembly assembly = Assembly.GetExecutingAssembly();
+        string resourceName = "KCKSeFCli.Resources.schemat_FA(3)_v1-0E.xsd";
+        using (Stream? stream = assembly.GetManifestResourceStream(resourceName)) {
+            if (stream == null)
+                throw new Exception($"Embedded resource not found: {resourceName}");
+            using (XmlReader reader = XmlReader.Create(stream)) {
+                _schema.Add(MyXml.KsefNamespace.NamespaceName, reader);
+            }
+        }
+        return _schema;
+    }
+
+    public static bool Validate(string xml, out List<string> errors) {
+        List<string> localErrors = new List<string>();
+        XmlReaderSettings settings = new XmlReaderSettings {
+            Schemas = GetSchema(),
+            ValidationType = ValidationType.Schema,
+            ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings,
+            XmlResolver = new XmlUrlResolver(),
+        };
+        settings.ValidationEventHandler += (sender, args) => localErrors.Add(args.Message);
+
+        try {
+            using (XmlReader reader = XmlReader.Create(new StringReader(xml), settings)) {
                 while (reader.Read()) { }
             }
+        } catch (XmlException ex) {
+            localErrors.Add(ex.Message);
+        }
 
-            errors.AddRange(validationEvents);
-            return errors.Count == 0;
+        errors = localErrors;
+        return errors.Count == 0;
+    }
+
+    public static bool ValidateLog(string xml, out List<string> errors) {
+        bool isValid = Validate(xml, out errors);
+        if (!isValid) {
+            Log.Error("XML validation failed:");
+            foreach (string error in errors) {
+                Log.Error(error);
+            }
         }
-        catch (Exception ex)
-        {
-            errors.Add($"Validation exception: {ex.Message}");
-            return false;
-        }
+        return isValid;
     }
 }

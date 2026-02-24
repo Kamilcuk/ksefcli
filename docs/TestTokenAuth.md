@@ -1,6 +1,6 @@
 [Powrót do strony głównej](../README.md)
 
-# Polecenie: `TokenAuth`
+# Polecenie: `TestTokenAuth`
 
 > [!IMPORTANT]
 > **Komenda testowa:** To polecenie służy wyłącznie do ręcznego testowania procesu uwierzytelniania. W normalnej pracy z narzędziem nie ma potrzeby wywoływania go jawnie. Aplikacja `kcksefcli` automatycznie zarządza procesem logowania, pobieraniem tokenów sesyjnych oraz ich odświeżaniem w tle przed wykonaniem jakiejkolwiek innej operacji (np. wysyłki lub szukania faktur).
@@ -12,7 +12,7 @@ Wymusza uwierzytelnienie za pomocą tokena sesyjnego z aktywnego profilu. Profil
 
 **Użycie:**
 ```bash
-kcksefcli -a profil_z_tokenem TokenAuth
+kcksefcli -a profil_z_tokenem TestTokenAuth
 ```
 
 ---

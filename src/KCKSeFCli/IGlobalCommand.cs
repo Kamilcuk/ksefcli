@@ -4,57 +4,40 @@ using CommandLine;
 
 namespace KCKSeFCli;
 
-public abstract class IGlobalCommand
-{
+public abstract class IGlobalCommand {
     public static readonly string CacheDir = GetCacheDir();
     public static readonly string ConfigDir = GetConfigDir();
 
-    private static string GetCacheDir()
-    {
+    private static string GetCacheDir() {
         string cacheDir;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             cacheDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
+        } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
             cacheDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Caches");
-        }
-        else // Linux and other Unix-like systems
-        {
+        } else // Linux and other Unix-like systems
+          {
             string? xdgCacheHome = Environment.GetEnvironmentVariable("XDG_CACHE_HOME");
-            if (!string.IsNullOrEmpty(xdgCacheHome))
-            {
+            if (!string.IsNullOrEmpty(xdgCacheHome)) {
                 cacheDir = xdgCacheHome;
-            }
-            else
-            {
+            } else {
                 cacheDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".cache");
             }
         }
         return Path.Combine(cacheDir, "kcksefcli");
     }
 
-    private static string GetConfigDir()
-    {
+    private static string GetConfigDir() {
         string configDir;
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             configDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        }
-        else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
+        } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
             configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Library", "Application Support");
-        }
-        else // Linux and other Unix-like systems
-        {
+        } else // Linux and other Unix-like systems
+          {
             string? xdgConfigHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
-            if (!string.IsNullOrEmpty(xdgConfigHome))
-            {
+            if (!string.IsNullOrEmpty(xdgConfigHome)) {
                 configDir = xdgConfigHome;
-            }
-            else
-            {
+            } else {
                 configDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".config");
             }
         }

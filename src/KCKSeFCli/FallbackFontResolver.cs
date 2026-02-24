@@ -1,45 +1,35 @@
-using PdfSharp.Fonts;
-using System;
-using System.IO;
 using System.Reflection;
 
-namespace KCKSeFCli
-{
-    public class FallbackFontResolver : IFontResolver
-    {
-        public FallbackFontResolver()
-        {
+using PdfSharp.Fonts;
+
+namespace KCKSeFCli {
+    public class FallbackFontResolver : IFontResolver {
+        public FallbackFontResolver() {
             GlobalFontSettings.UseWindowsFontsUnderWindows = true;
             GlobalFontSettings.UseWindowsFontsUnderWsl2 = true;
         }
 
-        public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var stream = assembly.GetManifestResourceStream("KCKSeFCli.Resources.WorkSans-Regular.ttf");
+        public FontResolverInfo ResolveTypeface(string familyName, bool isBold, bool isItalic) {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            Stream? stream = assembly.GetManifestResourceStream("KCKSeFCli.Resources.WorkSans-Regular.ttf");
 
-            if (stream != null)
-            {
+            if (stream != null) {
                 return new FontResolverInfo("WorkSans-Regular");
             }
-            
-            var fontResolverInfo = PlatformFontResolver.ResolveTypeface(familyName, isBold, isItalic);
-            if (fontResolverInfo == null)
-            {
+
+            FontResolverInfo? fontResolverInfo = PlatformFontResolver.ResolveTypeface(familyName, isBold, isItalic);
+            if (fontResolverInfo == null) {
                 throw new System.Exception($"Font {familyName} not found.");
             }
             return fontResolverInfo;
         }
 
-        public byte[] GetFont(string faceName)
-        {
-            var assembly = Assembly.GetExecutingAssembly();
-            var stream = assembly.GetManifestResourceStream("KCKSeFCli.Resources.WorkSans-Regular.ttf");
+        public byte[] GetFont(string faceName) {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            Stream? stream = assembly.GetManifestResourceStream("KCKSeFCli.Resources.WorkSans-Regular.ttf");
 
-            if (stream != null)
-            {
-                using (var reader = new BinaryReader(stream))
-                {
+            if (stream != null) {
+                using (BinaryReader reader = new BinaryReader(stream)) {
                     return reader.ReadBytes((int)stream.Length);
                 }
             }

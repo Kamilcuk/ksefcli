@@ -1,6 +1,6 @@
 [Powrót do strony głównej](../README.md)
 
-# Polecenie: `Auth`
+# Polecenie: `TestCertAuth`
 
 > [!IMPORTANT]
 > **Komenda testowa:** To polecenie służy wyłącznie do ręcznego testowania procesu uwierzytelniania. W normalnej pracy z narzędziem nie ma potrzeby wywoływania go jawnie. Aplikacja `kcksefcli` automatycznie zarządza procesem logowania, pobieraniem tokenów sesyjnych oraz ich odświeżaniem w tle przed wykonaniem jakiejkolwiek innej operacji (np. wysyłki lub szukania faktur).
@@ -8,11 +8,11 @@
 > Ta komenda może zostać usunięta w przyszłych wersjach narzędzia.
 > Więcej o automatycznym zarządzaniu sesją znajdziesz w dokumencie: [**Konfiguracja**](Configuration.md).
 
-Uwierzytelnia użytkownika na podstawie metody zdefiniowanej w aktywnym profilu (token lub certyfikat) i zwraca token dostępowy.
+Wymusza uwierzytelnienie za pomocą certyfikatu kwalifikowanego z aktywnego profilu. Profil musi zawierać sekcję `certificate`.
 
 **Użycie:**
 ```bash
-kcksefcli -a moj_profil Auth
+kcksefcli -a profil_z_certyfikatem TestCertAuth
 ```
 
 ---

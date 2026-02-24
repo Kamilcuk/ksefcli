@@ -13,16 +13,13 @@ using Microsoft.IdentityModel.Tokens;
 namespace KCKSeFCli;
 
 [Verb("LinkDoFaktury", HelpText = "Generate a link to an invoice")]
-public class LinkDoFakturyCommand : IWithConfigCommand
-{
+public class LinkDoFakturyCommand : IWithConfigCommand {
     [Value(0, Required = true, HelpText = "KSeF invoice number")]
     public string KsefNumber { get; set; }
 
-    public static string LinkDoFaktury(string invoiceXml, IVerificationLinkService linkSvc)
-    {
+    public static string LinkDoFaktury(string invoiceXml, IVerificationLinkService linkSvc) {
         XDocument xmlDoc = XDocument.Parse(invoiceXml);
-        if (xmlDoc.Root is null)
-        {
+        if (xmlDoc.Root is null) {
             throw new InvalidDataException("Invoice XML is missing the root element.");
         }
 
@@ -43,8 +40,7 @@ public class LinkDoFakturyCommand : IWithConfigCommand
         return url;
     }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
 

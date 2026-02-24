@@ -11,28 +11,24 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("WylistujCertyfikaty", HelpText = "List KSeF certificate metadata.")]
-public class WylistujCertyfikatyCommand : IWithConfigCommand
-{
+public class WylistujCertyfikatyCommand : IWithConfigCommand {
     [Option("name", HelpText = "Filter by certificate name.")]
     public string? Name { get; set; }
 
     [Option("serialNumber", HelpText = "Filter by certificate serial number.")]
     public string? CertificateSerialNumber { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
 
         IGetCertificateMetadataListListRequestBuilder requestBuilder = KSeF.Client.Api.Builders.Certificates.GetCertificateMetadataListRequestBuilder.Create();
 
-        if (!string.IsNullOrEmpty(Name))
-        {
+        if (!string.IsNullOrEmpty(Name)) {
             requestBuilder.WithName(Name);
         }
 
-        if (!string.IsNullOrEmpty(CertificateSerialNumber))
-        {
+        if (!string.IsNullOrEmpty(CertificateSerialNumber)) {
             requestBuilder.WithCertificateSerialNumber(CertificateSerialNumber);
         }
 

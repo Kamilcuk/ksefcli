@@ -5,8 +5,7 @@ using CommandLine;
 namespace KCKSeFCli;
 
 [Verb("XML2PDF", HelpText = "Convert KSeF XML invoice to PDF.")]
-public class XML2PDFCommand : IGlobalCommand
-{
+public class XML2PDFCommand : IGlobalCommand {
     [Value(0, Required = true, HelpText = "Input XML file path.")]
     public required string InputFile { get; set; }
 
@@ -25,33 +24,26 @@ public class XML2PDFCommand : IGlobalCommand
     [Option("qrCode2", Required = false, HelpText = "Second URL of QR code to embed in PDF.")]
     public string? QrCode2Url { get; set; }
 
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         ConfigureLogging();
 
-        if (!File.Exists(InputFile))
-        {
+        if (!File.Exists(InputFile)) {
             Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
         string outputPdfPath;
-        if (string.IsNullOrEmpty(OutputFile))
-        {
-            if (!InputFile.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-            {
+        if (string.IsNullOrEmpty(OutputFile)) {
+            if (!InputFile.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) {
                 Console.Error.WriteLine("Error: Input file must have a .xml extension when no output file is specified.");
                 return 1;
             }
             outputPdfPath = Path.ChangeExtension(InputFile, ".pdf");
-            if (File.Exists(outputPdfPath))
-            {
+            if (File.Exists(outputPdfPath)) {
                 Console.Error.WriteLine($"Error: Output file already exists: {outputPdfPath}");
                 return 1;
             }
-        }
-        else
-        {
+        } else {
             outputPdfPath = OutputFile;
         }
 
@@ -60,8 +52,7 @@ public class XML2PDFCommand : IGlobalCommand
         Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
         byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, cancellationToken).ConfigureAwait(false);
 
-        if (QrCode2Url is not null)
-        {
+        if (QrCode2Url is not null) {
             pdfContent = AddQrToPdf.AddQrCode(pdfContent, QrCode2Url);
         }
 
@@ -72,17 +63,14 @@ public class XML2PDFCommand : IGlobalCommand
         return 0;
     }
 
-    public class Runner
-    {
+    public class Runner {
         private readonly string[] _command;
 
-        internal Runner(string[] command)
-        {
+        internal Runner(string[] command) {
             _command = command;
         }
 
-        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCodeUrl, CancellationToken cancellationToken)
-        {
+        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCodeUrl, CancellationToken cancellationToken) {
             using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
             await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
             using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
@@ -91,17 +79,14 @@ public class XML2PDFCommand : IGlobalCommand
             commandArgs.AddRange(new[] { upo ? "upo" : "invoice", tempXml.Path, tempPdf.Path });
 
             System.Collections.Generic.Dictionary<string, string> options = new();
-            if (!string.IsNullOrEmpty(nrKSeF))
-            {
+            if (!string.IsNullOrEmpty(nrKSeF)) {
                 options.Add("nrKSeF", nrKSeF);
             }
-            if (!string.IsNullOrEmpty(qrCodeUrl))
-            {
+            if (!string.IsNullOrEmpty(qrCodeUrl)) {
                 options.Add("qrCode", qrCodeUrl);
             }
 
-            if (options.Count > 0)
-            {
+            if (options.Count > 0) {
                 commandArgs.Add(System.Text.Json.JsonSerializer.Serialize(options));
             }
 
@@ -115,48 +100,37 @@ public class XML2PDFCommand : IGlobalCommand
         }
     }
 
-    private static void AssertNpxExists()
-    {
-        if (!Subprocess.CheckCommandExists("npx"))
-        {
+    private static void AssertNpxExists() {
+        if (!Subprocess.CheckCommandExists("npx")) {
             throw new InvalidOperationException("Command `npx` not found. Please install Node.js and npm to use this functionality.");
         }
     }
 
-    public static async Task<Runner> GetRunner(CancellationToken cancellationToken)
-    {
+    public static async Task<Runner> GetRunner(CancellationToken cancellationToken) {
         string? url = null;
         string? fileName = null;
 
-        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-        {
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)) {
             url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.0.0/ksef-pdf-generator-linux";
             fileName = "ksef-pdf-generator-linux";
-        }
-        else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
-        {
+        } else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) {
             url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.0.0/ksef-pdf-generator-win.exe";
             fileName = "ksef-pdf-generator-win.exe";
         }
 
         string[] runnerCommand;
 
-        if (url is null || fileName is null)
-        {
+        if (url is null || fileName is null) {
             AssertNpxExists();
             runnerCommand = new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator" };
-        }
-        else
-        {
+        } else {
             Directory.CreateDirectory(IGlobalCommand.CacheDir);
             string destinationPath = Path.Combine(IGlobalCommand.CacheDir, fileName);
 
             await Downloader.DownloadFileWithTimestampCheckAsync(url, destinationPath, cancellationToken).ConfigureAwait(false);
 
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux))
-            {
-                Process p = new System.Diagnostics.Process
-                {
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)) {
+                Process p = new System.Diagnostics.Process {
                     StartInfo = { FileName = "chmod", Arguments = $"+x \"{destinationPath}\"" }
                 };
                 p.Start();

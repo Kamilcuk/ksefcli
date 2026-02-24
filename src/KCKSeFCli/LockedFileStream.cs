@@ -1,24 +1,17 @@
 namespace KCKSeFCli;
 
-public class LockedFileStream : IDisposable
-{
+public class LockedFileStream : IDisposable {
     public FileStream Fs { get; }
 
-    public LockedFileStream(string path, FileMode mode, FileAccess access, FileShare share)
-    {
+    public LockedFileStream(string path, FileMode mode, FileAccess access, FileShare share) {
         bool locked = false;
-        while (true)
-        {
-            try
-            {
+        while (true) {
+            try {
                 Fs = new FileStream(path, mode, access, share);
                 break;
-            }
-            catch (IOException)
-            {
-                if (!locked)
-                {
-                    Log.LogInformation($"Waiting for lock on {path}...");
+            } catch (IOException) {
+                if (!locked) {
+                    Log.Information($"Waiting for lock on {path}...");
                     locked = true;
                 }
                 Thread.Sleep(1000);
@@ -26,8 +19,7 @@ public class LockedFileStream : IDisposable
         }
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         Fs?.Dispose();
         GC.SuppressFinalize(this);
     }

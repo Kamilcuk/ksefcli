@@ -14,8 +14,8 @@
   - [Opcje Globalne](#opcje-globalne)
   - [Dostępne Polecenia](#dostępne-polecenia)
 - [Polecenia](#polecenia)
-  - [`Auth`](docs/Auth.md)
-  - [`CertAuth`](docs/CertAuth.md)
+  - [`TestAuth`](docs/TestAuth.md)
+  - [`TestCertAuth`](docs/TestCertAuth.md)
   - [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
   - [`GetFaktura`](docs/GetFaktura.md)
   - [`LinkDoFaktury`](docs/LinkDoFaktury.md)
@@ -34,14 +34,16 @@
   - [`SelfUpdate`](docs/SelfUpdate.md)
   - [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md)
   - [`SzukajFaktur`](docs/SzukajFaktur.md)
-  - [`TokenAuth`](docs/TokenAuth.md)
+  - [`TestTokenAuth`](docs/TestTokenAuth.md)
   - [`TokenRefresh`](docs/TokenRefresh.md)
   - [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md)
   - [`WeryfikujXML`](docs/WeryfikujXML.md)
   - [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md)
   - [`WystawFaktureOffline`](docs/WystawFaktureOffline.md)
   - [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
+  - [`WystawKorekte`](docs/WystawKorekte.md)
   - [`XMLExtract`](docs/XMLExtract.md)
+  - [`XMLRemoveNamespace`](docs/XMLRemoveNamespace.md)
   - [`XML2PDF`](docs/XML2PDF.md)
 - [Rozwój](#rozwój)
 - [Uwierzytelnianie w KSeF](#uwierzytelnianie-w-ksef)
@@ -107,35 +109,37 @@ Szczegółowy opis konfiguracji profili, globalnych opcji i pamięci podręcznej
 
 ## Polecenia
 
-- [`Auth`](docs/Auth.md)
-- [`CertAuth`](docs/CertAuth.md)
-- [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
-- [`GetFaktura`](docs/GetFaktura.md)
-- [`LinkDoFaktury`](docs/LinkDoFaktury.md)
-- [`LinkWeryfikacjiFaktury`](docs/LinkWeryfikacjiFaktury.md)
-- [`NowyCertyfikat`](docs/NowyCertyfikat.md)
-- [`NowaFaktura`](docs/NowaFaktura.md)
-- [`ParseDate`](docs/ParseDate.md)
-- [`PobierzCertyfikat`](docs/PobierzCertyfikat.md)
-- [`PobierzInfoONip`](docs/PobierzInfoONip.md)
-- [`PobierzFaktury`](docs/PobierzFaktury.md)
-- [`PokazLimity`](docs/PokazLimity.md)
-- [`PrintConfig`](docs/PrintConfig.md)
-- [`PrzeslijFaktury`](docs/PrzeslijFaktury.md)
-- [`QRDoFaktury`](docs/QRDoFaktury.md)
-- [`QRWeryfikacjiFaktury`](docs/QRWeryfikacjiFaktury.md)
-- [`SelfUpdate`](docs/SelfUpdate.md)
-- [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md)
-- [`SzukajFaktur`](docs/SzukajFaktur.md)
-- [`TokenAuth`](docs/TokenAuth.md)
-- [`TokenRefresh`](docs/TokenRefresh.md)
-- [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md)
-- [`WeryfikujXML`](docs/WeryfikujXML.md)
-- [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md)
-- [`WystawFaktureOffline`](docs/WystawFaktureOffline.md)
-- [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
-- [`XMLExtract`](docs/XMLExtract.md)
-- [`XML2PDF`](docs/XML2PDF.md)
+  - [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md) - Add a new item to an existing KSeF XML invoice.
+  - [`GetFaktura`](docs/GetFaktura.md) - Get a single invoice by KSeF number
+  - [`LinkDoFaktury`](docs/LinkDoFaktury.md) - Generate a link to an invoice
+  - [`LinkWeryfikacjiFaktury`](docs/LinkWeryfikacjiFaktury.md) - Generuje link weryfikacji faktury (KOD II).
+  - [`NowaFaktura`](docs/NowaFaktura.md) - Create a new KSeF XML invoice from a YAML specification.
+  - [`NowyCertyfikat`](docs/NowyCertyfikat.md) - Generate a new KSeF certificate.
+  - [`ParseDate`](docs/ParseDate.md) - Parse a date string and output it in ISO 8601 format or seconds since epoch.
+  - [`PobierzCertyfikat`](docs/PobierzCertyfikat.md) - Retrieve KSeF certificate content by serial number.
+  - [`PobierzFaktury`](docs/PobierzFaktury.md) - Download invoices based on search criteria.
+  - [`PobierzInfoONip`](docs/PobierzInfoONip.md) - Retrieve NIP information from the government API.
+  - [`PokazLimity`](docs/PokazLimity.md) - Show limits for the current context, subject and attachment permission status.
+  - [`PrintConfig`](docs/PrintConfig.md) - Print the active configuration
+  - [`PrzeslijFaktury`](docs/PrzeslijFaktury.md) - Upload invoices in XML format.
+  - [`QRDoFaktury`](docs/QRDoFaktury.md) - Generate a QR code for an invoice and save it to a file
+  - [`QRWeryfikacjiFaktury`](docs/QRWeryfikacjiFaktury.md) - Generate a verification QR code (KOD II) for an invoice and save it to a file.
+  - [`SelfUpdate`](docs/SelfUpdate.md) - Updates the tool to the latest version.
+  - [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md) - Check available certificate limits.
+  - [`SzukajFaktur`](docs/SzukajFaktur.md) - Query invoice metadata
+  - [`TestAuth`](docs/TestAuth.md) - Authenticate using configured method
+  - [`TestCertAuth`](docs/TestCertAuth.md) - Authenticate using a certificate
+  - [`TestTokenAuth`](docs/TestTokenAuth.md) - Authenticate using a KSeF token
+  - [`TestTokenRefresh`](docs/TestTokenRefresh.md) - Refresh an existing session token
+  - [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md) - Revoke a KSeF certificate.
+  - [`WeryfikujXML`](docs/WeryfikujXML.md) - Validate KSeF XML invoice against the XSD schema.
+  - [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md) - List KSeF certificate metadata.
+  - [`WystawFaktureOffline`](docs/WystawFaktureOffline.md) - Convert KSeF XML invoice to PDF, adding an offline verification QR code (KOD II).
+  - [`WystawKorekte`](docs/WystawKorekte.md) - Issue a correction invoice based on an input XML.
+  - [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md) - Create a new KSeF XML invoice based on an existing one with updated dates.
+  - [`XML2PDF`](docs/XML2PDF.md) - Convert KSeF XML invoice to PDF.
+  - [`XMLExtract`](docs/XMLExtract.md) - Extracts a value from an XML file using an XPath expression.
+  - [`XMLRemoveNamespace`](docs/XMLRemoveNamespace.md) - Removes namespaces from an XML invoice and sets a default namespace.
 
 ## Rozwój
 
@@ -161,7 +165,10 @@ dotnet run --project src/KCKSeFCli -- <polecenie> [opcje]
 ## Uwierzytelnianie w KSeF
 
 Szczegółowe informacje na temat mechanizmów uwierzytelniania w Krajowym Systemie e-Faktur można znaleźć w oficjalnej dokumentacji: [Uwierzytelnianie w KSeF](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md).
+
 Dokumentacja KSeF API: [https://api-test.ksef.mf.gov.pl/docs/v2/index.html](https://api-test.ksef.mf.gov.pl/docs/v2/index.html).
+
+Artykuł o problemach z namespace w KSeF: [https://ksbot.pl/api/ksef-api-xml-namespace-problemy/](https://ksbot.pl/api/ksef-api-xml-namespace-problemy/).
 
 ## Autor i Licencja
 
