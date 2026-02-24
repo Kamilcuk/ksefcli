@@ -35,7 +35,7 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
         ConfigureLogging();
 
         if (!File.Exists(InputFile)) {
-            Log.LogError($"Error: Input file not found: {InputFile}");
+            Log.Error($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
@@ -49,13 +49,13 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
 
             XElement? fa = doc.Root?.Element(ns + "Fa");
             if (fa == null) {
-                Log.LogError("Error: Could not find <Fa> element in the XML.");
+                Log.Error("Error: Could not find <Fa> element in the XML.");
                 return 1;
             }
 
             XElement? lastWiersz = fa.Elements(ns + "FaWiersz").LastOrDefault();
             if (lastWiersz == null) {
-                Log.LogError("Error: Could not find any <FaWiersz> elements in the XML.");
+                Log.Error("Error: Could not find any <FaWiersz> elements in the XML.");
                 return 1;
             }
 
@@ -99,15 +99,15 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
             string newXml = doc.ToString();
 
             await File.WriteAllTextAsync(outputPath, newXml, cancellationToken).ConfigureAwait(false);
-            Log.LogInformation($"Successfully added item and saved to: {outputPath}");
+            Log.Information($"Successfully added item and saved to: {outputPath}");
 
             if (!BezWalidacji) {
                 if (XmlValidator.Validate(newXml, out List<string>? errors)) {
-                    Log.LogInformation("Post-modification validation successful.");
+                    Log.Information("Post-modification validation successful.");
                 } else {
-                    Log.LogError("Post-modification validation failed:");
+                    Log.Error("Post-modification validation failed:");
                     foreach (string error in errors) {
-                        Log.LogError(error);
+                        Log.Error(error);
                     }
                     return 1;
                 }
@@ -115,7 +115,7 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
 
             return 0;
         } catch (Exception ex) {
-            Log.LogError($"An unexpected error occurred: {ex.Message}");
+            Log.Error($"An unexpected error occurred: {ex.Message}");
             return 1;
         }
     }

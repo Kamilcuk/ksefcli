@@ -36,7 +36,7 @@ public class XMLExtractCommand : IGlobalCommand {
         if (element != null) {
             Console.WriteLine(element.Value);
         } else {
-            Log.LogError($"Error: Element not found for XPath: {XPathExpression}");
+            Log.Error($"Error: Element not found for XPath: {XPathExpression}");
             return Task.FromResult(1);
         }
         return Task.FromResult(0);

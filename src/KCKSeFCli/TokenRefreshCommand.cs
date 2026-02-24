@@ -19,10 +19,10 @@ public class TokenRefreshCommand : IWithConfigCommand {
             Console.Error.WriteLine("No refresh token provided. Use --token to provide a refresh token.");
             return 1;
         }
-        Log.LogInformation("Refreshing token...");
+        Log.Information("Refreshing token...");
         RefreshTokenResponse tokenResponse = await ksefClient.RefreshAccessTokenAsync(config.Token, cancellationToken).ConfigureAwait(false);
         Console.Out.WriteLine(JsonSerializer.Serialize(tokenResponse));
-        Log.LogInformation("Token refreshed successfully.");
+        Log.Information("Token refreshed successfully.");
         return 0;
     }
 }

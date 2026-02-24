@@ -40,13 +40,13 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
             throw new ArgumentException($"Invalid certificate type: {CertificateType}");
         }
 
-        Log.LogInformation("1. Sprawdzenie limitów (Skipped for now).");
+        Log.Information("1. Sprawdzenie limitów (Skipped for now).");
 
-        Log.LogInformation("2. Pobranie danych do wniosku certyfikacyjnego.");
+        Log.Information("2. Pobranie danych do wniosku certyfikacyjnego.");
         CertificateEnrollmentsInfoResponse enrollmentInfo = await ksefClient.GetCertificateEnrollmentDataAsync(accessToken, cancellationToken).ConfigureAwait(false);
         Console.WriteLine($"Enrollment Info: {JsonSerializer.Serialize(enrollmentInfo, new JsonSerializerOptions { WriteIndented = true })}");
 
-        Log.LogInformation("3. Przygotowanie CSR (Certificate Signing Request).");
+        Log.Information("3. Przygotowanie CSR (Certificate Signing Request).");
         (string? csrBase64, string? privateKeyBase64) = cryptographyService.GenerateCsrWithEcdsa(enrollmentInfo);
 
         if (!string.IsNullOrEmpty(CsrOutputPath)) {
@@ -58,7 +58,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
             Console.WriteLine($"Private key saved to {PrivateKeyOutputPath}");
         }
 
-        Log.LogInformation("4. Wysłanie wniosku certyfikacyjnego.");
+        Log.Information("4. Wysłanie wniosku certyfikacyjnego.");
         SendCertificateEnrollmentRequest sendRequest = SendCertificateEnrollmentRequestBuilder
             .Create()
             .WithCertificateName(CertificateName)
@@ -70,7 +70,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
         CertificateEnrollmentResponse enrollmentResponse = await ksefClient.SendCertificateEnrollmentAsync(sendRequest, accessToken, cancellationToken).ConfigureAwait(false);
         Console.WriteLine($"Enrollment Response: {JsonSerializer.Serialize(enrollmentResponse, new JsonSerializerOptions { WriteIndented = true })}");
 
-        Log.LogInformation("5. Sprawdzenie statusu wniosku.");
+        Log.Information("5. Sprawdzenie statusu wniosku.");
         string referenceNumber = enrollmentResponse.ReferenceNumber;
         DateTime startTime = DateTime.UtcNow;
         TimeSpan timeout = TimeSpan.FromMinutes(5);
@@ -90,7 +90,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
             throw new InvalidOperationException($"Certificate enrollment failed or timed out: {statusResponse.Status.Description}");
         }
 
-        Log.LogInformation("6. Pobieranie wystawionego certyfikatu.");
+        Log.Information("6. Pobieranie wystawionego certyfikatu.");
         if (!string.IsNullOrEmpty(statusResponse.CertificateSerialNumber) && !string.IsNullOrEmpty(CertificateOutputPath)) {
             CertificateListRequest certListRequest = new CertificateListRequest { CertificateSerialNumbers = new[] { statusResponse.CertificateSerialNumber } };
             CertificateListResponse certificateListResponse = await ksefClient.GetCertificateListAsync(certListRequest, accessToken, cancellationToken).ConfigureAwait(false);

@@ -66,7 +66,7 @@ internal record Subprocess(
 
         IEnumerable<string> args = CommandAndArgs.Skip(1);
         if (!Quiet) {
-            Log.LogInformation($"Executing: {string.Join(" ", CommandAndArgs)}");
+            Log.Information($"Executing: {string.Join(" ", CommandAndArgs)}");
         }
 
         ProcessStartInfo processStartInfo = new() {
@@ -81,7 +81,7 @@ internal record Subprocess(
 
     public async Task<byte[]> CheckOutputAsync(CancellationToken cancellationToken = default) {
         if (!Quiet) {
-            Log.LogInformation($"Executing (capturing output): {string.Join(" ", CommandAndArgs.Select(a => $"\"{a}\""))}");
+            Log.Information($"Executing (capturing output): {string.Join(" ", CommandAndArgs.Select(a => $"\"{a}\""))}");
         }
 
         ProcessStartInfo processStartInfo = new ProcessStartInfo {

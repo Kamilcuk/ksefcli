@@ -38,8 +38,8 @@ public static class Log {
 
     public static void LogTrace(string message) => Logger.LogTrace(message);
     public static void LogDebug(string message) => Logger.LogDebug(message);
-    public static void LogInformation(string message) => Logger.LogInformation(message);
-    public static void LogWarning(string message) => Logger.LogWarning(message);
-    public static void LogError(string message) => Logger.LogError(message);
+    public static void Information(string message) => Logger.LogInformation(message);
+    public static void Warning(string message) => Logger.LogWarning(message);
+    public static void Error(string message) => Logger.LogError(message);
     public static void LogCritical(string message) => Logger.LogCritical(message);
 }

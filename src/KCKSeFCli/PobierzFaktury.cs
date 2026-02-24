@@ -53,7 +53,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
 
             if (!NoJson) {
                 await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
-                Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
+                Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
             }
 
             string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
@@ -69,14 +69,14 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
 
             await File.WriteAllTextAsync(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n", cancellationToken).ConfigureAwait(false);
 
-            Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
+            Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
             if (Pdf) {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
                 byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
-                Log.LogInformation($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
+                Log.Information($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
             }
         }
 

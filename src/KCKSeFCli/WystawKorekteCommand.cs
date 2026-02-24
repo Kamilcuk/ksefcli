@@ -29,24 +29,24 @@ public class WystawKorekteCommand : IGlobalCommand {
         ConfigureLogging();
 
         if (!File.Exists(InputFile)) {
-            Log.LogError($"Error: Input file not found: {InputFile}");
+            Log.Error($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
         string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
         XDocument doc = XDocument.Parse(xml);
-        XNamespace ns = "http://crd.gov.pl/wzor/2025/06/25/13775/";
+        XNamespace ns = MyXml.KsefNamespace;
 
         XElement? fa = doc.Root?.Element(ns + "Fa");
         if (fa == null) {
-            Log.LogError("Error: Could not find <Fa> element in the XML.");
+            Log.Error("Error: Could not find <Fa> element in the XML.");
             return 1;
         }
 
         string? p1 = fa.Element(ns + "P_1")?.Value;
         string? p2 = fa.Element(ns + "P_2")?.Value;
         if (string.IsNullOrEmpty(p1) || string.IsNullOrEmpty(p2)) {
-            Log.LogError("Error: Could not find P_1 (issue date) or P_2 (invoice number) in the XML.");
+            Log.Error("Error: Could not find P_1 (issue date) or P_2 (invoice number) in the XML.");
             return 1;
         }
 
@@ -69,7 +69,7 @@ public class WystawKorekteCommand : IGlobalCommand {
 
         List<string> korektyList = new List<string>(Korekty);
         if (korektyList.Count % 2 != 0) {
-            Log.LogError("Error: Corrections must be provided in pairs: <numer_lub_nazwa> <ilosc_lub_roznica>");
+            Log.Error("Error: Corrections must be provided in pairs: <numer_lub_nazwa> <ilosc_lub_roznica>");
             return 1;
         }
 
@@ -113,18 +113,18 @@ public class WystawKorekteCommand : IGlobalCommand {
 
         if (!NoValidate) {
             if (XmlValidator.Validate(newXml, out List<string>? errors)) {
-                Log.LogInformation("Post-modification validation successful.");
+                Log.Information("Post-modification validation successful.");
             } else {
-                Log.LogError("Post-modification validation failed:");
+                Log.Error("Post-modification validation failed:");
                 foreach (string error in errors) {
-                    Log.LogError(error);
+                    Log.Error(error);
                 }
                 return 1;
             }
         }
 
         await File.WriteAllTextAsync(OutputFile, newXml, cancellationToken).ConfigureAwait(false);
-        Log.LogInformation($"Successfully created correction and saved to: {OutputFile}");
+        Log.Information($"Successfully created correction and saved to: {OutputFile}");
 
         return 0;
     }

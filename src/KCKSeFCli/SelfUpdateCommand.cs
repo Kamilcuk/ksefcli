@@ -17,7 +17,7 @@ public class SelfUpdateCommand : IGlobalCommand {
         if (string.IsNullOrEmpty(Destination)) {
             currentExecutablePath = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName;
             if (string.IsNullOrEmpty(currentExecutablePath)) {
-                Log.LogError("Error: Could not determine the location of the current executable.");
+                Log.Error("Error: Could not determine the location of the current executable.");
                 return 1;
             }
         }
@@ -35,7 +35,7 @@ public class SelfUpdateCommand : IGlobalCommand {
             downloadUrl = "https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli?job=linux_build_main";
             fileName = "kcksefcli";
         } else {
-            Log.LogError("Error: Self-update is only supported on Windows and Linux.");
+            Log.Error("Error: Self-update is only supported on Windows and Linux.");
             return 1;
         }
 
@@ -48,7 +48,7 @@ public class SelfUpdateCommand : IGlobalCommand {
 
         try {
             using (HttpClient httpClient = new HttpClient()) {
-                Log.LogInformation($"Downloading new version from {downloadUrl}");
+                Log.Information($"Downloading new version from {downloadUrl}");
                 HttpResponseMessage response = await httpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 using (FileStream fs = new FileStream(tempFile.Path, FileMode.Create, FileAccess.Write, FileShare.None)) {
@@ -67,12 +67,12 @@ public class SelfUpdateCommand : IGlobalCommand {
                 destinationPath = Directory.Exists(Destination) ? Path.Combine(Destination, fileName) : Destination;
             }
 
-            Log.LogInformation($"Saving to {destinationPath}...");
+            Log.Information($"Saving to {destinationPath}...");
             File.Move(tempFile.Path, destinationPath, true);
-            Log.LogInformation("Update successful.");
+            Log.Information("Update successful.");
             return 0;
         } catch (Exception ex) {
-            Log.LogError($"Error during self-update: {ex.Message}");
+            Log.Error($"Error during self-update: {ex.Message}");
             return 1;
         }
     }

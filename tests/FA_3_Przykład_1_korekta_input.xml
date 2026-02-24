@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Faktura xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/" xmlns="http://crd.gov.pl/wzor/2025/06/25/13775/">
+	<Naglowek>
+		<KodFormularza kodSystemowy="FA (3)" wersjaSchemy="1-0E">FA</KodFormularza>
+		<WariantFormularza>3</WariantFormularza>
+		<DataWytworzeniaFa>2026-01-08T10:12:15Z</DataWytworzeniaFa>
+		<SystemyTeleinformatyczne>
+			<NazwaSystemu>KSeF</NazwaSystemu>
+		</SystemyTeleinformatyczne>
+	</Naglowek>
+	<Podmiot1>
+		<DaneIdentyfikacyjne>
+			<NIP>9999999999</NIP>
+			<Nazwa>ABC AGD sp. z o.o.</Nazwa>
+		</DaneIdentyfikacyjne>
+		<Adres>
+			<KodKraju>PL</KodKraju>
+			<Ulica>Kwiatowa</Ulica>
+			<NrDomu>1</NrDomu>
+			<KodPocztowy>00-001</KodPocztowy>
+			<Miejscowosc>Warszawa</Miejscowosc>
+		</Adres>
+	</Podmiot1>
+	<Podmiot2>
+		<DaneIdentyfikacyjne>
+			<NIP>1111111111</NIP>
+			<Nazwa>Firma XYZ</Nazwa>
+		</DaneIdentyfikacyjne>
+		<Adres>
+			<KodKraju>PL</KodKraju>
+			<Ulica>Uliczna</Ulica>
+			<NrDomu>123</NrDomu>
+			<KodPocztowy>00-002</KodPocztowy>
+			<Miejscowosc>Kraków</Miejscowosc>
+		</Adres>
+	</Podmiot2>
+	<Fa>
+		<KodWaluty>PLN</KodWaluty>
+		<P_1>2026-01-08</P_1>
+		<P_2>FV2026/01/123</P_2>
+		<P_6>2026-01-08</P_6>
+		<P_13_1>100.00</P_13_1>
+		<P_14_1>23.00</P_14_1>
+		<P_15>123.00</P_15>
+		<RodzajFaktury>VAT</RodzajFaktury>
+		<FaWiersz>
+			<NrWierszaFa>1</NrWierszaFa>
+			<P_7>Towar A</P_7>
+			<P_8A>szt.</P_8A>
+			<P_8B>1.00</P_8B>
+			<P_9A>100.00</P_9A>
+			<P_11>100.00</P_11>
+			<P_12>23</P_12>
+		</FaWiersz>
+	</Fa>
+</Faktura>

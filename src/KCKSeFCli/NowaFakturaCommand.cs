@@ -59,7 +59,7 @@ public class NowaFakturaCommand : IGlobalCommand {
                     // PelnaNazwa is not directly available from the current NIP API response, so we don't fill it for now
                 }
             } catch (HttpRequestException ex) {
-                Log.LogWarning($"Warning: Could not fetch NIP info for {Nip}: {ex.Message}");
+                Log.Warning($"Warning: Could not fetch NIP info for {Nip}: {ex.Message}");
             }
         }
     }
@@ -89,7 +89,7 @@ public class NowaFakturaCommand : IGlobalCommand {
         ConfigureLogging();
 
         if (!File.Exists(InputFile)) {
-            Log.LogError($"Error: Input file not found: {InputFile}");
+            Log.Error($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
@@ -106,11 +106,11 @@ public class NowaFakturaCommand : IGlobalCommand {
 
         string xml = GenerateXml(spec);
         await File.WriteAllTextAsync(OutputFile, xml, cancellationToken).ConfigureAwait(false);
-        Log.LogInformation($"Successfully created invoice and saved to: {OutputFile}");
+        Log.Information($"Successfully created invoice and saved to: {OutputFile}");
 
         if (!BezWalidacji) {
             if (XmlValidator.ValidateLog(xml, out _)) {
-                Log.LogInformation("Validation successful.");
+                Log.Information("Validation successful.");
             } else {
                 return 1;
             }
@@ -158,8 +158,8 @@ public class NowaFakturaCommand : IGlobalCommand {
     }
 
     private string GenerateXml(InvoiceSpec spec) {
-        XNamespace ns = "http://crd.gov.pl/wzor/2025/06/25/13775/";
-        XNamespace xsi = "http://www.w3.org/2001/XMLSchema-instance";
+        XNamespace ns = MyXml.KsefNamespace;
+        XNamespace xsi = MyXml.XsiNamespace;
 
         DateTime now = DateTime.UtcNow;
 
@@ -284,8 +284,8 @@ public class NowaFakturaCommand : IGlobalCommand {
             new XDeclaration("1.0", "UTF-8", null),
             new XElement("Faktura",
                 new XAttribute(XNamespace.Xmlns + "xsi", xsi),
-                new XAttribute("xmlns", ns.NamespaceName), // Set default namespace here
-                new XAttribute(xsi + "schemaLocation", ns.NamespaceName),
+                new XAttribute("xmlns", MyXml.KsefNamespace.NamespaceName), // Set default namespace here
+                new XAttribute(MyXml.XsiNamespace + "schemaLocation", MyXml.KsefNamespace.NamespaceName),
                 new XElement("Naglowek",
                     new XElement("KodFormularza",
                         new XAttribute("kodSystemowy", "FA (3)"),

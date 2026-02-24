@@ -11,7 +11,7 @@ public class LockedFileStream : IDisposable {
                 break;
             } catch (IOException) {
                 if (!locked) {
-                    Log.LogInformation($"Waiting for lock on {path}...");
+                    Log.Information($"Waiting for lock on {path}...");
                     locked = true;
                 }
                 Thread.Sleep(1000);

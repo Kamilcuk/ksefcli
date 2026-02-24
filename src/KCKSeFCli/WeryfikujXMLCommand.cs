@@ -17,7 +17,7 @@ public class WeryfikujXMLCommand : IGlobalCommand {
 
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
         if (XmlValidator.ValidateLog(xmlContent, out _)) {
-            Log.LogInformation("XML validation successful.");
+            Log.Information("XML validation successful.");
             return 0;
         }
         return 1;

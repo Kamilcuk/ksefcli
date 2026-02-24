@@ -17,13 +17,13 @@ public class PokazLimityCommand : IWithConfigCommand {
         ILimitsClient limitsClient = scope.ServiceProvider.GetRequiredService<ILimitsClient>();
         string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
 
-        Log.LogInformation("Pobieranie limitów kontekstu...");
+        Log.Information("Pobieranie limitów kontekstu...");
         SessionLimitsInCurrentContextResponse contextLimits = await limitsClient.GetLimitsForCurrentContextAsync(accessToken, cancellationToken).ConfigureAwait(false);
 
-        Log.LogInformation("Pobieranie limitów podmiotu...");
+        Log.Information("Pobieranie limitów podmiotu...");
         CertificatesLimitInCurrentSubjectResponse subjectLimits = await limitsClient.GetLimitsForCurrentSubjectAsync(accessToken, cancellationToken).ConfigureAwait(false);
 
-        Log.LogInformation("Pobieranie statusu uprawnień do załączników...");
+        Log.Information("Pobieranie statusu uprawnień do załączników...");
         PermissionsAttachmentAllowedResponse attachmentStatus = await ksefClient.GetAttachmentPermissionStatusAsync(accessToken, cancellationToken).ConfigureAwait(false);
 
         var result = new {

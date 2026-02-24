@@ -45,7 +45,7 @@ public class TokenStore {
     public TokenStore(string path) {
         _path = Environment.ExpandEnvironmentVariables(path);
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
-        Log.LogInformation($"Token store loaded from: {_path}");
+        Log.Information($"Token store loaded from: {_path}");
     }
 
     private Dictionary<string, Data> LoadTokens(LockedFileStream lockFile) {
@@ -62,7 +62,7 @@ public class TokenStore {
         try {
             return JsonSerializer.Deserialize<Dictionary<string, Data>>(data, _jsonOptions) ?? new Dictionary<string, Data>();
         } catch (Exception e) when (e is JsonException || e is Exception) {
-            Log.LogWarning($"Invalid JSON in token cache file: {_path}. Overwriting with empty data.");
+            Log.Warning($"Invalid JSON in token cache file: {_path}. Overwriting with empty data.");
             lockFile.Fs.Seek(0, SeekOrigin.Begin);
             lockFile.Fs.SetLength(0);
             Dictionary<string, Data> empty = new Dictionary<string, Data>();
@@ -81,7 +81,7 @@ public class TokenStore {
                                        token.Response.RefreshToken is null ? "RefreshToken is null" :
                                        token.Response.AccessToken is null ? "AccessToken is null" : "";
                 if (!string.IsNullOrEmpty(invalidReason)) {
-                    Log.LogWarning($"Invalid token data found in cache for key: {key.ToCacheKey()} (reason: {invalidReason}). Deleting the entry.");
+                    Log.Warning($"Invalid token data found in cache for key: {key.ToCacheKey()} (reason: {invalidReason}). Deleting the entry.");
                     tokens.Remove(key.ToCacheKey());
                     lockFile.Fs.Seek(0, SeekOrigin.Begin);
                     lockFile.Fs.SetLength(0);

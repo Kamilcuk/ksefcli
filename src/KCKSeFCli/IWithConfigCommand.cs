@@ -63,7 +63,7 @@ public abstract class IWithConfigCommand : IGlobalCommand {
                 string? profileEnv = System.Environment.GetEnvironmentVariable("KCKSEFCLI_ACTIVE");
                 string actualActiveProfileToLoad = !string.IsNullOrEmpty(ActiveProfile) ? ActiveProfile : !string.IsNullOrEmpty(profileEnv) ? profileEnv : "";
 
-                Log.LogInformation($"Loading config from {actualConfigFileToLoad} with active={actualActiveProfileToLoad}");
+                Log.Information($"Loading config from {actualConfigFileToLoad} with active={actualActiveProfileToLoad}");
                 KCKSeFCliConfig config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
                 ProfileConfig profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
@@ -99,13 +99,13 @@ public abstract class IWithConfigCommand : IGlobalCommand {
             AuthMethod.Xades => await Authenticate.CertAuth(config, scope, GetCryptographicService, cancellationToken).ConfigureAwait(false),
             _ => throw new Exception($"Invalid authmethod in profile: {config.Environment}")
         };
-        Log.LogInformation($"Acquired accessToken until {Dtisoformat(response.AccessToken.ValidUntil)}, refreshToken until {Dtisoformat(response.RefreshToken.ValidUntil)}");
+        Log.Information($"Acquired accessToken until {Dtisoformat(response.AccessToken.ValidUntil)}, refreshToken until {Dtisoformat(response.RefreshToken.ValidUntil)}");
         return response;
     }
 
     public async Task<string> GetAccessToken(IServiceScope scope, CancellationToken cancellationToken) {
         if (NoTokenCache) {
-            Log.LogInformation("Token cache disabled, starting new auth");
+            Log.Information("Token cache disabled, starting new auth");
             AuthenticationOperationStatusResponse response = await Auth(scope, cancellationToken).ConfigureAwait(false);
             return response.AccessToken.Token;
         }
@@ -115,20 +115,20 @@ public abstract class IWithConfigCommand : IGlobalCommand {
         TokenStore.Data? storedToken = tokenStore.GetToken(key);
 
         if (storedToken == null) {
-            Log.LogInformation("No token found in store, starting new auth");
+            Log.Information("No token found in store, starting new auth");
         } else {
-            Log.LogInformation($"Stored accessToken until {Dtisoformat(storedToken.Response.AccessToken.ValidUntil)}, refreshToken until {Dtisoformat(storedToken.Response.RefreshToken.ValidUntil)}");
+            Log.Information($"Stored accessToken until {Dtisoformat(storedToken.Response.AccessToken.ValidUntil)}, refreshToken until {Dtisoformat(storedToken.Response.RefreshToken.ValidUntil)}");
         }
         if (storedToken == null || storedToken.Response.RefreshToken.ValidUntil < DateTimeOffset.UtcNow.AddMinutes(-1)) {
-            Log.LogInformation("Stored refresh token is nearing expiration, refreshing token");
+            Log.Information("Stored refresh token is nearing expiration, refreshing token");
             AuthenticationOperationStatusResponse response = await Auth(scope, cancellationToken).ConfigureAwait(false);
             tokenStore.SetToken(key, new TokenStore.Data(response));
             return response.AccessToken.Token;
         }
         if (storedToken.Response.AccessToken.ValidUntil < DateTimeOffset.UtcNow.AddMinutes(-1)) {
-            Log.LogInformation("Stored access token is nearing expiration, refreshing token");
+            Log.Information("Stored access token is nearing expiration, refreshing token");
             AuthenticationOperationStatusResponse response = await TokenRefresh(scope, storedToken.Response.RefreshToken, cancellationToken).ConfigureAwait(false);
-            Log.LogInformation($"Acquired accessToken until {Dtisoformat(response.AccessToken.ValidUntil)}, refreshToken until {Dtisoformat(response.RefreshToken.ValidUntil)}");
+            Log.Information($"Acquired accessToken until {Dtisoformat(response.AccessToken.ValidUntil)}, refreshToken until {Dtisoformat(response.RefreshToken.ValidUntil)}");
             tokenStore.SetToken(key, new TokenStore.Data(response));
             return response.AccessToken.Token;
         }
