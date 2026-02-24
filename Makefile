@@ -14,10 +14,10 @@ $(B)/init: ./.gitmodules
 	git submodule update --init --recursive
 	@mkdir -p $(dir $@) && touch $@
 $(B)/build: $(B)/init $(SOURCES)
-	dotnet build
+	dotnet build $(S)
 	@mkdir -p $(dir $@) && touch $@
 $(B)/format: $(SOURCES)
-	dotnet format -v d
+	dotnet format $(S) -v d
 	@mkdir -p $(dir $@) && touch $@
 ###############################################################################
 
