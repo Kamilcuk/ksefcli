@@ -25,7 +25,7 @@ public class XMLExtractCommand : IGlobalCommand {
 
         XDocument doc = XDocument.Load(InputFile);
 
-        if (!NoStripNamespaces)        doc = MyXml.StripNamespacesFromDocument(doc);
+        if (!NoStripNamespaces) doc = MyXml.StripNamespacesFromDocument(doc);
 
         XPathNavigator navigator = doc.CreateNavigator();
         XmlNamespaceManager manager = new XmlNamespaceManager(navigator.NameTable);

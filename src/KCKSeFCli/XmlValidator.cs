@@ -14,7 +14,7 @@ public static class XmlValidator {
         _schema = new XmlSchemaSet();
         Assembly assembly = Assembly.GetExecutingAssembly();
         string resourceName = "KCKSeFCli.Resources.schemat.xsd";
-        using (var stream = assembly.GetManifestResourceStream(resourceName)) {
+        using (Stream? stream = assembly.GetManifestResourceStream(resourceName)) {
             if (stream == null)
                 throw new Exception($"Embedded resource not found: {resourceName}");
             using (XmlReader reader = XmlReader.Create(stream)) {
