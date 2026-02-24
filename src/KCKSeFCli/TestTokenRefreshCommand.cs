@@ -10,8 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KCKSeFCli;
 
-[Verb("TokenRefresh", HelpText = "Refresh an existing session token")]
-public class TokenRefreshCommand : IWithConfigCommand {
+[Verb("TestTokenRefresh", HelpText = "Refresh an existing session token")]
+public class TestTokenRefreshCommand : IWithConfigCommand {
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         ProfileConfigWithName config = Config();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();

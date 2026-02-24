@@ -1,12 +1,12 @@
 [Powrót do strony głównej](../README.md)
 
-# Polecenie: `TokenRefresh`
+# Polecenie: `TestTokenRefresh`
 
 Odświeża istniejący token sesji.
 
 **Użycie:**
 ```bash
-kcksefcli -a moj_profil TokenRefresh
+kcksefcli -a moj_profil TestTokenRefresh
 ```
 
 ---

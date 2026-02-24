@@ -35,7 +35,7 @@ public class Program {
             typeof(SprawdzLimitCertyfikatowCommand),
             typeof(SzukajFakturCommand),
             typeof(TestTokenAuthCommand),
-            typeof(TokenRefreshCommand),
+            typeof(TestTokenRefreshCommand),
             typeof(UniewaznijCertyfikatCommand),
             typeof(XMLRemoveNamespaceCommand),
             typeof(WeryfikujXMLCommand),
