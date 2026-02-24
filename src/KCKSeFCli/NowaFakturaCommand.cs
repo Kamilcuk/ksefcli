@@ -283,9 +283,6 @@ public class NowaFakturaCommand : IGlobalCommand {
         XDocument doc = new XDocument(
             new XDeclaration("1.0", "UTF-8", null),
             new XElement("Faktura",
-                new XAttribute(XNamespace.Xmlns + "xsi", xsi),
-                new XAttribute("xmlns", MyXml.KsefNamespace.NamespaceName), // Set default namespace here
-                new XAttribute(MyXml.XsiNamespace + "schemaLocation", MyXml.KsefNamespace.NamespaceName),
                 new XElement("Naglowek",
                     new XElement("KodFormularza",
                         new XAttribute("kodSystemowy", "FA (3)"),
@@ -301,6 +298,7 @@ public class NowaFakturaCommand : IGlobalCommand {
             )
         );
 
-        return MyXml.XmlToString(doc, ns);
+        doc = MyXml.Normalize(doc);
+        return MyXml.XmlToString(doc);
     }
 }

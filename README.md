@@ -43,6 +43,7 @@
   - [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
   - [`WystawKorekte`](docs/WystawKorekte.md)
   - [`XMLExtract`](docs/XMLExtract.md)
+  - [`XMLRemoveNamespace`](docs/XMLRemoveNamespace.md)
   - [`XML2PDF`](docs/XML2PDF.md)
 - [Rozwój](#rozwój)
 - [Uwierzytelnianie w KSeF](#uwierzytelnianie-w-ksef)
@@ -108,35 +109,36 @@ Szczegółowy opis konfiguracji profili, globalnych opcji i pamięci podręcznej
 
 ## Polecenia
 
-- [`TestAuth`](docs/TestAuth.md)
-- [`TestCertAuth`](docs/TestCertAuth.md)
-- [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
-- [`GetFaktura`](docs/GetFaktura.md)
-- [`LinkDoFaktury`](docs/LinkDoFaktury.md)
-- [`LinkWeryfikacjiFaktury`](docs/LinkWeryfikacjiFaktury.md)
-- [`NowyCertyfikat`](docs/NowyCertyfikat.md)
-- [`NowaFaktura`](docs/NowaFaktura.md)
-- [`ParseDate`](docs/ParseDate.md)
-- [`PobierzCertyfikat`](docs/PobierzCertyfikat.md)
-- [`PobierzInfoONip`](docs/PobierzInfoONip.md)
-- [`PobierzFaktury`](docs/PobierzFaktury.md)
-- [`PokazLimity`](docs/PokazLimity.md)
-- [`PrintConfig`](docs/PrintConfig.md)
-- [`PrzeslijFaktury`](docs/PrzeslijFaktury.md)
-- [`QRDoFaktury`](docs/QRDoFaktury.md)
-- [`QRWeryfikacjiFaktury`](docs/QRWeryfikacjiFaktury.md)
-- [`SelfUpdate`](docs/SelfUpdate.md)
-- [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md)
-- [`SzukajFaktur`](docs/SzukajFaktur.md)
-- [`TestTokenAuth`](docs/TestTokenAuth.md)
-- [`TokenRefresh`](docs/TokenRefresh.md)
-- [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md)
-- [`WeryfikujXML`](docs/WeryfikujXML.md)
-- [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md)
-- [`WystawFaktureOffline`](docs/WystawFaktureOffline.md)
-- [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
-- [`XMLExtract`](docs/XMLExtract.md)
-- [`XML2PDF`](docs/XML2PDF.md)
+  - [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
+  - [`GetFaktura`](docs/GetFaktura.md)
+  - [`LinkDoFaktury`](docs/LinkDoFaktury.md)
+  - [`LinkWeryfikacjiFaktury`](docs/LinkWeryfikacjiFaktury.md)
+  - [`NowaFaktura`](docs/NowaFaktura.md)
+  - [`NowyCertyfikat`](docs/NowyCertyfikat.md)
+  - [`ParseDate`](docs/ParseDate.md)
+  - [`PobierzCertyfikat`](docs/PobierzCertyfikat.md)
+  - [`PobierzFaktury`](docs/PobierzFaktury.md)
+  - [`PobierzInfoONip`](docs/PobierzInfoONip.md)
+  - [`PokazLimity`](docs/PokazLimity.md)
+  - [`PrintConfig`](docs/PrintConfig.md)
+  - [`PrzeslijFaktury`](docs/PrzeslijFaktury.md)
+  - [`QRDoFaktury`](docs/QRDoFaktury.md)
+  - [`QRWeryfikacjiFaktury`](docs/QRWeryfikacjiFaktury.md)
+  - [`SelfUpdate`](docs/SelfUpdate.md)
+  - [`SprawdzLimitCertyfikatow`](docs/SprawdzLimitCertyfikatow.md)
+  - [`SzukajFaktur`](docs/SzukajFaktur.md)
+  - [`TestAuth`](docs/TestAuth.md)
+  - [`TestCertAuth`](docs/TestCertAuth.md)
+  - [`TestTokenAuth`](docs/TestTokenAuth.md)
+  - [`TokenRefresh`](docs/TokenRefresh.md)
+  - [`UniewaznijCertyfikat`](docs/UniewaznijCertyfikat.md)
+  - [`WeryfikujXML`](docs/WeryfikujXML.md)
+  - [`WylistujCertyfikaty`](docs/WylistujCertyfikaty.md)
+  - [`WystawFaktureOffline`](docs/WystawFaktureOffline.md)
+  - [`WystawPodobnaFakture`](docs/WystawPodobnaFakture.md)
+  - [`XML2PDF`](docs/XML2PDF.md)
+  - [`XMLExtract`](docs/XMLExtract.md)
+  - [`XMLRemoveNamespace`](docs/XMLRemoveNamespace.md) - Usuwa przestrzenie nazw (namespaces) z faktur KSeF, czyniąc pliki XML bardziej czytelnymi dla człowieka i łatwiejszymi do przetwarzania prostymi narzędziami.
 
 ## Rozwój
 
@@ -162,7 +164,10 @@ dotnet run --project src/KCKSeFCli -- <polecenie> [opcje]
 ## Uwierzytelnianie w KSeF
 
 Szczegółowe informacje na temat mechanizmów uwierzytelniania w Krajowym Systemie e-Faktur można znaleźć w oficjalnej dokumentacji: [Uwierzytelnianie w KSeF](https://github.com/CIRFMF/ksef-docs/blob/main/uwierzytelnianie.md).
+
 Dokumentacja KSeF API: [https://api-test.ksef.mf.gov.pl/docs/v2/index.html](https://api-test.ksef.mf.gov.pl/docs/v2/index.html).
+
+Artykuł o problemach z namespace w KSeF: [https://ksbot.pl/api/ksef-api-xml-namespace-problemy/](https://ksbot.pl/api/ksef-api-xml-namespace-problemy/).
 
 ## Autor i Licencja
 

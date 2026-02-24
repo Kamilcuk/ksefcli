@@ -1,0 +1,8 @@
+<Root xmlns="http://example.com/schema" xmlns:meta="http://example.com/meta">
+    <Element1>Value1</Element1>
+    <Element2>
+        <NestedElement>NestedValue</NestedElement>
+    </Element2>
+    <meta:Info>MetaValue</meta:Info>
+</Root>
+

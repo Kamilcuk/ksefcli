@@ -109,7 +109,8 @@ public class WystawKorekteCommand : IGlobalCommand {
 
         RecalculateTotals(fa, ns);
 
-        string newXml = doc.ToString();
+        doc = MyXml.Normalize(doc);
+        string newXml = MyXml.XmlToString(doc);
 
         if (!NoValidate) {
             if (XmlValidator.Validate(newXml, out List<string>? errors)) {

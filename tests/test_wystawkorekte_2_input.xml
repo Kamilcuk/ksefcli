@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Faktura xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://crd.gov.pl/wzor/2025/06/25/13775/">
+<Faktura xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/" xmlns="http://crd.gov.pl/wzor/2025/06/25/13775/">
 	<Naglowek>
 		<KodFormularza kodSystemowy="FA (3)" wersjaSchemy="1-0E">FA</KodFormularza>
 		<WariantFormularza>3</WariantFormularza>
@@ -39,9 +39,9 @@
 		<P_1>2026-01-08</P_1>
 		<P_2>FV2026/01/123</P_2>
 		<P_6>2026-01-08</P_6>
-		<P_13_1>100.00</P_13_1>
-		<P_14_1>23.00</P_14_1>
-		<P_15>123.00</P_15>
+		<P_13_1>300.00</P_13_1>
+		<P_14_1>69.00</P_14_1>
+		<P_15>369.00</P_15>
 		<RodzajFaktury>VAT</RodzajFaktury>
 		<FaWiersz>
 			<NrWierszaFa>1</NrWierszaFa>
@@ -50,6 +50,15 @@
 			<P_8B>1.00</P_8B>
 			<P_9A>100.00</P_9A>
 			<P_11>100.00</P_11>
+			<P_12>23</P_12>
+		</FaWiersz>
+		<FaWiersz>
+			<NrWierszaFa>2</NrWierszaFa>
+			<P_7>Towar B</P_7>
+			<P_8A>szt.</P_8A>
+			<P_8B>2.00</P_8B>
+			<P_9A>100.00</P_9A>
+			<P_11>200.00</P_11>
 			<P_12>23</P_12>
 		</FaWiersz>
 	</Fa>

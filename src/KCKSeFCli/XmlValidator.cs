@@ -11,8 +11,7 @@ public static class XmlValidator {
         if (_schema != null)
             return _schema;
 
-        _schema = new XmlSchemaSet()
-        {
+        _schema = new XmlSchemaSet() {
             XmlResolver = new XmlUrlResolver()
         };
         Assembly assembly = Assembly.GetExecutingAssembly();
@@ -29,13 +28,12 @@ public static class XmlValidator {
 
     public static bool Validate(string xml, out List<string> errors) {
         List<string> localErrors = new List<string>();
-                XmlReaderSettings settings = new XmlReaderSettings
-                {
-                    Schemas = GetSchema(),
-                    ValidationType = ValidationType.Schema,
-                    ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings,
-                    XmlResolver = new XmlUrlResolver(),
-                };
+        XmlReaderSettings settings = new XmlReaderSettings {
+            Schemas = GetSchema(),
+            ValidationType = ValidationType.Schema,
+            ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings,
+            XmlResolver = new XmlUrlResolver(),
+        };
         settings.ValidationEventHandler += (sender, args) => localErrors.Add(args.Message);
 
         try {

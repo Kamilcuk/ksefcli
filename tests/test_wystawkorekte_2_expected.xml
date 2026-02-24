@@ -1,5 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Faktura xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://crd.gov.pl/wzor/2025/06/25/13775/">
+<?xml version="1.0" encoding="UTF-8"?>
+<Faktura xmlns:etd="http://crd.gov.pl/xml/schematy/dziedzinowe/mf/2022/01/05/eD/DefinicjeTypy/" xmlns="http://crd.gov.pl/wzor/2025/06/25/13775/">
   <Naglowek>
     <KodFormularza kodSystemowy="FA (3)" wersjaSchemy="1-0E">FA</KodFormularza>
     <WariantFormularza>3</WariantFormularza>
@@ -39,14 +39,14 @@
     <P_1>2026-01-08</P_1>
     <P_2>FK/FV2026/01/123</P_2>
     <P_6>2026-01-08</P_6>
-    <P_13_1>400.00</P_13_1>
-    <P_14_1>92.00</P_14_1>
-    <P_15>492.00</P_15>
+    <P_13_1>700.00</P_13_1>
+    <P_14_1>161.00</P_14_1>
+    <P_15>861.00</P_15>
     <DaneFaKorygowanej>
       <DataWystFaKorygowanej>2026-01-08</DataWystFaKorygowanej>
       <NrFaKorygowanej>FV2026/01/123</NrFaKorygowanej>
     </DaneFaKorygowanej>
-    <PrzyczynaKorekty>Testowa korekta</PrzyczynaKorekty>
+    <PrzyczynaKorekty>Zle ilosci</PrzyczynaKorekty>
     <RodzajFaktury>KOR</RodzajFaktury>
     <FaWiersz>
       <NrWierszaFa>1</NrWierszaFa>
@@ -61,9 +61,27 @@
       <NrWierszaFa>2</NrWierszaFa>
       <P_7>Towar A</P_7>
       <P_8A>szt.</P_8A>
-      <P_8B>5.00</P_8B>
+      <P_8B>3.00</P_8B>
       <P_9A>100.00</P_9A>
-      <P_11>500.00</P_11>
+      <P_11>300.00</P_11>
+      <P_12>23</P_12>
+    </FaWiersz>
+    <FaWiersz>
+      <NrWierszaFa>3</NrWierszaFa>
+      <P_7>Towar B</P_7>
+      <P_8A>szt.</P_8A>
+      <P_8B>-2.00</P_8B>
+      <P_9A>100.00</P_9A>
+      <P_11>-200.00</P_11>
+      <P_12>23</P_12>
+    </FaWiersz>
+    <FaWiersz>
+      <NrWierszaFa>4</NrWierszaFa>
+      <P_7>Towar B</P_7>
+      <P_8A>szt.</P_8A>
+      <P_8B>4.00</P_8B>
+      <P_9A>100.00</P_9A>
+      <P_11>400.00</P_11>
       <P_12>23</P_12>
     </FaWiersz>
   </Fa>

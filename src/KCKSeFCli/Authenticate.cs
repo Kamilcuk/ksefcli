@@ -133,8 +133,8 @@ public static class Authenticate {
     }
 
     public static void PrintXmlToConsole(string xml, string title) {
-        Log.LogDebug($"----- {title} -----");
-        Log.LogDebug(xml);
-        Log.LogDebug($"----- KONIEC: {title} -----\n");
+        Log.Debug($"----- {title} -----");
+        Log.Debug(xml);
+        Log.Debug($"----- KONIEC: {title} -----\n");
     }
 }

@@ -36,10 +36,10 @@ public static class Log {
         Logger = _loggerFactory.CreateLogger("KCKSeFCli");
     }
 
-    public static void LogTrace(string message) => Logger.LogTrace(message);
-    public static void LogDebug(string message) => Logger.LogDebug(message);
+    public static void Trace(string message) => Logger.LogTrace(message);
+    public static void Debug(string message) => Logger.LogDebug(message);
     public static void Information(string message) => Logger.LogInformation(message);
     public static void Warning(string message) => Logger.LogWarning(message);
     public static void Error(string message) => Logger.LogError(message);
-    public static void LogCritical(string message) => Logger.LogCritical(message);
+    public static void Critical(string message) => Logger.LogCritical(message);
 }

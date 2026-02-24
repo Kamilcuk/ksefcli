@@ -41,82 +41,78 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
 
         string outputPath = OutputFile ?? InputFile;
 
-        try {
-            string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
 
-            XDocument doc = XDocument.Parse(xml);
-            XNamespace ns = "http://crd.gov.pl/wzor/2025/06/25/13775/";
+        XDocument doc = XDocument.Parse(xml);
+        XNamespace ns = MyXml.KsefNamespace;
 
-            XElement? fa = doc.Root?.Element(ns + "Fa");
-            if (fa == null) {
-                Log.Error("Error: Could not find <Fa> element in the XML.");
-                return 1;
-            }
-
-            XElement? lastWiersz = fa.Elements(ns + "FaWiersz").LastOrDefault();
-            if (lastWiersz == null) {
-                Log.Error("Error: Could not find any <FaWiersz> elements in the XML.");
-                return 1;
-            }
-
-            int newWierszId = int.Parse(lastWiersz.Element(ns + "NrWierszaFa")?.Value ?? "0") + 1;
-            decimal wartoscNetto = Ilosc * CenaNetto;
-
-            XElement newFaWiersz = new XElement(ns + "FaWiersz",
-                new XElement(ns + "NrWierszaFa", newWierszId.ToString()),
-                new XElement(ns + "P_7", Nazwa),
-                new XElement(ns + "P_8A", Miara),
-                new XElement(ns + "P_8B", Ilosc.ToString("F2", CultureInfo.InvariantCulture)),
-                new XElement(ns + "P_9A", CenaNetto.ToString("F2", CultureInfo.InvariantCulture)),
-                new XElement(ns + "P_11", wartoscNetto.ToString("F2", CultureInfo.InvariantCulture)),
-                new XElement(ns + "P_12", StawkaVat)
-            );
-
-            lastWiersz.AddAfterSelf(newFaWiersz);
-
-            if (StawkaVat == "23" || StawkaVat == "22") {
-                XElement? p13_1 = fa.Element(ns + "P_13_1");
-                if (p13_1 != null) {
-                    decimal currentValue = decimal.Parse(p13_1.Value, CultureInfo.InvariantCulture);
-                    p13_1.Value = (currentValue + wartoscNetto).ToString("F2", CultureInfo.InvariantCulture);
-                }
-
-                XElement? p14_1 = fa.Element(ns + "P_14_1");
-                if (p14_1 != null) {
-                    decimal currentVat = decimal.Parse(p14_1.Value, CultureInfo.InvariantCulture);
-                    decimal newVat = wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100);
-                    p14_1.Value = (currentVat + newVat).ToString("F2", CultureInfo.InvariantCulture);
-                }
-            }
-
-            XElement? p15 = fa.Element(ns + "P_15");
-            if (p15 != null) {
-                decimal currentTotal = decimal.Parse(p15.Value, CultureInfo.InvariantCulture);
-                decimal newVat = (StawkaVat == "23" || StawkaVat == "22") ? wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100) : 0;
-                p15.Value = (currentTotal + wartoscNetto + newVat).ToString("F2", CultureInfo.InvariantCulture);
-            }
-
-            string newXml = doc.ToString();
-
-            await File.WriteAllTextAsync(outputPath, newXml, cancellationToken).ConfigureAwait(false);
-            Log.Information($"Successfully added item and saved to: {outputPath}");
-
-            if (!BezWalidacji) {
-                if (XmlValidator.Validate(newXml, out List<string>? errors)) {
-                    Log.Information("Post-modification validation successful.");
-                } else {
-                    Log.Error("Post-modification validation failed:");
-                    foreach (string error in errors) {
-                        Log.Error(error);
-                    }
-                    return 1;
-                }
-            }
-
-            return 0;
-        } catch (Exception ex) {
-            Log.Error($"An unexpected error occurred: {ex.Message}");
+        XElement? fa = doc.Root?.Element(ns + "Fa");
+        if (fa == null) {
+            Log.Error("Error: Could not find <Fa> element in the XML.");
             return 1;
         }
+
+        XElement? lastWiersz = fa.Elements(ns + "FaWiersz").LastOrDefault();
+        if (lastWiersz == null) {
+            Log.Error("Error: Could not find any <FaWiersz> elements in the XML.");
+            return 1;
+        }
+
+        int newWierszId = int.Parse(lastWiersz.Element(ns + "NrWierszaFa")?.Value ?? "0") + 1;
+        decimal wartoscNetto = Ilosc * CenaNetto;
+
+        XElement newFaWiersz = new XElement(ns + "FaWiersz",
+            new XElement(ns + "NrWierszaFa", newWierszId.ToString()),
+            new XElement(ns + "P_7", Nazwa),
+            new XElement(ns + "P_8A", Miara),
+            new XElement(ns + "P_8B", Ilosc.ToString("F2", CultureInfo.InvariantCulture)),
+            new XElement(ns + "P_9A", CenaNetto.ToString("F2", CultureInfo.InvariantCulture)),
+            new XElement(ns + "P_11", wartoscNetto.ToString("F2", CultureInfo.InvariantCulture)),
+            new XElement(ns + "P_12", StawkaVat)
+        );
+
+        lastWiersz.AddAfterSelf(newFaWiersz);
+
+        if (StawkaVat == "23" || StawkaVat == "22") {
+            XElement? p13_1 = fa.Element(ns + "P_13_1");
+            if (p13_1 != null) {
+                decimal currentValue = decimal.Parse(p13_1.Value, CultureInfo.InvariantCulture);
+                p13_1.Value = (currentValue + wartoscNetto).ToString("F2", CultureInfo.InvariantCulture);
+            }
+
+            XElement? p14_1 = fa.Element(ns + "P_14_1");
+            if (p14_1 != null) {
+                decimal currentVat = decimal.Parse(p14_1.Value, CultureInfo.InvariantCulture);
+                decimal newVat = wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100);
+                p14_1.Value = (currentVat + newVat).ToString("F2", CultureInfo.InvariantCulture);
+            }
+        }
+
+        XElement? p15 = fa.Element(ns + "P_15");
+        if (p15 != null) {
+            decimal currentTotal = decimal.Parse(p15.Value, CultureInfo.InvariantCulture);
+            decimal newVat = (StawkaVat == "23" || StawkaVat == "22") ? wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100) : 0;
+            p15.Value = (currentTotal + wartoscNetto + newVat).ToString("F2", CultureInfo.InvariantCulture);
+        }
+
+        doc = MyXml.Normalize(doc);
+        string newXml = MyXml.XmlToString(doc);
+
+        await File.WriteAllTextAsync(outputPath, newXml, cancellationToken).ConfigureAwait(false);
+        Log.Information($"Successfully added item and saved to: {outputPath}");
+
+        if (!BezWalidacji) {
+            if (XmlValidator.Validate(newXml, out List<string>? errors)) {
+                Log.Information("Post-modification validation successful.");
+            } else {
+                Log.Error("Post-modification validation failed:");
+                foreach (string error in errors) {
+                    Log.Error(error);
+                }
+                return 1;
+            }
+        }
+
+        return 0;
     }
 }

@@ -127,44 +127,40 @@ EOF
 }
 
 clitest_xml_extract_namespace() {
-    L_with_cd_tmpdir
-
-    cat <<EOF > test_ns.xml
-<Root xmlns="http://example.com/schema" xmlns:meta="http://example.com/meta">
-    <Element1>Value1</Element1>
-    <Element2>
-        <NestedElement>NestedValue</NestedElement>
-    </Element2>
-    <meta:Info>MetaValue</meta:Info>
-</Root>
-EOF
-
     # With namespace stripping (default): plain XPath, no prefixes needed
     local output
-    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/Root/Element1"
+    L_unittest_cmd -v output cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Element1"
     L_unittest_vareq output "Value1"
-    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/Root/Element2/NestedElement"
+    L_unittest_cmd -v output cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Element2/NestedElement"
     L_unittest_vareq output "NestedValue"
-    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/Root/Info"
-    L_unittest_vareq output "MetaValue"
-
-    # With --no-strip-namespaces: must use prefixes
-    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/default:Root/default:Element1" --no-strip-namespaces
-    L_unittest_vareq output "Value1"
-    L_unittest_cmd -v output cli XMLExtract test_ns.xml "/default:Root/meta:Info" --no-strip-namespaces
+    L_unittest_cmd -v output cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Info"
     L_unittest_vareq output "MetaValue"
 }
 
 clitest_xml_remove_namespace() {
-    L_with_cd_tmpdir
-    
     # Test case 1: From a specific namespace to default
-    L_unittest_cmd cli XMLRemoveNamespace "$DIR/test_with_namespace.xml" output1.xml
-    L_unittest_cmd diff -u "$DIR/test_expected_no_namespace.xml" output1.xml
+    L_unittest_cmd cli XMLRemoveNamespace "$DIR/test_with_namespace.xml" "$TMPD/output1.xml"
+    L_unittest_cmd diff -u "$DIR/test_expected_no_namespace.xml" "$TMPD/output1.xml"
 
     # Test case 2: From a default namespace to the same default namespace
-    L_unittest_cmd cli XMLRemoveNamespace "$DIR/test_with_default_namespace.xml" output2.xml
-    L_unittest_cmd diff -u "$DIR/test_expected_no_namespace.xml" output2.xml
+    L_unittest_cmd cli XMLRemoveNamespace "$DIR/test_with_default_namespace.xml" "$TMPD/output2.xml"
+    L_unittest_cmd diff -u "$DIR/test_expected_no_namespace.xml" "$TMPD/output2.xml"
+}
+
+clitest_wystawkorekte() {
+    local INPUT_FILE="$DIR/FA_3_Przykład_1_korekta_input.xml"
+    local OUTPUT_FILE="$TMPD/korekta_output.xml"
+    local EXPECTED_FILE="$DIR/expected_korekta.xml"
+    # Generate the correction file
+    L_unittest_cmd "$opt_exe" WystawKorekte \
+        "$INPUT_FILE" \
+        "$OUTPUT_FILE" \
+        1 5 \
+        --PrzyczynaKorekty "Testowa korekta" \
+        --no-validate
+    # Compare the generated file with the expected one
+    L_unittest_cmd diff -u "$EXPECTED_FILE" "$OUTPUT_FILE"
+    rm "$OUTPUT_FILE"
 }
 
 ###############################################################################

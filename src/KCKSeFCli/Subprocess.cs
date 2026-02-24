@@ -34,7 +34,7 @@ internal record Subprocess(
 
         if (Environment != null) {
             foreach (KeyValuePair<string, string?> kvp in Environment) {
-                Log.LogDebug($"Setting environment variable: {kvp.Key}={kvp.Value}");
+                Log.Debug($"Setting environment variable: {kvp.Key}={kvp.Value}");
                 processStartInfo.Environment[kvp.Key] = kvp.Value;
             }
         }

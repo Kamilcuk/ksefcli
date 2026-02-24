@@ -22,16 +22,10 @@ public class XMLExtractCommand : IGlobalCommand {
             Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
             return Task.FromResult(1);
         }
-
         XDocument doc = XDocument.Load(InputFile);
-
         if (!NoStripNamespaces) doc = MyXml.StripNamespacesFromDocument(doc);
-
         XPathNavigator navigator = doc.CreateNavigator();
         XmlNamespaceManager manager = new XmlNamespaceManager(navigator.NameTable);
-
-        if (NoStripNamespaces) MyXml.RegisterNamespaces(doc, manager, Namespaces);
-
         XPathNavigator? element = navigator.SelectSingleNode(XPathExpression, manager);
         if (element != null) {
             Console.WriteLine(element.Value);

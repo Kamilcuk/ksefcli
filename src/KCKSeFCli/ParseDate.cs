@@ -19,11 +19,11 @@ public static class ParseDate {
 
             if (unit == "day" || unit == "days" || unit == "dzien" || unit == "dzień" || unit == "dni") {
                 calculatedDate = baseDate.AddDays(-number);
-                Log.LogDebug($"Parsed '{dateString}' using Regex (days): {calculatedDate}");
+                Log.Debug($"Parsed '{dateString}' using Regex (days): {calculatedDate}");
                 return calculatedDate;
             } else if (unit == "week" || unit == "weeks" || unit == "tydzień" || unit == "tygodni") {
                 calculatedDate = baseDate.AddDays(-number * 7);
-                Log.LogDebug($"Parsed '{dateString}' using Regex (weeks): {calculatedDate}");
+                Log.Debug($"Parsed '{dateString}' using Regex (weeks): {calculatedDate}");
                 return calculatedDate;
             }
         }
@@ -33,7 +33,7 @@ public static class ParseDate {
     public static async Task<DateTime> Parse(string dateString, CancellationToken cancellationToken) {
         // 1. Try parsing using standard C# DateTime.Parse
         if (DateTime.TryParse(dateString, out DateTime result)) {
-            Log.LogDebug($"Parsed '{dateString}' using DateTime.TryParse: {result}");
+            Log.Debug($"Parsed '{dateString}' using DateTime.TryParse: {result}");
             return result;
         }
 
@@ -43,7 +43,7 @@ public static class ParseDate {
             "yyyy/MM/dd", "yyyy/MM/dd HH:mm:ss"
         };
         if (DateTime.TryParseExact(dateString, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out result)) {
-            Log.LogDebug($"Parsed '{dateString}' using DateTime.TryParseExact: {result}");
+            Log.Debug($"Parsed '{dateString}' using DateTime.TryParseExact: {result}");
             return result;
         }
 
@@ -56,7 +56,7 @@ public static class ParseDate {
         // 3. Use HumanDateParser
         try {
             DateTime parsed = DateParser.Parse(dateString);
-            Log.LogDebug($"Parsed '{dateString}' using HumanDateParser: {parsed}");
+            Log.Debug($"Parsed '{dateString}' using HumanDateParser: {parsed}");
             return parsed;
         } catch {
             // HumanDateParser failed, proceed to fallback
@@ -73,11 +73,11 @@ public static class ParseDate {
                 DateTimeOffset dateTimeOffset = DateTimeOffset.FromUnixTimeSeconds((long)unixTimestampSeconds);
                 dateTimeOffset = dateTimeOffset.AddSeconds(unixTimestampSeconds - (long)unixTimestampSeconds);
                 result = dateTimeOffset.ToLocalTime().DateTime; // Explicitly convert to local time
-                Log.LogDebug($"Parsed '{dateString}' using GNU date: {result}");
+                Log.Debug($"Parsed '{dateString}' using GNU date: {result}");
                 return result;
             }
         } catch (Exception ex) {
-            Log.LogDebug($"GNU date fallback failed for '{dateString}': {ex.Message}");
+            Log.Debug($"GNU date fallback failed for '{dateString}': {ex.Message}");
         }
 
         throw new FormatException($"Could not parse date string: {dateString}");

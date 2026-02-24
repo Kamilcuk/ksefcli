@@ -50,20 +50,20 @@ public class WystawFaktureOfflineCommand : IWithConfigCommand {
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
         string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
 
-        Log.LogDebug("--- Generate KOD I QR Code ---");
+        Log.Debug("--- Generate KOD I QR Code ---");
         string invoiceUrl = LinkDoFakturyCommand.LinkDoFaktury(xmlContent, linkSvc);
 
-        Log.LogDebug("--- Generate KOD II QR Code ---");
+        Log.Debug("--- Generate KOD II QR Code ---");
         byte[] certBytes = Encoding.UTF8.GetBytes(config.Certificate.Certificate!);
         X509Certificate2 publicCert = certBytes.LoadCertificate();
         X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password ?? string.Empty);
         string verificationUrl = LinkWeryfikacjiFaktury.GenerateCertificateVerificationLink(xmlContent, linkSvc, certificate);
 
-        Log.LogDebug("Converting to PDF");
+        Log.Debug("Converting to PDF");
         XML2PDFCommand.Runner runner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, false, NrKSeF ?? " ", invoiceUrl, cancellationToken).ConfigureAwait(false);
 
-        Log.LogDebug("--- Add label to KOD II QR Code ---");
+        Log.Debug("--- Add label to KOD II QR Code ---");
         string verificationText = "Link do weryfikacji wystawcy faktury:";
         pdfContent = AddQrToPdf.AddQrCode(pdfContent, verificationUrl, verificationText);
 
