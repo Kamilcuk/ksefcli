@@ -24,8 +24,8 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
     [Option("useInvoiceNumber", HelpText = "Use InvoiceNumber instead of KsefNumber for the filename to save invoices.")]
     public bool UseInvoiceNumber { get; set; }
 
-    [Option("zapiszjson", HelpText = "Zapisz metadane faktury w plik .json")]
-    public bool ZapiszJson { get; set; }
+    [Option("no-json", HelpText = "Nie zapisuj metadanych faktury w plikach .json")]
+    public bool NoJson { get; set; }
 
     [Option("retry-attempts", Default = 5, HelpText = "Number of retry attempts on rate limit.")]
     public int RetryAttempts { get; set; }
@@ -51,8 +51,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
-            if (ZapiszJson)
-            {
+            if (!NoJson) {
                 await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
                 Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
             }

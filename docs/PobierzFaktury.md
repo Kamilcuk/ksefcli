@@ -17,7 +17,7 @@ To polecenie akceptuje wszystkie opcje z `SzukajFaktur` oraz dodatkowo:
 | `-o`, `--outputdir`    | Katalog wyjściowy do zapisania faktur.                          | Tak      |           |
 | `-p`, `--pdf`          | Zapisz również wersję PDF faktury.                              | Nie      |           |
 | `--useInvoiceNumber`   | Użyj `InvoiceNumber` zamiast `KsefNumber` jako nazwy pliku.     | Nie      |           |
-| `--zapiszjson`         | Zapisz metadane faktury w plik .json.                           | Nie      |           |
+| `--no-json`            | Nie zapisuj metadanych faktury w plikach .json.                 | Nie      |           |
 | `--retry-attempts`     | Liczba ponownych prób przy limicie zapytań.                     | Nie      | 5         |
 | `--no-local-rate-limit`| Wyłącza lokalny limit zapytań.                                  | Nie      |           |
 
