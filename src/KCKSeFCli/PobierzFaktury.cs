@@ -14,8 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("PobierzFaktury", HelpText = "Download invoices based on search criteria.")]
-public class PobierzFakturyCommand : SzukajFakturCommand
-{
+public class PobierzFakturyCommand : SzukajFakturCommand {
     [Option('o', "outputdir", Required = true, HelpText = "Output directory to save files to.")]
     public required string OutputDir { get; set; }
 
@@ -34,11 +33,9 @@ public class PobierzFakturyCommand : SzukajFakturCommand
     [Option("no-local-rate-limit", HelpText = "Disable local rate limiting.")]
     public bool NoLocalRateLimit { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         XML2PDFCommand.Runner? pdfRunner = null;
-        if (Pdf)
-        {
+        if (Pdf) {
             pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         }
 
@@ -49,8 +46,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
         List<InvoiceSummary> invoices = await base.SzukajFaktury(scope, ksefClient, cancellationToken).ConfigureAwait(false);
 
-        foreach (InvoiceSummary invoiceSummary in invoices)
-        {
+        foreach (InvoiceSummary invoiceSummary in invoices) {
             string fileName = UseInvoiceNumber ? invoiceSummary.InvoiceNumber : invoiceSummary.KsefNumber;
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
@@ -76,8 +72,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand
 
             Log.LogInformation($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
-            if (Pdf)
-            {
+            if (Pdf) {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
                 byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");

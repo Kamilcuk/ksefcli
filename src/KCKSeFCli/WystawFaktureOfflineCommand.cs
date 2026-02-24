@@ -11,8 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("WystawFaktureOffline", HelpText = "Convert KSeF XML invoice to PDF, adding an offline verification QR code (KOD II).")]
-public class WystawFaktureOfflineCommand : IWithConfigCommand
-{
+public class WystawFaktureOfflineCommand : IWithConfigCommand {
     [Value(0, Required = true, HelpText = "Input XML file path.")]
     public required string InputFile { get; set; }
 
@@ -22,37 +21,29 @@ public class WystawFaktureOfflineCommand : IWithConfigCommand
     [Option("nrKSeF", Required = false, HelpText = "KSeF invoice number to embed in PDF.")]
     public string? NrKSeF { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
-        if (!File.Exists(InputFile))
-        {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
+        if (!File.Exists(InputFile)) {
             Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
         string outputPdfPath;
-        if (string.IsNullOrEmpty(OutputFile))
-        {
-            if (!InputFile.EndsWith(".xml", StringComparison.OrdinalIgnoreCase))
-            {
+        if (string.IsNullOrEmpty(OutputFile)) {
+            if (!InputFile.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) {
                 Console.Error.WriteLine("Error: Input file must have a .xml extension when no output file is specified.");
                 return 1;
             }
             outputPdfPath = Path.ChangeExtension(InputFile, ".pdf");
-            if (File.Exists(outputPdfPath))
-            {
+            if (File.Exists(outputPdfPath)) {
                 Console.Error.WriteLine($"Error: Output file already exists: {outputPdfPath}");
                 return 1;
             }
-        }
-        else
-        {
+        } else {
             outputPdfPath = OutputFile;
         }
 
         ProfileConfigWithName config = Config();
-        if (config.Certificate is null || string.IsNullOrEmpty(config.Certificate.Certificate))
-        {
+        if (config.Certificate is null || string.IsNullOrEmpty(config.Certificate.Certificate)) {
             throw new InvalidOperationException("Certificate is not configured for this profile.");
         }
 

@@ -18,8 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("PrzeslijFaktury", HelpText = "Upload invoices in XML format.")]
-public class PrzeslijFakturyCommand : IWithConfigCommand
-{
+public class PrzeslijFakturyCommand : IWithConfigCommand {
     [Value(0, Min = 1, Required = true, HelpText = "Paths to XML invoice files.")]
     public required IEnumerable<string> Pliki { get; set; }
 
@@ -35,8 +34,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
     [Option("offlinemode", Required = false, HelpText = "Ustaw jeśli chcesz ustawic offline mode")]
     public bool OfflineModeOption { get; set; } = false;
 
-    public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths)
-    {
+    public static IEnumerable<(string FileName, byte[] Content)> GetFilesWithContent(IEnumerable<string> paths) {
         return paths.Select(path => (
             FileName: Path.GetFileName(path),
             Content: File.ReadAllBytes(path)
@@ -70,16 +68,14 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         SystemCode systemCode = DefaultSystemCode,
         string schemaVersion = DefaultSchemaVersion,
         string value = DefaultValue,
-        bool offlineMode = false)
-    {
+        bool offlineMode = false) {
         IOpenBatchSessionRequestBuilderBatchFile builder = OpenBatchSessionRequestBuilder
             .Create()
             .WithFormCode(systemCode: SystemCodeHelper.GetSystemCode(systemCode), schemaVersion: schemaVersion, value: value)
             .WithOfflineMode(offlineMode)
             .WithBatchFile(fileSize: zipMeta.FileSize, fileHash: zipMeta.HashSHA);
 
-        foreach (BatchPartSendingInfo p in encryptedParts)
-        {
+        foreach (BatchPartSendingInfo p in encryptedParts) {
             builder = builder.AddBatchFilePart(
                 ordinalNumber: p.OrdinalNumber,
                 fileSize: p.Metadata.FileSize,
@@ -98,8 +94,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
             IEnumerable<(string FileName, byte[] Content)> invoices,
             IKSeFClient ksefClient,
         ICryptographyService cryptographyService,
-        string accessToken)
-    {
+        string accessToken) {
         EncryptionData encryptionData = cryptographyService.GetEncryptionData();
 
         Log.LogInformation("1. Przygotowanie paczki ZIP");
@@ -131,12 +126,10 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
             IKSeFClient ksefClient,
             string referenceNumber,
             string accessToken,
-            CancellationToken cancellationToken)
-    {
+            CancellationToken cancellationToken) {
         const int pageSize = 50;
         string? continuationtoken = null;
-        do
-        {
+        do {
             SessionInvoicesResponse sessionInvoices = await ksefClient
                                         .GetSessionInvoicesAsync(
                                         referenceNumber,
@@ -145,10 +138,8 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                                         continuationtoken,
                                         cancellationToken).ConfigureAwait(false);
 
-            foreach (SessionInvoice sessionInvoice in sessionInvoices.Invoices)
-            {
-                Console.Out.WriteLine(JsonSerializer.Serialize(sessionInvoice, new JsonSerializerOptions
-                {
+            foreach (SessionInvoice sessionInvoice in sessionInvoices.Invoices) {
+                Console.Out.WriteLine(JsonSerializer.Serialize(sessionInvoice, new JsonSerializerOptions {
                     WriteIndented = true
                 }));
             }
@@ -158,11 +149,9 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         while (continuationtoken != null);
     }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         XML2PDFCommand.Runner? pdfRunner = null;
-        if (UpoPdf)
-        {
+        if (UpoPdf) {
             pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         }
 
@@ -197,21 +186,17 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
         Log.LogInformation("3. Pobranie informacji na temat przesłanych faktur");
         await PobranieInformacjiNaTematPrzeslanychFaktur(ksefClient, referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
 
-        if (!string.IsNullOrEmpty(UpoDir))
-        {
+        if (!string.IsNullOrEmpty(UpoDir)) {
             Directory.CreateDirectory(UpoDir);
 
-            if (UpoSesji && sessionStatus.Upo is not null)
-            {
+            if (UpoSesji && sessionStatus.Upo is not null) {
                 // Zbiorcze UPO
-                foreach (UpoPageResponse? upo in sessionStatus.Upo.Pages)
-                {
+                foreach (UpoPageResponse? upo in sessionStatus.Upo.Pages) {
                     Log.LogInformation($"Pobieranie zbiorczego UPO: {upo.ReferenceNumber}");
                     string upoContent = await ksefClient.GetSessionUpoAsync(referenceNumber, upo.ReferenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
                     string upoPath = Path.Combine(UpoDir, $"uposesji-{upo.ReferenceNumber}.xml");
                     await File.WriteAllTextAsync(upoPath, XDocument.Parse(upoContent).ToString() + "\n", cancellationToken).ConfigureAwait(false);
-                    if (UpoPdf)
-                    {
+                    if (UpoPdf) {
                         Log.LogInformation($"Generowanie PDF dla zbiorczego UPO: {upo.ReferenceNumber}");
                         byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);
@@ -222,8 +207,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
             // Indywidualne UPO
             const int pageSize = 50;
             string? continuationtoken = null;
-            do
-            {
+            do {
                 SessionInvoicesResponse sessionInvoices = await ksefClient
                    .GetSessionInvoicesAsync(
                        referenceNumber,
@@ -232,14 +216,12 @@ public class PrzeslijFakturyCommand : IWithConfigCommand
                        continuationtoken,
                        cancellationToken).ConfigureAwait(false);
 
-                foreach (SessionInvoice? invoice in sessionInvoices.Invoices.Where(i => i.KsefNumber is not null))
-                {
+                foreach (SessionInvoice? invoice in sessionInvoices.Invoices.Where(i => i.KsefNumber is not null)) {
                     Log.LogInformation($"Pobieranie indywidualnego UPO dla faktury: {invoice.KsefNumber}");
                     string upoContent = await ksefClient.GetSessionInvoiceUpoByKsefNumberAsync(referenceNumber, invoice.KsefNumber, accessToken, cancellationToken).ConfigureAwait(false);
                     string upoPath = Path.Combine(UpoDir, $"upo-{invoice.KsefNumber}.xml");
                     await File.WriteAllTextAsync(upoPath, XDocument.Parse(upoContent).ToString() + "\n", cancellationToken).ConfigureAwait(false);
-                    if (UpoPdf)
-                    {
+                    if (UpoPdf) {
                         Log.LogInformation($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefNumber}");
                         byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
                         await File.WriteAllBytesAsync(Path.ChangeExtension(upoPath, ".pdf"), pdfContent, cancellationToken).ConfigureAwait(false);

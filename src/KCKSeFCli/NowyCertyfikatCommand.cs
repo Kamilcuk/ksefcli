@@ -12,8 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("NowyCertyfikat", HelpText = "Generate a new KSeF certificate.")]
-public class NowyCertyfikatCommand : IWithConfigCommand
-{
+public class NowyCertyfikatCommand : IWithConfigCommand {
     [Option("certificateName", Required = true, HelpText = "Name for the new certificate.")]
     public string CertificateName { get; set; }
 
@@ -32,14 +31,12 @@ public class NowyCertyfikatCommand : IWithConfigCommand
     [Option("validFrom", HelpText = "Start date for certificate validity (e.g., 2023-01-01). If not provided, current date is used.")]
     public string? ValidFrom { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
         ICryptographyService cryptographyService = await GetCryptographicService(scope, cancellationToken).ConfigureAwait(false);
         string accessToken = await GetAccessToken(scope, cancellationToken).ConfigureAwait(false);
 
-        if (!Enum.TryParse(CertificateType, true, out CertificateType type))
-        {
+        if (!Enum.TryParse(CertificateType, true, out CertificateType type)) {
             throw new ArgumentException($"Invalid certificate type: {CertificateType}");
         }
 
@@ -52,13 +49,11 @@ public class NowyCertyfikatCommand : IWithConfigCommand
         Log.LogInformation("3. Przygotowanie CSR (Certificate Signing Request).");
         (string? csrBase64, string? privateKeyBase64) = cryptographyService.GenerateCsrWithEcdsa(enrollmentInfo);
 
-        if (!string.IsNullOrEmpty(CsrOutputPath))
-        {
+        if (!string.IsNullOrEmpty(CsrOutputPath)) {
             await File.WriteAllTextAsync(CsrOutputPath, csrBase64, cancellationToken).ConfigureAwait(false);
             Console.WriteLine($"CSR saved to {CsrOutputPath}");
         }
-        if (!string.IsNullOrEmpty(PrivateKeyOutputPath))
-        {
+        if (!string.IsNullOrEmpty(PrivateKeyOutputPath)) {
             await File.WriteAllTextAsync(PrivateKeyOutputPath, privateKeyBase64, cancellationToken).ConfigureAwait(false);
             Console.WriteLine($"Private key saved to {PrivateKeyOutputPath}");
         }
@@ -81,36 +76,29 @@ public class NowyCertyfikatCommand : IWithConfigCommand
         TimeSpan timeout = TimeSpan.FromMinutes(5);
         CertificateEnrollmentStatusResponse statusResponse;
 
-        do
-        {
+        do {
             statusResponse = await ksefClient.GetCertificateEnrollmentStatusAsync(referenceNumber, accessToken, cancellationToken).ConfigureAwait(false);
             Console.WriteLine($"Status: {statusResponse.Status.Code} - {statusResponse.Status.Description} | Elapsed: {DateTime.UtcNow - startTime:mm:ss}");
-            if (statusResponse.Status.Code == 200 || statusResponse.Status.Code == 120)
-            {
+            if (statusResponse.Status.Code == 200 || statusResponse.Status.Code == 120) {
                 break;
             }
             await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken).ConfigureAwait(false);
         }
         while ((DateTime.UtcNow - startTime) < timeout);
 
-        if (statusResponse.Status.Code != 200)
-        {
+        if (statusResponse.Status.Code != 200) {
             throw new InvalidOperationException($"Certificate enrollment failed or timed out: {statusResponse.Status.Description}");
         }
 
         Log.LogInformation("6. Pobieranie wystawionego certyfikatu.");
-        if (!string.IsNullOrEmpty(statusResponse.CertificateSerialNumber) && !string.IsNullOrEmpty(CertificateOutputPath))
-        {
+        if (!string.IsNullOrEmpty(statusResponse.CertificateSerialNumber) && !string.IsNullOrEmpty(CertificateOutputPath)) {
             CertificateListRequest certListRequest = new CertificateListRequest { CertificateSerialNumbers = new[] { statusResponse.CertificateSerialNumber } };
             CertificateListResponse certificateListResponse = await ksefClient.GetCertificateListAsync(certListRequest, accessToken, cancellationToken).ConfigureAwait(false);
             CertificateResponse? issuedCert = certificateListResponse.Certificates.FirstOrDefault();
-            if (issuedCert != null)
-            {
+            if (issuedCert != null) {
                 await File.WriteAllTextAsync(CertificateOutputPath, issuedCert.Certificate, cancellationToken).ConfigureAwait(false);
                 Console.WriteLine($"Issued certificate saved to {CertificateOutputPath}");
-            }
-            else
-            {
+            } else {
                 Console.Error.WriteLine($"Error: Issued certificate with serial number {statusResponse.CertificateSerialNumber} not found.");
             }
         }

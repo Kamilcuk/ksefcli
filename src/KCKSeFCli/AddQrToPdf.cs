@@ -10,22 +10,17 @@ using PdfSharp.Pdf.IO;
 namespace KCKSeFCli;
 
 
-public static class AddQrToPdf
-{
+public static class AddQrToPdf {
 
-    public static string[] WrapText(string input)
-    {
-        if (string.IsNullOrEmpty(input))
-        {
+    public static string[] WrapText(string input) {
+        if (string.IsNullOrEmpty(input)) {
             return [];
         }
 
         StringBuilder sb = new();
-        for (int i = 0; i < input.Length; i++)
-        {
+        for (int i = 0; i < input.Length; i++) {
             sb.Append(input[i]);
-            if ((i + 1) % 80 == 0 && i != input.Length - 1)
-            {
+            if ((i + 1) % 80 == 0 && i != input.Length - 1) {
                 sb.Append('\n');
             }
         }
@@ -33,24 +28,20 @@ public static class AddQrToPdf
     }
 
     // Helper to convert XGraphics Y to PDF Y
-    private static double FlipY(double y, double height, PdfPage page)
-    {
+    private static double FlipY(double y, double height, PdfPage page) {
         return page.Height.Point - y - height;
     }
 
-    public static byte[] AddQrCode(byte[] inputPdfBytes, string qrCodeUrl, string? label = null)
-    {
+    public static byte[] AddQrCode(byte[] inputPdfBytes, string qrCodeUrl, string? label = null) {
         GlobalFontSettings.FontResolver = new FallbackFontResolver();
 
         using MemoryStream inputStream = new MemoryStream(inputPdfBytes);
         using MemoryStream outputStream = new MemoryStream();
         byte[] qrCodeBytes = QrCodeService.GenerateQrCode(qrCodeUrl, 5);
 
-        using (PdfDocument doc = PdfReader.Open(inputStream, PdfDocumentOpenMode.Modify))
-        {
+        using (PdfDocument doc = PdfReader.Open(inputStream, PdfDocumentOpenMode.Modify)) {
             PdfPage newPage = doc.AddPage();
-            using (XGraphics gfx = XGraphics.FromPdfPage(newPage))
-            {
+            using (XGraphics gfx = XGraphics.FromPdfPage(newPage)) {
                 double currentY = 50;
                 XFont font = new XFont("Work Sans", 7, XFontStyleEx.Regular);
                 XFont linkFont = new XFont("Work Sans", 7, XFontStyleEx.Underline);
@@ -58,10 +49,8 @@ public static class AddQrToPdf
                 XBrush linkBrush = XBrushes.Blue;
 
                 // 1. ADD LABEL (MULTILINE)
-                if (!string.IsNullOrEmpty(label))
-                {
-                    foreach (string line in WrapText(label))
-                    {
+                if (!string.IsNullOrEmpty(label)) {
+                    foreach (string line in WrapText(label)) {
                         XSize size = gfx.MeasureString(line, font);
                         gfx.DrawString(line, font, brush, (newPage.Width.Point - size.Width) / 2, currentY);
                         currentY += size.Height + 2;
@@ -71,8 +60,7 @@ public static class AddQrToPdf
 
                 // 2. ADD CLICKABLE URL TEXT
                 string[] urlLines = WrapText(qrCodeUrl); // Użyj tej samej logiki 80 znaków
-                foreach (string line in urlLines)
-                {
+                foreach (string line in urlLines) {
                     XSize size = gfx.MeasureString(line, linkFont);
                     double xPos = (newPage.Width.Point - size.Width) / 2;
 

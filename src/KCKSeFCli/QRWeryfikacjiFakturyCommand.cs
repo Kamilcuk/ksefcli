@@ -11,8 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("QRWeryfikacjiFaktury", HelpText = "Generate a verification QR code (KOD II) for an invoice and save it to a file.")]
-public class QRWeryfikacjiFakturyCommand : IWithConfigCommand
-{
+public class QRWeryfikacjiFakturyCommand : IWithConfigCommand {
     [Value(0, Required = true, HelpText = "Input XML file path.")]
     public required string InputFile { get; set; }
 
@@ -22,13 +21,11 @@ public class QRWeryfikacjiFakturyCommand : IWithConfigCommand
     [Option('p', "pixels", Default = 5, HelpText = "Pixels per module for the QR code")]
     public int PixelsPerModule { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
 
         ProfileConfigWithName config = Config();
-        if (config.Certificate is null || string.IsNullOrEmpty(config.Certificate.Certificate))
-        {
+        if (config.Certificate is null || string.IsNullOrEmpty(config.Certificate.Certificate)) {
             throw new InvalidOperationException("Certificate is not configured for this profile.");
         }
         byte[] certBytes = Encoding.UTF8.GetBytes(config.Certificate.Certificate!);

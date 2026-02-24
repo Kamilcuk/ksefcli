@@ -14,16 +14,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace KCKSeFCli;
 
-public static class Authenticate
-{
+public static class Authenticate {
     public static async Task<AuthenticationOperationStatusResponse> TokenAuth(
         ProfileConfig config,
         IServiceScope scope,
         Func<IServiceScope, CancellationToken, Task<ICryptographyService>> GetCryptographicService,
-        CancellationToken cancellationToken)
-    {
-        if (config.AuthMethod != AuthMethod.KsefToken)
-        {
+        CancellationToken cancellationToken) {
+        if (config.AuthMethod != AuthMethod.KsefToken) {
             throw new InvalidOperationException("This command requires token authentication.");
         }
 
@@ -41,11 +38,9 @@ public static class Authenticate
         string encryptedTokenB64 = Convert.ToBase64String(encrypted);
         Log.LogInformation("2. Wysłanie żądania uwierzytelnienia tokenem KSeF");
         Trace.Assert(!string.IsNullOrEmpty(config.Nip), "--nip jest empty");
-        AuthenticationKsefTokenRequest request = new AuthenticationKsefTokenRequest
-        {
+        AuthenticationKsefTokenRequest request = new AuthenticationKsefTokenRequest {
             Challenge = challenge.Challenge,
-            ContextIdentifier = new AuthenticationTokenContextIdentifier
-            {
+            ContextIdentifier = new AuthenticationTokenContextIdentifier {
                 Type = AuthenticationTokenContextIdentifierType.Nip,
                 Value = config.Nip
             },
@@ -57,18 +52,15 @@ public static class Authenticate
         DateTime startTime = DateTime.UtcNow;
         TimeSpan timeout = TimeSpan.FromMinutes(2);
         AuthStatus status;
-        do
-        {
+        do {
             status = await ksefClient.GetAuthStatusAsync(signature.ReferenceNumber, signature.AuthenticationToken.Token).ConfigureAwait(false);
             Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
-            if (status.Status.Code != 200)
-            {
+            if (status.Status.Code != 200) {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
             }
         }
         while (status.Status.Code == 100 && (DateTime.UtcNow - startTime) < timeout);
-        if (status.Status.Code != 200)
-        {
+        if (status.Status.Code != 200) {
             throw new InvalidOperationException($"Uwierzytelnienie nie powiodło się lub przekroczono czas oczekiwania. {StatusInfoToString(status.Status)}");
         }
         Log.LogInformation("4. Uzyskanie tokena dostępowego (accessToken)");
@@ -80,10 +72,8 @@ public static class Authenticate
         ProfileConfig config,
         IServiceScope scope,
         Func<IServiceScope, CancellationToken, Task<ICryptographyService>> GetCryptographicService,
-        CancellationToken cancellationToken)
-    {
-        if (config.AuthMethod != AuthMethod.Xades)
-        {
+        CancellationToken cancellationToken) {
+        if (config.AuthMethod != AuthMethod.Xades) {
             throw new InvalidOperationException("This command requires certificate authentication.");
         }
 
@@ -117,18 +107,15 @@ public static class Authenticate
         DateTime startTime = DateTime.UtcNow;
         TimeSpan timeout = TimeSpan.FromMinutes(2);
         AuthStatus status;
-        do
-        {
+        do {
             status = await ksefClient.GetAuthStatusAsync(submission.ReferenceNumber, submission.AuthenticationToken.Token).ConfigureAwait(false);
             Log.LogInformation($"      Status: {StatusInfoToString(status.Status)} | upłynęło: {DateTime.UtcNow - startTime:mm\\:ss}");
-            if (status.Status.Code != 200)
-            {
+            if (status.Status.Code != 200) {
                 await Task.Delay(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
             }
         }
         while (status.Status.Code == 100 && (DateTime.UtcNow - startTime) < timeout);
-        if (status.Status.Code != 200)
-        {
+        if (status.Status.Code != 200) {
             throw new InvalidOperationException($"Uwierzytelnienie nie powiodło się lub przekroczono czas oczekiwania. {StatusInfoToString(status.Status)}");
         }
         Log.LogInformation("[9] Pobieranie access token...");
@@ -136,19 +123,16 @@ public static class Authenticate
         return tokenResponse;
     }
 
-    public static string StatusInfoToString(OperationStatusInfo statusInfo)
-    {
+    public static string StatusInfoToString(OperationStatusInfo statusInfo) {
         StringBuilder sb = new StringBuilder();
         sb.Append($"Code: {statusInfo.Code}, Description: {statusInfo.Description}");
-        if (statusInfo.Details != null && statusInfo.Details.Any())
-        {
+        if (statusInfo.Details != null && statusInfo.Details.Any()) {
             sb.Append($", Details: [{string.Join(", ", statusInfo.Details)}]");
         }
         return sb.ToString();
     }
 
-    public static void PrintXmlToConsole(string xml, string title)
-    {
+    public static void PrintXmlToConsole(string xml, string title) {
         Log.LogDebug($"----- {title} -----");
         Log.LogDebug(xml);
         Log.LogDebug($"----- KONIEC: {title} -----\n");

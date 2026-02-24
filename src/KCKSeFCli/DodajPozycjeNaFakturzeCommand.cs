@@ -1,16 +1,15 @@
-using System.ComponentModel;
 using System.Globalization;
 using System.Xml.Linq;
+
 using CommandLine;
 
 namespace KCKSeFCli;
 
 [Verb("DodajPozycjeNaFakturze", HelpText = "Add a new item to an existing KSeF XML invoice.")]
-public class DodajPozycjeNaFakturzeCommand : IGlobalCommand
-{
+public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
     [Value(0, Required = true, HelpText = "Input XML file path.")]
     public required string InputFile { get; set; }
-    
+
     [Value(1, Required = false, HelpText = "Output XML file path. If not provided, the input file will be overwritten.")]
     public string? OutputFile { get; set; }
 
@@ -28,47 +27,42 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand
 
     [Option("stawka-vat", Required = true, HelpText = "VAT rate (P_12), e.g., 23, 8, 5, 0.")]
     public required string StawkaVat { get; set; }
-    
+
     [Option("bez-walidacji", Required = false, HelpText = "Skip XML validation after adding the item.")]
     public bool BezWalidacji { get; set; }
 
-    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         ConfigureLogging();
 
-        if (!File.Exists(InputFile))
-        {
+        if (!File.Exists(InputFile)) {
             Log.LogError($"Error: Input file not found: {InputFile}");
             return 1;
         }
-        
+
         string outputPath = OutputFile ?? InputFile;
-        
-        try
-        {
-            var xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
-            
-            var doc = XDocument.Parse(xml);
+
+        try {
+            string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+
+            XDocument doc = XDocument.Parse(xml);
             XNamespace ns = "http://crd.gov.pl/wzor/2025/06/25/13775/";
 
-            var fa = doc.Root?.Element(ns + "Fa");
-            if (fa == null)
-            {
+            XElement? fa = doc.Root?.Element(ns + "Fa");
+            if (fa == null) {
                 Log.LogError("Error: Could not find <Fa> element in the XML.");
                 return 1;
             }
 
-            var lastWiersz = fa.Elements(ns + "FaWiersz").LastOrDefault();
-            if (lastWiersz == null)
-            {
+            XElement? lastWiersz = fa.Elements(ns + "FaWiersz").LastOrDefault();
+            if (lastWiersz == null) {
                 Log.LogError("Error: Could not find any <FaWiersz> elements in the XML.");
                 return 1;
             }
-            
+
             int newWierszId = int.Parse(lastWiersz.Element(ns + "NrWierszaFa")?.Value ?? "0") + 1;
             decimal wartoscNetto = Ilosc * CenaNetto;
 
-            var newFaWiersz = new XElement(ns + "FaWiersz",
+            XElement newFaWiersz = new XElement(ns + "FaWiersz",
                 new XElement(ns + "NrWierszaFa", newWierszId.ToString()),
                 new XElement(ns + "P_7", Nazwa),
                 new XElement(ns + "P_8A", Miara),
@@ -80,48 +74,39 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand
 
             lastWiersz.AddAfterSelf(newFaWiersz);
 
-            if (StawkaVat == "23" || StawkaVat == "22")
-            {
-                var p13_1 = fa.Element(ns + "P_13_1");
-                if (p13_1 != null)
-                {
-                    var currentValue = decimal.Parse(p13_1.Value, CultureInfo.InvariantCulture);
+            if (StawkaVat == "23" || StawkaVat == "22") {
+                XElement? p13_1 = fa.Element(ns + "P_13_1");
+                if (p13_1 != null) {
+                    decimal currentValue = decimal.Parse(p13_1.Value, CultureInfo.InvariantCulture);
                     p13_1.Value = (currentValue + wartoscNetto).ToString("F2", CultureInfo.InvariantCulture);
                 }
 
-                var p14_1 = fa.Element(ns + "P_14_1");
-                if (p14_1 != null)
-                {
-                    var currentVat = decimal.Parse(p14_1.Value, CultureInfo.InvariantCulture);
-                    var newVat = wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100);
+                XElement? p14_1 = fa.Element(ns + "P_14_1");
+                if (p14_1 != null) {
+                    decimal currentVat = decimal.Parse(p14_1.Value, CultureInfo.InvariantCulture);
+                    decimal newVat = wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100);
                     p14_1.Value = (currentVat + newVat).ToString("F2", CultureInfo.InvariantCulture);
                 }
             }
 
-            var p15 = fa.Element(ns + "P_15");
-            if (p15 != null)
-            {
-                var currentTotal = decimal.Parse(p15.Value, CultureInfo.InvariantCulture);
-                var newVat = (StawkaVat == "23" || StawkaVat == "22") ? wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100) : 0;
+            XElement? p15 = fa.Element(ns + "P_15");
+            if (p15 != null) {
+                decimal currentTotal = decimal.Parse(p15.Value, CultureInfo.InvariantCulture);
+                decimal newVat = (StawkaVat == "23" || StawkaVat == "22") ? wartoscNetto * (decimal.Parse(StawkaVat, CultureInfo.InvariantCulture) / 100) : 0;
                 p15.Value = (currentTotal + wartoscNetto + newVat).ToString("F2", CultureInfo.InvariantCulture);
             }
-            
-            var newXml = doc.ToString();
-            
+
+            string newXml = doc.ToString();
+
             await File.WriteAllTextAsync(outputPath, newXml, cancellationToken).ConfigureAwait(false);
             Log.LogInformation($"Successfully added item and saved to: {outputPath}");
 
-            if (!BezWalidacji)
-            {
-                if (XmlValidator.Validate(newXml, out var errors))
-                {
+            if (!BezWalidacji) {
+                if (XmlValidator.Validate(newXml, out List<string>? errors)) {
                     Log.LogInformation("Post-modification validation successful.");
-                }
-                else
-                {
+                } else {
                     Log.LogError("Post-modification validation failed:");
-                    foreach (var error in errors)
-                    {
+                    foreach (string error in errors) {
                         Log.LogError(error);
                     }
                     return 1;
@@ -129,9 +114,7 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand
             }
 
             return 0;
-        }
-        catch (Exception ex)
-        {
+        } catch (Exception ex) {
             Log.LogError($"An unexpected error occurred: {ex.Message}");
             return 1;
         }

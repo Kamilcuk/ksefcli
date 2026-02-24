@@ -14,16 +14,13 @@ using Microsoft.IdentityModel.Tokens;
 namespace KCKSeFCli;
 
 [Verb("LinkWeryfikacjiFaktury", HelpText = "Generuje link weryfikacji faktury (KOD II).")]
-public class LinkWeryfikacjiFaktury : IWithConfigCommand
-{
+public class LinkWeryfikacjiFaktury : IWithConfigCommand {
     [Value(0, Required = true, HelpText = "Plik XML z fakturą.")]
     public string FilePath { get; set; }
 
-    public static string GenerateCertificateVerificationLink(string invoiceXml, IVerificationLinkService linkSvc, X509Certificate2 certificate)
-    {
+    public static string GenerateCertificateVerificationLink(string invoiceXml, IVerificationLinkService linkSvc, X509Certificate2 certificate) {
         XDocument xmlDoc = XDocument.Parse(invoiceXml);
-        if (xmlDoc.Root is null)
-        {
+        if (xmlDoc.Root is null) {
             throw new InvalidDataException("Invoice XML is missing the root element.");
         }
 
@@ -46,13 +43,11 @@ public class LinkWeryfikacjiFaktury : IWithConfigCommand
         return url;
     }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
 
         ProfileConfigWithName config = Config();
-        if (config.Certificate is null || string.IsNullOrEmpty(config.Certificate.Certificate))
-        {
+        if (config.Certificate is null || string.IsNullOrEmpty(config.Certificate.Certificate)) {
             throw new InvalidOperationException("Certificate is not configured for this profile.");
         }
         byte[] certBytes = Encoding.UTF8.GetBytes(config.Certificate.Certificate!);

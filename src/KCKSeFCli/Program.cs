@@ -3,14 +3,11 @@ using CommandLine.Text;
 
 namespace KCKSeFCli;
 
-public class Program
-{
-    public static async Task<int> Main(string[] args)
-    {
+public class Program {
+    public static async Task<int> Main(string[] args) {
         // https://github.com/commandlineparser/commandline/wiki/How-To
         StringWriter helpWriter = new StringWriter();
-        Parser parser = new Parser(with =>
-        {
+        Parser parser = new Parser(with => {
             with.HelpWriter = helpWriter;
             with.EnableDashDash = true;
         });
@@ -52,31 +49,24 @@ public class Program
 
 
         CancellationTokenSource cts = new CancellationTokenSource();
-        Console.CancelKeyPress += (s, e) =>
-        {
+        Console.CancelKeyPress += (s, e) => {
             Console.WriteLine("Canceling...");
             cts.Cancel();
             e.Cancel = true;
         };
 
         return await result.MapResult(
-            (IGlobalCommand cmd) =>
-            {
-                try
-                {
+            (IGlobalCommand cmd) => {
+                try {
                     cmd.ConfigureLogging();
                     return cmd.ExecuteAsync(cts.Token);
-                }
-                catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     Console.Error.WriteLine(ex.ToString());
                     return Task.FromResult(3);
                 }
             },
-            errs =>
-            {
-                HelpText helpText = HelpText.AutoBuild(result, h =>
-                {
+            errs => {
+                HelpText helpText = HelpText.AutoBuild(result, h => {
                     h.Copyright = "Copyright (C) 2026 Kamil Cukrowski. Source code lisenced under GPLv3.";
                     // new CopyrightInfo("Kamil Cukrowski", 2026);
                     h.AdditionalNewLineAfterOption = false;
@@ -84,8 +74,7 @@ public class Program
                 });
                 Console.WriteLine(helpText);
 
-                if (errs.Any(e => e is HelpRequestedError or HelpVerbRequestedError or VersionRequestedError))
-                {
+                if (errs.Any(e => e is HelpRequestedError or HelpVerbRequestedError or VersionRequestedError)) {
                     return Task.FromResult(0);
                 }
 

@@ -10,23 +10,18 @@ using YamlDotNet.Serialization.NamingConventions;
 namespace KCKSeFCli;
 
 [Verb("PrintConfig", HelpText = "Print the active configuration")]
-public class PrintConfigCommand : IWithConfigCommand
-{
+public class PrintConfigCommand : IWithConfigCommand {
     [Option("json", HelpText = "Output configuration in JSON format")]
     public bool JsonOutput { get; set; }
 
-    public override Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         ProfileConfigWithName config = Config();
 
-        if (JsonOutput)
-        {
+        if (JsonOutput) {
             JsonSerializerOptions options = new JsonSerializerOptions { WriteIndented = true };
-            string json = JsonSerializer.Serialize(new
-            {
+            string json = JsonSerializer.Serialize(new {
                 active_profile = config.Name,
-                profile = new ProfileConfig
-                {
+                profile = new ProfileConfig {
                     Environment = config.Environment,
                     Nip = config.Nip,
                     Certificate = config.Certificate,
@@ -34,17 +29,13 @@ public class PrintConfigCommand : IWithConfigCommand
                 }
             }, options);
             Console.WriteLine(json);
-        }
-        else
-        {
+        } else {
             ISerializer serializer = new SerializerBuilder()
                 .WithNamingConvention(UnderscoredNamingConvention.Instance)
                 .Build();
-            string yaml = serializer.Serialize(new
-            {
+            string yaml = serializer.Serialize(new {
                 active_profile = config.Name,
-                profile = new ProfileConfig
-                {
+                profile = new ProfileConfig {
                     Environment = config.Environment,
                     Nip = config.Nip,
                     Certificate = config.Certificate,

@@ -1,40 +1,33 @@
 using Microsoft.Extensions.Logging;
 
-public static class Log
-{
+public static class Log {
     private static ILoggerFactory? _loggerFactory;
 
     public static ILogger Logger { get; private set; } = default!;
 
-    public static void ConfigureLogging(bool verbose = false, bool quiet = false)
-    {
-        _loggerFactory = LoggerFactory.Create(builder =>
-        {
+    public static void ConfigureLogging(bool verbose = false, bool quiet = false) {
+        _loggerFactory = LoggerFactory.Create(builder => {
             LogLevel kcksefCliLevel = LogLevel.Information;
             LogLevel microsoftLevel = LogLevel.Warning;
             LogLevel systemLevel = LogLevel.Warning;
 
-            if (verbose)
-            {
+            if (verbose) {
                 kcksefCliLevel = LogLevel.Debug;
                 microsoftLevel = LogLevel.Debug;
                 systemLevel = LogLevel.Debug;
             }
 
-            if (quiet)
-            {
+            if (quiet) {
                 kcksefCliLevel = LogLevel.Warning;
             }
 
             builder.AddFilter("KCKSeFCli", kcksefCliLevel)
                    .AddFilter("Microsoft", microsoftLevel)
                    .AddFilter("System", systemLevel)
-                   .AddConsole(options =>
-                   {
+                   .AddConsole(options => {
                        options.LogToStandardErrorThreshold = LogLevel.Trace;
                    })
-                   .AddSimpleConsole(options =>
-                   {
+                   .AddSimpleConsole(options => {
                        options.SingleLine = true;
                        options.TimestampFormat = "HH:mm:ss ";
                    });

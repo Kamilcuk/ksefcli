@@ -12,8 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace KCKSeFCli;
 
 [Verb("SzukajFaktur", HelpText = "Query invoice metadata")]
-public class SzukajFakturCommand : IWithConfigCommand
-{
+public class SzukajFakturCommand : IWithConfigCommand {
     [Option('s', "subjectType", Default = "Subject1", HelpText = """
     Typ podmiotu, którego dotyczą kryteria filtrowania metadanych faktur. Określa kontekst, w jakim przeszukiwane są dane.
     Wartość                 | Opis
@@ -133,8 +132,7 @@ public class SzukajFakturCommand : IWithConfigCommand
     [Option("hasAttachment", HelpText = "Czy faktura ma załącznik.")]
     public bool? HasAttachment { get; set; }
 
-    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken)
-    {
+    public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         Log.LogInformation("Szukanie faktur...");
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
 
@@ -150,14 +148,11 @@ public class SzukajFakturCommand : IWithConfigCommand
     protected async Task<List<InvoiceSummary>> SzukajFaktury(
         IServiceScope scope,
         IKSeFClient ksefClient,
-        CancellationToken cancellationToken)
-    {
+        CancellationToken cancellationToken) {
         SzukajFakturCommand settings = this;
 
-        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType))
-        {
-            subjectType = settings.SubjectType.ToLowerInvariant() switch
-            {
+        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType)) {
+            subjectType = settings.SubjectType.ToLowerInvariant() switch {
                 "1" or "sprzedawca" => InvoiceSubjectType.Subject1,
                 "2" or "nabywca" => InvoiceSubjectType.Subject2,
                 "3" => InvoiceSubjectType.Subject3,
@@ -166,23 +161,19 @@ public class SzukajFakturCommand : IWithConfigCommand
             };
         }
 
-        if (!Enum.TryParse(settings.DateType, true, out DateType dateType))
-        {
+        if (!Enum.TryParse(settings.DateType, true, out DateType dateType)) {
             throw new InvalidEnumArgumentException($"Invalid DateType: {settings.DateType}");
         }
 
         DateTime parsedFromDate = await ParseDate.Parse(settings.From, cancellationToken).ConfigureAwait(false);
         DateTime? parsedToDate = null;
-        if (settings.To is not null)
-        {
+        if (settings.To is not null) {
             parsedToDate = await ParseDate.Parse(settings.To, cancellationToken).ConfigureAwait(false);
         }
 
-        InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters
-        {
+        InvoiceQueryFilters invoiceQueryFilters = new InvoiceQueryFilters {
             SubjectType = subjectType,
-            DateRange = new DateRange
-            {
+            DateRange = new DateRange {
                 From = parsedFromDate,
                 To = parsedToDate,
                 DateType = dateType,
@@ -195,85 +186,63 @@ public class SzukajFakturCommand : IWithConfigCommand
             HasAttachment = settings.HasAttachment
         };
 
-        if (settings.CurrencyCodes is not null)
-        {
+        if (settings.CurrencyCodes is not null) {
             invoiceQueryFilters.CurrencyCodes = new List<CurrencyCode>();
-            foreach (string currencyCodeStr in settings.CurrencyCodes)
-            {
-                if (Enum.TryParse(currencyCodeStr, true, out CurrencyCode currencyCode))
-                {
+            foreach (string currencyCodeStr in settings.CurrencyCodes) {
+                if (Enum.TryParse(currencyCodeStr, true, out CurrencyCode currencyCode)) {
                     invoiceQueryFilters.CurrencyCodes.Add(currencyCode);
-                }
-                else
-                {
+                } else {
                     throw new InvalidEnumArgumentException($"Invalid CurrencyCode: {currencyCodeStr}");
                 }
             }
         }
 
-        if (settings.AmountType is not null)
-        {
-            if (!Enum.TryParse(settings.AmountType, true, out AmountType amountType))
-            {
+        if (settings.AmountType is not null) {
+            if (!Enum.TryParse(settings.AmountType, true, out AmountType amountType)) {
                 throw new InvalidEnumArgumentException($"Invalid AmountType: {settings.AmountType}");
             }
-            AmountFilter amountFilter = new AmountFilter
-            {
+            AmountFilter amountFilter = new AmountFilter {
                 Type = amountType
             };
-            if (settings.AmountFrom.HasValue)
-            {
+            if (settings.AmountFrom.HasValue) {
                 amountFilter.From = (decimal)settings.AmountFrom.Value;
             }
-            if (settings.AmountTo.HasValue)
-            {
+            if (settings.AmountTo.HasValue) {
                 amountFilter.To = (decimal)settings.AmountTo.Value;
             }
             invoiceQueryFilters.Amount = amountFilter;
         }
 
-        if (settings.BuyerIdentifierType is not null)
-        {
-            if (!Enum.TryParse(settings.BuyerIdentifierType, true, out BuyerIdentifierType buyerIdentifierType))
-            {
+        if (settings.BuyerIdentifierType is not null) {
+            if (!Enum.TryParse(settings.BuyerIdentifierType, true, out BuyerIdentifierType buyerIdentifierType)) {
                 throw new InvalidEnumArgumentException($"Invalid BuyerIdentifierType: {settings.BuyerIdentifierType}");
             }
-            invoiceQueryFilters.BuyerIdentifier = new BuyerIdentifier
-            {
+            invoiceQueryFilters.BuyerIdentifier = new BuyerIdentifier {
                 Type = buyerIdentifierType,
                 Value = settings.BuyerIdValue
             };
         }
 
-        if (settings.InvoicingMode is not null)
-        {
-            if (!Enum.TryParse(settings.InvoicingMode, true, out InvoicingMode invoicingMode))
-            {
+        if (settings.InvoicingMode is not null) {
+            if (!Enum.TryParse(settings.InvoicingMode, true, out InvoicingMode invoicingMode)) {
                 throw new InvalidEnumArgumentException($"Invalid InvoicingMode: {settings.InvoicingMode}");
             }
             invoiceQueryFilters.InvoicingMode = invoicingMode;
         }
 
-        if (settings.FormType is not null)
-        {
-            if (!Enum.TryParse(settings.FormType, true, out FormType formType))
-            {
+        if (settings.FormType is not null) {
+            if (!Enum.TryParse(settings.FormType, true, out FormType formType)) {
                 throw new InvalidEnumArgumentException($"Invalid FormType: {settings.FormType}");
             }
             invoiceQueryFilters.FormType = formType;
         }
 
-        if (settings.InvoiceTypes is not null)
-        {
+        if (settings.InvoiceTypes is not null) {
             invoiceQueryFilters.InvoiceTypes = new List<InvoiceType>();
-            foreach (string invoiceTypeStr in settings.InvoiceTypes)
-            {
-                if (Enum.TryParse(invoiceTypeStr, true, out InvoiceType invoiceType))
-                {
+            foreach (string invoiceTypeStr in settings.InvoiceTypes) {
+                if (Enum.TryParse(invoiceTypeStr, true, out InvoiceType invoiceType)) {
                     invoiceQueryFilters.InvoiceTypes.Add(invoiceType);
-                }
-                else
-                {
+                } else {
                     throw new InvalidEnumArgumentException($"Invalid InvoiceType: {invoiceTypeStr}");
                 }
             }
@@ -285,8 +254,7 @@ public class SzukajFakturCommand : IWithConfigCommand
         PagedInvoiceResponse pagedInvoicesResponse;
         int currentPageOffset = settings.PageOffset;
 
-        do
-        {
+        do {
             Log.LogInformation($"Fetching page with offset {currentPageOffset} and size {settings.PageSize}");
             pagedInvoicesResponse = await ksefClient.QueryInvoiceMetadataAsync(
                 invoiceQueryFilters,
@@ -295,8 +263,7 @@ public class SzukajFakturCommand : IWithConfigCommand
                 pageSize: settings.PageSize,
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            if (pagedInvoicesResponse.Invoices != null)
-            {
+            if (pagedInvoicesResponse.Invoices != null) {
                 allInvoices.AddRange(pagedInvoicesResponse.Invoices);
             }
 

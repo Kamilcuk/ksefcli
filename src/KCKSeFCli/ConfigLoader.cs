@@ -4,13 +4,10 @@ using YamlDotNet.Serialization.NamingConventions;
 
 namespace KCKSeFCli;
 
-public static class ConfigLoader
-{
-    public static KCKSeFCliConfig Load(string configPath, string? activeProfileNameOverride)
-    {
+public static class ConfigLoader {
+    public static KCKSeFCliConfig Load(string configPath, string? activeProfileNameOverride) {
         string absoluteConfigPath = Path.GetFullPath(configPath);
-        if (!File.Exists(absoluteConfigPath))
-        {
+        if (!File.Exists(absoluteConfigPath)) {
             throw new FileNotFoundException($"Configuration file not found at {absoluteConfigPath}");
         }
 
@@ -20,43 +17,33 @@ public static class ConfigLoader
             .Build();
 
         KCKSeFCliConfig config;
-        try
-        {
+        try {
             config = deserializer.Deserialize<KCKSeFCliConfig>(
                 File.ReadAllText(absoluteConfigPath)
             );
-        }
-        catch (YamlException ex)
-        {
+        } catch (YamlException ex) {
             throw new Exception($"Exception during deserialization of '{absoluteConfigPath}'", ex);
         }
 
         string activeProfile = activeProfileNameOverride ?? config.ActiveProfile;
 
-        if (string.IsNullOrWhiteSpace(activeProfile))
-        {
-            if (config.Profiles.Count == 1)
-            {
+        if (string.IsNullOrWhiteSpace(activeProfile)) {
+            if (config.Profiles.Count == 1) {
                 activeProfile = config.Profiles.Keys.First();
-            }
-            else
-            {
+            } else {
                 throw new InvalidOperationException("Active profile not specified in config file or via --active option.");
             }
         }
 
-        if (!config.Profiles.TryGetValue(activeProfile, out ProfileConfig? profile))
-        {
+        if (!config.Profiles.TryGetValue(activeProfile, out ProfileConfig? profile)) {
             throw new InvalidOperationException($"Active profile '{activeProfile}' not found in configuration.");
         }
 
         string? configDir = Path.GetDirectoryName(absoluteConfigPath);
 
         Dictionary<string, ProfileConfig> resolvedProfiles = new Dictionary<string, ProfileConfig>();
-        foreach ((string? profileName, ProfileConfig? profileConfig) in config.Profiles)
-        {
-            if (profileConfig.Certificate is not null && configDir is not null)
-            {
+        foreach ((string? profileName, ProfileConfig? profileConfig) in config.Profiles) {
+            if (profileConfig.Certificate is not null && configDir is not null) {
                 CertificateConfig cert = profileConfig.Certificate;
                 string? resolvedPrivateKey = ResolveContent(cert.Private_Key, cert.Private_Key_File, configDir);
                 string? resolvedCertificate = ResolveContent(cert.Certificate, cert.Certificate_File, configDir);
@@ -64,8 +51,7 @@ public static class ConfigLoader
                                            (cert.Password_Env is not null ? System.Environment.GetEnvironmentVariable(cert.Password_Env) : null) ??
                                            ResolveContent(null, cert.Password_File, configDir);
 
-                CertificateConfig newCert = new CertificateConfig
-                {
+                CertificateConfig newCert = new CertificateConfig {
                     Private_Key = resolvedPrivateKey,
                     Certificate = resolvedCertificate,
                     Password = resolvedPassword,
@@ -75,18 +61,14 @@ public static class ConfigLoader
                     Password_File = cert.Password_File,
                 };
 
-                resolvedProfiles[profileName] = new ProfileConfig
-                {
+                resolvedProfiles[profileName] = new ProfileConfig {
                     Certificate = newCert,
                     Environment = profileConfig.Environment,
                     Nip = profileConfig.Nip,
                     Token = profileConfig.Token,
                 };
-            }
-            else
-            {
-                resolvedProfiles[profileName] = new ProfileConfig
-                {
+            } else {
+                resolvedProfiles[profileName] = new ProfileConfig {
                     Certificate = null,
                     Environment = profileConfig.Environment,
                     Nip = !String.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : !String.IsNullOrEmpty(profileConfig.Token) ? CheckNip.ExtractNipFromToken(profileConfig.Token) : "",
@@ -95,8 +77,7 @@ public static class ConfigLoader
             }
         }
 
-        KCKSeFCliConfig finalConfig = new KCKSeFCliConfig
-        {
+        KCKSeFCliConfig finalConfig = new KCKSeFCliConfig {
             ActiveProfile = activeProfile,
             Profiles = resolvedProfiles,
         };
@@ -106,67 +87,54 @@ public static class ConfigLoader
         return finalConfig;
     }
 
-    private static string? ResolveContent(string? content, string? filePath, string configDir)
-    {
-        if (!string.IsNullOrWhiteSpace(content))
-        {
+    private static string? ResolveContent(string? content, string? filePath, string configDir) {
+        if (!string.IsNullOrWhiteSpace(content)) {
             return content;
         }
 
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
+        if (string.IsNullOrWhiteSpace(filePath)) {
             return null;
         }
 
         string path = ExpandTilde(filePath);
-        if (!Path.IsPathRooted(path))
-        {
+        if (!Path.IsPathRooted(path)) {
             path = Path.GetFullPath(Path.Combine(configDir, path));
         }
 
         return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
     }
 
-    private static void ValidateProfile(ProfileConfig profile)
-    {
+    private static void ValidateProfile(ProfileConfig profile) {
         bool hasCert = profile.Certificate != null;
         bool hasToken = !string.IsNullOrWhiteSpace(profile.Token);
 
-        if (!string.IsNullOrEmpty(profile.Nip))
-        {
+        if (!string.IsNullOrEmpty(profile.Nip)) {
             CheckNip.AssertNipIsValid(profile.Nip);
         }
 
-        if (hasCert == hasToken)
-        {
+        if (hasCert == hasToken) {
             throw new InvalidOperationException(
                 "Profile must define either certificate or token, exactly one."
             );
         }
 
-        if (hasCert)
-        {
-            if (string.IsNullOrEmpty(profile.Certificate!.Private_Key))
-            {
+        if (hasCert) {
+            if (string.IsNullOrEmpty(profile.Certificate!.Private_Key)) {
                 throw new InvalidOperationException("Private key is not configured.");
             }
 
-            if (string.IsNullOrEmpty(profile.Certificate.Certificate))
-            {
+            if (string.IsNullOrEmpty(profile.Certificate.Certificate)) {
                 throw new InvalidOperationException("Certificate is not configured.");
             }
 
-            if (string.IsNullOrEmpty(profile.Certificate.Password))
-            {
+            if (string.IsNullOrEmpty(profile.Certificate.Password)) {
                 throw new InvalidOperationException("Certificate password is not set.");
             }
         }
     }
 
-    private static string ExpandTilde(string path)
-    {
-        if (string.IsNullOrEmpty(path) || !path.StartsWith("~"))
-        {
+    private static string ExpandTilde(string path) {
+        if (string.IsNullOrEmpty(path) || !path.StartsWith("~")) {
             return path;
         }
 
