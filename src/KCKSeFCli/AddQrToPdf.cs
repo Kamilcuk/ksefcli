@@ -50,7 +50,7 @@ public static class AddQrToPdf {
 
                 // 1. ADD LABEL (MULTILINE)
                 if (!string.IsNullOrEmpty(label)) {
-                    foreach (string line in WrapText(label)) {
+                    foreach (string line in WrapText(label!)) {
                         XSize size = gfx.MeasureString(line, font);
                         gfx.DrawString(line, font, brush, (newPage.Width.Point - size.Width) / 2, currentY);
                         currentY += size.Height + 2;

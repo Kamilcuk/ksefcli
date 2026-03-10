@@ -15,7 +15,7 @@ public class ParseDateCommand : IGlobalCommand {
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         DateTime result = await ParseDate.Parse(DateString, cancellationToken).ConfigureAwait(false);
         if (Seconds) {
-            TimeSpan diff = result.ToUniversalTime() - DateTime.UnixEpoch;
+            TimeSpan diff = result.ToUniversalTime() - Compatibility.UnixEpoch;
             double seconds = diff.TotalSeconds;
             Console.WriteLine(seconds.ToString("F6", CultureInfo.InvariantCulture));
         } else {

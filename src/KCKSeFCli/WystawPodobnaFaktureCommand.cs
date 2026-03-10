@@ -4,6 +4,8 @@ using System.Xml.Linq;
 
 using CommandLine;
 
+using KCKSeFCli;
+
 namespace KCKSeFCli;
 
 [Verb("WystawPodobnaFakture", HelpText = "Create a new KSeF XML invoice based on an existing one with updated dates.")]
@@ -28,7 +30,7 @@ public class WystawPodobnaFaktureCommand : IGlobalCommand {
             return 1;
         }
 
-        string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xmlContent = File.ReadAllText(InputFile);
         XDocument doc = XDocument.Parse(xmlContent);
         XNamespace ns = doc.Root?.GetDefaultNamespace() ?? XNamespace.None;
 
@@ -70,7 +72,7 @@ public class WystawPodobnaFaktureCommand : IGlobalCommand {
             doc.Save(writer);
         }
         string newXml = Encoding.UTF8.GetString(ms.ToArray());
-        await File.WriteAllTextAsync(OutputFile, newXml, cancellationToken).ConfigureAwait(false);
+        File.WriteAllText(OutputFile, newXml);
 
         Console.WriteLine($"Successfully created similar invoice: {OutputFile}");
         return 0;

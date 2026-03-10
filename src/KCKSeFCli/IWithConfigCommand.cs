@@ -47,11 +47,11 @@ public abstract class IWithConfigCommand : IGlobalCommand {
                 if (string.IsNullOrEmpty(CmdToken)) {
                     throw new InvalidOperationException("You have to use --token is specifying authentication on command line with --environment.");
                 }
-                string nip = CheckNip.ExtractNipFromToken(CmdToken);
+                string nip = CheckNip.ExtractNipFromToken(CmdToken!);
                 ProfileConfig profile = new ProfileConfig {
-                    Environment = CmdEnvironment,
+                    Environment = CmdEnvironment!,
                     Nip = nip,
-                    Token = CmdToken,
+                    Token = CmdToken!,
                 };
                 return new ProfileConfigWithName(profile, ".__cmd__");
             } else {

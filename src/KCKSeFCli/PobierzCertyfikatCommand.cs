@@ -34,7 +34,7 @@ public class PobierzCertyfikatCommand : IWithConfigCommand {
         if (string.IsNullOrEmpty(OutputFile)) {
             Console.WriteLine(JsonSerializer.Serialize(certificate, new JsonSerializerOptions { WriteIndented = true }));
         } else {
-            await File.WriteAllTextAsync(OutputFile, certificate.Certificate, cancellationToken).ConfigureAwait(false);
+            File.WriteAllText(OutputFile!, certificate.Certificate);
             Console.WriteLine($"Certificate saved to {OutputFile}");
         }
 

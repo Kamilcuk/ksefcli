@@ -18,11 +18,11 @@ public class XMLRemoveNamespaceCommand : IGlobalCommand {
             Log.Error($"Error: Input file not found: {InputFile}");
             return 1;
         }
-        string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xml = File.ReadAllText(InputFile);
         XDocument doc = XDocument.Parse(xml);
         doc = MyXml.NormalizeToNamespace(doc);
         string xmlString = MyXml.XmlToString(doc);
-        await File.WriteAllTextAsync(OutputFile, xmlString, cancellationToken).ConfigureAwait(false);
+        File.WriteAllText(OutputFile, xmlString);
         return 0;
     }
 }

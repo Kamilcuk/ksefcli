@@ -26,8 +26,8 @@ public class SelfUpdateCommand : IGlobalCommand {
         string fileName;
 
         if (!string.IsNullOrEmpty(Url)) {
-            downloadUrl = Url;
-            fileName = Path.GetFileName(new Uri(Url).LocalPath);
+            downloadUrl = Url!;
+            fileName = Path.GetFileName(new Uri(Url!).LocalPath);
         } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
             downloadUrl = "https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli.exe?job=windows_build_main";
             fileName = "kcksefcli.exe";
@@ -52,12 +52,12 @@ public class SelfUpdateCommand : IGlobalCommand {
                 HttpResponseMessage response = await httpClient.GetAsync(downloadUrl, cancellationToken).ConfigureAwait(false);
                 response.EnsureSuccessStatusCode();
                 using (FileStream fs = new FileStream(tempFile.Path, FileMode.Create, FileAccess.Write, FileShare.None)) {
-                    await response.Content.CopyToAsync(fs, cancellationToken).ConfigureAwait(false);
+                    response.Content.CopyToAsync(fs).Wait();
                 }
             }
 
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
-                await new Subprocess(new[] { "chmod", "+x", tempFile.Path }).CheckCallAsync(cancellationToken).ConfigureAwait(false);
+                new Subprocess(new[] { "chmod", "+x", tempFile.Path }).CheckCallAsync(cancellationToken).Wait();
             }
 
             string destinationPath;
@@ -68,7 +68,8 @@ public class SelfUpdateCommand : IGlobalCommand {
             }
 
             Log.Information($"Saving to {destinationPath}...");
-            File.Move(tempFile.Path, destinationPath, true);
+            if (File.Exists(destinationPath)) File.Delete(destinationPath);
+            File.Move(tempFile.Path, destinationPath);
             Log.Information("Update successful.");
             return 0;
         } catch (Exception ex) {

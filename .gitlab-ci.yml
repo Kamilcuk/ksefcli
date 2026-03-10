@@ -50,7 +50,7 @@ secret_detection:
 linux_build:
   extends: .build
   script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 -o dist -v n
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 -f net10.0 -o dist -v n
     - mv -v ./dist/kcksefcli .
     - ldd ./kcksefcli
     - stat ./kcksefcli
@@ -85,9 +85,20 @@ windows_build_main:
   extends: [.release_main_expire_never, .build]
   dependencies: []
   script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 -o dist -v n
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x64 -f net10.0 -o dist -v n
     - mv -v dist/kcksefcli.exe .
     - stat ./kcksefcli.exe
   artifacts:
     paths:
       - ./kcksefcli.exe
+
+  win-x86-net6.0_build_main:
+    extends: [.release_main_expire_never, .build]
+    dependencies: []
+    script:
+      - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win7-x86 -f net6.0 -o dist -v n
+      - mv -v dist/kcksefcli.exe .
+      - stat ./kcksefcli.exe
+    artifacts:
+      paths:
+        - ./kcksefcli.exe

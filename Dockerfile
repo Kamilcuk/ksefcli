@@ -24,3 +24,8 @@ FROM test AS itest
 COPY secrets/ secrets/
 RUN time ./tests/integration.sh -r WystawFaktureOffline ${EXE}
 
+FROM mono:latest AS mono
+WORKDIR /build
+COPY . .
+RUN nuget restore
+RUN msbuild src/KCKSeFCli/KCKSeFCli.csproj /p:Configuration=Release /p:Platform=x86

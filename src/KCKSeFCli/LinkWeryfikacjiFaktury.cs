@@ -16,7 +16,7 @@ namespace KCKSeFCli;
 [Verb("LinkWeryfikacjiFaktury", HelpText = "Generuje link weryfikacji faktury (KOD II).")]
 public class LinkWeryfikacjiFaktury : IWithConfigCommand {
     [Value(0, Required = true, HelpText = "Plik XML z fakturą.")]
-    public string FilePath { get; set; }
+    public required string FilePath { get; set; }
 
     public static string GenerateCertificateVerificationLink(string invoiceXml, IVerificationLinkService linkSvc, X509Certificate2 certificate) {
         XDocument xmlDoc = XDocument.Parse(invoiceXml);
@@ -31,7 +31,7 @@ public class LinkWeryfikacjiFaktury : IWithConfigCommand {
         string sellerNip = podmiot1.Element(ns + "DaneIdentyfikacyjne")?.Element(ns + "NIP")?.Value ?? throw new InvalidDataException("Could not find seller NIP in invoice XML.");
 
         byte[] invoiceBytes = Encoding.UTF8.GetBytes(invoiceXml);
-        byte[] hashBytes = SHA256.HashData(invoiceBytes);
+        byte[] hashBytes = Compatibility.SHA256HashData(invoiceBytes);
         string invoiceHash = Base64UrlEncoder.Encode(hashBytes);
 
         string url = linkSvc.BuildCertificateVerificationUrl(
@@ -54,7 +54,7 @@ public class LinkWeryfikacjiFaktury : IWithConfigCommand {
         X509Certificate2 publicCert = certBytes.LoadCertificate();
         X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password ?? string.Empty);
 
-        string invoiceXml = await File.ReadAllTextAsync(FilePath, cancellationToken).ConfigureAwait(false);
+        string invoiceXml = File.ReadAllText(FilePath);
 
         string url = GenerateCertificateVerificationLink(invoiceXml, linkSvc, certificate);
 

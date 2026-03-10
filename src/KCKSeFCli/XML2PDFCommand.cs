@@ -38,16 +38,16 @@ public class XML2PDFCommand : IGlobalCommand {
                 Console.Error.WriteLine("Error: Input file must have a .xml extension when no output file is specified.");
                 return 1;
             }
-            outputPdfPath = Path.ChangeExtension(InputFile, ".pdf");
+            outputPdfPath = Path.ChangeExtension(InputFile, ".pdf")!;
             if (File.Exists(outputPdfPath)) {
                 Console.Error.WriteLine($"Error: Output file already exists: {outputPdfPath}");
                 return 1;
             }
         } else {
-            outputPdfPath = OutputFile;
+            outputPdfPath = OutputFile!;
         }
 
-        string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xmlContent = File.ReadAllText(InputFile);
 
         Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
         byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, cancellationToken).ConfigureAwait(false);
@@ -56,7 +56,7 @@ public class XML2PDFCommand : IGlobalCommand {
             pdfContent = AddQrToPdf.AddQrCode(pdfContent, QrCode2Url);
         }
 
-        await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
+        File.WriteAllBytes(outputPdfPath, pdfContent);
 
         Console.WriteLine($"PDF saved to: {outputPdfPath}");
 
@@ -72,7 +72,7 @@ public class XML2PDFCommand : IGlobalCommand {
 
         public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCodeUrl, CancellationToken cancellationToken) {
             using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
-            await File.WriteAllTextAsync(tempXml.Path, xmlContent, cancellationToken).ConfigureAwait(false);
+            File.WriteAllText(tempXml.Path, xmlContent);
             using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
 
             List<string> commandArgs = new(_command);
@@ -80,10 +80,10 @@ public class XML2PDFCommand : IGlobalCommand {
 
             System.Collections.Generic.Dictionary<string, string> options = new();
             if (!string.IsNullOrEmpty(nrKSeF)) {
-                options.Add("nrKSeF", nrKSeF);
+                options.Add("nrKSeF", nrKSeF!);
             }
             if (!string.IsNullOrEmpty(qrCodeUrl)) {
-                options.Add("qrCode", qrCodeUrl);
+                options.Add("qrCode", qrCodeUrl!);
             }
 
             if (options.Count > 0) {
@@ -95,7 +95,7 @@ public class XML2PDFCommand : IGlobalCommand {
                 Quiet: quiet
             );
             await nodeScript.CheckCallAsync(cancellationToken).ConfigureAwait(false);
-            byte[] pdfBytes = await File.ReadAllBytesAsync(tempPdf.Path, cancellationToken).ConfigureAwait(false);
+            byte[] pdfBytes = File.ReadAllBytes(tempPdf.Path);
             return pdfBytes;
         }
     }
@@ -134,7 +134,7 @@ public class XML2PDFCommand : IGlobalCommand {
                     StartInfo = { FileName = "chmod", Arguments = $"+x \"{destinationPath}\"" }
                 };
                 p.Start();
-                await p.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                p.WaitForExit();
             }
             runnerCommand = new[] { destinationPath };
         }

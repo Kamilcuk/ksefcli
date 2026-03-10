@@ -10,6 +10,7 @@ using KSeF.Client.Tests.Core.Utils.RateLimit;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using KCKSeFCli;
 
 namespace KCKSeFCli;
 
@@ -52,7 +53,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
             if (!NoJson) {
-                await File.WriteAllTextAsync(jsonFilePath, JsonSerializer.Serialize(invoiceSummary), cancellationToken).ConfigureAwait(false);
+                File.WriteAllText(jsonFilePath, JsonSerializer.Serialize(invoiceSummary));
                 Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {jsonFilePath}");
             }
 
@@ -67,7 +68,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
                 accessToken,
                 cancellationToken).ConfigureAwait(false);
 
-            await File.WriteAllTextAsync(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n", cancellationToken).ConfigureAwait(false);
+            File.WriteAllText(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n");
 
             Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
 
@@ -75,7 +76,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
                 byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
-                await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
+                File.WriteAllBytes(outputPdfPath, pdfContent);
                 Log.Information($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
             }
         }

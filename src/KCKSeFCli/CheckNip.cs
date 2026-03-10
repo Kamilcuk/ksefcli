@@ -3,8 +3,8 @@ using System.Text.RegularExpressions;
 namespace KCKSeFCli;
 
 public static partial class CheckNip {
-    [GeneratedRegex(@".*\|nip-(\d+)\|.*", RegexOptions.Compiled)]
-    private static partial Regex NipRegex();
+    private static readonly Regex _nipRegex = new Regex(@".*\|nip-(\d+)\|.*", RegexOptions.Compiled);
+    private static Regex NipRegex() => _nipRegex;
 
     public static string ExtractNipFromToken(string token) {
         Match match = NipRegex().Match(token);
@@ -24,24 +24,24 @@ public static partial class CheckNip {
         if (string.IsNullOrEmpty(nip)) {
             throw new ArgumentException("NIP cannot be null or empty.");
         }
-        nip = nip.Replace("-", string.Empty).Trim();
-        if (nip.Length != 10) {
-            throw new ArgumentException($"Invalid NIP length: {nip}. NIP must be 10 digits long.");
+        string cleanNip = nip!.Replace("-", string.Empty).Trim();
+        if (cleanNip.Length != 10) {
+            throw new ArgumentException($"Invalid NIP length: {cleanNip}. NIP must be 10 digits long.");
         }
-        if (!long.TryParse(nip, out _)) {
-            throw new ArgumentException($"Invalid NIP format: {nip}. NIP must be a number.");
+        if (!long.TryParse(cleanNip, out _)) {
+            throw new ArgumentException($"Invalid NIP format: {cleanNip}. NIP must be a number.");
         }
         int[] weights = { 6, 5, 7, 2, 3, 4, 5, 6, 7 };
         int sum = 0;
         for (int i = 0; i < 9; i++) {
-            sum += (nip[i] - '0') * weights[i];
+            sum += (cleanNip[i] - '0') * weights[i];
         }
         int controlSum = sum % 11;
         if (controlSum == 10) {
-            throw new ArgumentException($"Invalid NIP control sum: {nip}.");
+            throw new ArgumentException($"Invalid NIP control sum: {cleanNip}.");
         }
-        if (controlSum != (nip[9] - '0')) {
-            throw new ArgumentException($"Invalid NIP control digit: {nip}.");
+        if (controlSum != (cleanNip[9] - '0')) {
+            throw new ArgumentException($"Invalid NIP control digit: {cleanNip}.");
         }
     }
 }

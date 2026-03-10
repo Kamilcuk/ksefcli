@@ -3,6 +3,8 @@ using System.Xml.Linq;
 
 using CommandLine;
 
+using KCKSeFCli;
+
 namespace KCKSeFCli;
 
 [Verb("WystawKorekte", HelpText = "Issue a correction invoice based on an input XML.")]
@@ -33,7 +35,7 @@ public class WystawKorekteCommand : IGlobalCommand {
             return 1;
         }
 
-        string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xml = File.ReadAllText(InputFile);
         XDocument doc = XDocument.Parse(xml);
         XNamespace ns = MyXml.KsefNamespace;
 
@@ -124,7 +126,7 @@ public class WystawKorekteCommand : IGlobalCommand {
             }
         }
 
-        await File.WriteAllTextAsync(OutputFile, newXml, cancellationToken).ConfigureAwait(false);
+        File.WriteAllText(OutputFile, newXml);
         Log.Information($"Successfully created correction and saved to: {OutputFile}");
 
         return 0;
