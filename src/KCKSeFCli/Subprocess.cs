@@ -38,9 +38,13 @@ internal record Subprocess(
                 processStartInfo.Environment[kvp.Key] = kvp.Value;
             }
         }
+#if NETCOREAPP3_1_OR_GREATER || NET5_0_OR_GREATER
         foreach (string? arg in CommandAndArgs.Skip(1)) {
-            processStartInfo.ArgumentList.Add(arg);
+            processStartInfo.ArgumentList.Add(arg!);
         }
+#else
+        processStartInfo.Arguments = string.Join(" ", CommandAndArgs.Skip(1).Select(a => $"\"{a.Replace("\"", "\\\"")}\""));
+#endif
 
         Process process = Process.Start(processStartInfo)!;
         if (process == null) {
@@ -50,8 +54,8 @@ internal record Subprocess(
         return process;
     }
 
-    private async Task WaitAndCheck(Process process, CancellationToken cancellationToken) {
-        await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+    private void WaitAndCheck(Process process) {
+        process.WaitForExit();
         if (process.ExitCode != 0) {
             throw new InvalidOperationException(
                 $"Command `{string.Join(" ", CommandAndArgs)}` failed with exit code {process.ExitCode}");
@@ -76,7 +80,7 @@ internal record Subprocess(
             CreateNoWindow = true
         };
         using Process process = AddArgsAndEnvironmentToProcessStartInfoAndStart(processStartInfo);
-        await WaitAndCheck(process, cancellationToken).ConfigureAwait(false);
+        WaitAndCheck(process);
     }
 
     public async Task<byte[]> CheckOutputAsync(CancellationToken cancellationToken = default) {
@@ -93,8 +97,8 @@ internal record Subprocess(
         };
         using Process process = AddArgsAndEnvironmentToProcessStartInfoAndStart(processStartInfo);
         using MemoryStream ms = new MemoryStream();
-        await process.StandardOutput.BaseStream.CopyToAsync(ms, cancellationToken).ConfigureAwait(false);
-        await WaitAndCheck(process, cancellationToken).ConfigureAwait(false);
+        process.StandardOutput.BaseStream.CopyTo(ms);
+        WaitAndCheck(process);
         return ms.ToArray();
     }
 }

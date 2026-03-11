@@ -41,7 +41,7 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
 
         string outputPath = OutputFile ?? InputFile;
 
-        string xml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xml = File.ReadAllText(InputFile);
 
         XDocument doc = XDocument.Parse(xml);
         XNamespace ns = MyXml.KsefNamespace;
@@ -98,7 +98,7 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
         doc = MyXml.Normalize(doc);
         string newXml = MyXml.XmlToString(doc);
 
-        await File.WriteAllTextAsync(outputPath, newXml, cancellationToken).ConfigureAwait(false);
+        File.WriteAllText(outputPath, newXml);
         Log.Information($"Successfully added item and saved to: {outputPath}");
 
         if (!BezWalidacji) {
@@ -106,7 +106,7 @@ public class DodajPozycjeNaFakturzeCommand : IGlobalCommand {
                 Log.Information("Post-modification validation successful.");
             } else {
                 Log.Error("Post-modification validation failed:");
-                foreach (string error in errors) {
+                foreach (string error in errors!) {
                     Log.Error(error);
                 }
                 return 1;

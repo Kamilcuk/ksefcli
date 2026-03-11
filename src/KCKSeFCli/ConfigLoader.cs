@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -43,7 +47,7 @@ public static class ConfigLoader {
 
         Dictionary<string, ProfileConfig> resolvedProfiles = new Dictionary<string, ProfileConfig>();
         foreach ((string? profileName, ProfileConfig? profileConfig) in config.Profiles) {
-            if (profileConfig.Certificate is not null && configDir is not null) {
+            if (profileConfig != null && profileConfig.Certificate is not null && configDir is not null) {
                 CertificateConfig cert = profileConfig.Certificate;
 
                 int pkCount = (cert.Private_Key != null ? 1 : 0) + (cert.Private_Key_File != null ? 1 : 0);
@@ -84,17 +88,17 @@ public static class ConfigLoader {
                     Password_Cmd = cert.Password_Cmd,
                 };
 
-                resolvedProfiles[profileName] = new ProfileConfig {
+                resolvedProfiles[profileName!] = new ProfileConfig {
                     Certificate = newCert,
                     Environment = profileConfig.Environment,
                     Nip = profileConfig.Nip,
                     Token = profileConfig.Token,
                 };
-            } else {
-                resolvedProfiles[profileName] = new ProfileConfig {
+            } else if (profileConfig != null) {
+                resolvedProfiles[profileName!] = new ProfileConfig {
                     Certificate = null,
                     Environment = profileConfig.Environment,
-                    Nip = !String.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : !String.IsNullOrEmpty(profileConfig.Token) ? CheckNip.ExtractNipFromToken(profileConfig.Token) : "",
+                    Nip = !String.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : !String.IsNullOrEmpty(profileConfig.Token) ? CheckNip.ExtractNipFromToken(profileConfig.Token!) : "",
                     Token = profileConfig.Token,
                 };
             }
@@ -119,7 +123,7 @@ public static class ConfigLoader {
             return null;
         }
 
-        string path = ExpandTilde(filePath);
+        string path = ExpandTilde(filePath!);
         if (!Path.IsPathRooted(path)) {
             path = Path.GetFullPath(Path.Combine(configDir, path));
         }

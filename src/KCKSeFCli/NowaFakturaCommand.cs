@@ -93,7 +93,7 @@ public class NowaFakturaCommand : IGlobalCommand {
             return 1;
         }
 
-        string yamlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string yamlContent = File.ReadAllText(InputFile);
         IDeserializer deserializer = new DeserializerBuilder()
             .WithNamingConvention(PascalCaseNamingConvention.Instance)
             .Build();
@@ -105,7 +105,7 @@ public class NowaFakturaCommand : IGlobalCommand {
         await spec.Kupujący.FillFromNipInfo(searchDate, cancellationToken).ConfigureAwait(false);
 
         string xml = GenerateXml(spec);
-        await File.WriteAllTextAsync(OutputFile, xml, cancellationToken).ConfigureAwait(false);
+        File.WriteAllText(OutputFile, xml);
         Log.Information($"Successfully created invoice and saved to: {OutputFile}");
 
         if (!BezWalidacji) {

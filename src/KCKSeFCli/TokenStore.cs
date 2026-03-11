@@ -27,15 +27,17 @@ public class TokenStore {
 
     public record Key(string Nazwa, ProfileConfig Profile) {
         public string ToCacheKey() {
-            using (System.Security.Cryptography.SHA256 sha256 = System.Security.Cryptography.SHA256.Create()) {
-                string profileJson = System.Text.Json.JsonSerializer.Serialize(Profile);
-                string nip = Profile.Nip;
-                string environment = Profile.Environment;
-                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(profileJson);
-                byte[] hash = sha256.ComputeHash(bytes);
-                string hashString = Convert.ToHexString(hash).ToLower();
-                return $"{Nazwa}_{environment}_{nip}_{hashString}";
-            }
+            string profileJson = System.Text.Json.JsonSerializer.Serialize(Profile);
+            string nip = Profile.Nip;
+            string environment = Profile.Environment;
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(profileJson);
+#if NET6_0_OR_GREATER
+            byte[] hash = System.Security.Cryptography.SHA256.HashData(bytes);
+#else
+            byte[] hash = Compatibility.SHA256HashData(bytes);
+#endif
+            string hashString = Compatibility.ToHexString(hash).ToLower();
+            return $"{Nazwa}_{environment}_{nip}_{hashString}";
         }
     }
 
@@ -58,7 +60,7 @@ public class TokenStore {
         }
         lockFile.Fs.Seek(0, SeekOrigin.Begin);
         byte[] data = new byte[lockFile.Fs.Length];
-        lockFile.Fs.ReadExactly(data);
+        lockFile.Fs.ReadExactly(data, 0, data.Length);
         try {
             return JsonSerializer.Deserialize<Dictionary<string, Data>>(data, _jsonOptions) ?? new Dictionary<string, Data>();
         } catch (Exception e) when (e is JsonException || e is Exception) {

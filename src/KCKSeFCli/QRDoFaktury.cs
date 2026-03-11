@@ -30,7 +30,7 @@ public class QRDoFakturyCommand : IWithConfigCommand {
 
         byte[] qrCodeBytes = QrCodeService.GenerateQrCode(url, PixelsPerModule);
 
-        await File.WriteAllBytesAsync(OutputPath, qrCodeBytes, cancellationToken).ConfigureAwait(false);
+        File.WriteAllBytes(OutputPath, qrCodeBytes);
 
         Console.WriteLine($"QR code saved to {OutputPath}");
 

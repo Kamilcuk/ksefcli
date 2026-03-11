@@ -32,14 +32,14 @@ public class QRWeryfikacjiFakturyCommand : IWithConfigCommand {
         X509Certificate2 publicCert = certBytes.LoadCertificate();
         X509Certificate2 certificate = publicCert.MergeWithPemKey(config.Certificate.Private_Key!, config.Certificate.Password ?? string.Empty);
 
-        string invoiceXml = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string invoiceXml = File.ReadAllText(InputFile);
 
         string url = LinkWeryfikacjiFaktury.GenerateCertificateVerificationLink(invoiceXml, linkSvc, certificate);
 
         byte[] qrCodeBytes = KSeF.Client.Api.Services.QrCodeService.GenerateQrCode(url, PixelsPerModule);
         // byte[] labeledQrCodeBytes = KSeF.Client.Api.Services.QrCodeService.AddLabelToQrCode(qrCodeBytes, "CERTYFIKAT");
 
-        await File.WriteAllBytesAsync(OutputPath, qrCodeBytes, cancellationToken).ConfigureAwait(false);
+        File.WriteAllBytes(OutputPath, qrCodeBytes);
         Console.WriteLine($"Verification QR code saved to {OutputPath}");
 
         return 0;

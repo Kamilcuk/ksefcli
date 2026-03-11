@@ -3,7 +3,7 @@ public sealed class TemporaryFile : IDisposable {
 
     public TemporaryFile(string? desiredPath = null, string prefix = "", string extension = "") {
         if (!string.IsNullOrEmpty(desiredPath)) {
-            Path = desiredPath;
+            Path = desiredPath!;
             // ensure file exists
             using (File.Create(Path)) { }
         } else {

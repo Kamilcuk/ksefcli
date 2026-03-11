@@ -32,7 +32,7 @@ public class LinkDoFakturyCommand : IWithConfigCommand {
         DateTime issueDate = DateTime.Parse(issueDateValue);
 
         byte[] invoiceBytes = Encoding.UTF8.GetBytes(invoiceXml);
-        byte[] hashBytes = SHA256.HashData(invoiceBytes);
+        byte[] hashBytes = Compatibility.SHA256HashData(invoiceBytes);
         string invoiceHash = Base64UrlEncoder.Encode(hashBytes);
 
         string url = linkSvc.BuildInvoiceVerificationUrl(sellerNip, issueDate, invoiceHash);

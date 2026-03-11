@@ -21,8 +21,8 @@ public static class Downloader {
             }
 
             Log.Information($"Downloading file from {url} to {destinationPath}");
-            byte[] fileBytes = await HttpClient.GetByteArrayAsync(url, cancellationToken).ConfigureAwait(false);
-            await File.WriteAllBytesAsync(destinationPath, fileBytes, cancellationToken).ConfigureAwait(false);
+            byte[] fileBytes = await Compatibility.GetByteArrayAsync(HttpClient, url, cancellationToken).ConfigureAwait(false);
+            File.WriteAllBytes(destinationPath, fileBytes);
             Log.Information($"Downloaded file from {url} to {destinationPath}");
 
             if (remoteLastModified.HasValue) {

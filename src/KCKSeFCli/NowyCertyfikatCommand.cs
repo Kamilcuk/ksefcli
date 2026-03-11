@@ -9,6 +9,8 @@ using KSeF.Client.Core.Models.Certificates;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using KCKSeFCli;
+
 namespace KCKSeFCli;
 
 [Verb("NowyCertyfikat", HelpText = "Generate a new KSeF certificate.")]
@@ -50,11 +52,11 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
         (string? csrBase64, string? privateKeyBase64) = cryptographyService.GenerateCsrWithEcdsa(enrollmentInfo);
 
         if (!string.IsNullOrEmpty(CsrOutputPath)) {
-            await File.WriteAllTextAsync(CsrOutputPath, csrBase64, cancellationToken).ConfigureAwait(false);
+            File.WriteAllText(CsrOutputPath!, csrBase64!);
             Console.WriteLine($"CSR saved to {CsrOutputPath}");
         }
         if (!string.IsNullOrEmpty(PrivateKeyOutputPath)) {
-            await File.WriteAllTextAsync(PrivateKeyOutputPath, privateKeyBase64, cancellationToken).ConfigureAwait(false);
+            File.WriteAllText(PrivateKeyOutputPath!, privateKeyBase64!);
             Console.WriteLine($"Private key saved to {PrivateKeyOutputPath}");
         }
 
@@ -64,7 +66,7 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
             .WithCertificateName(CertificateName)
             .WithCertificateType(type)
             .WithCsr(csrBase64)
-            .WithValidFrom(string.IsNullOrEmpty(ValidFrom) ? DateTimeOffset.UtcNow : await ParseDate.Parse(ValidFrom, cancellationToken).ConfigureAwait(false))
+            .WithValidFrom(string.IsNullOrEmpty(ValidFrom) ? DateTimeOffset.UtcNow : await ParseDate.Parse(ValidFrom!, cancellationToken).ConfigureAwait(false))
             .Build();
 
         CertificateEnrollmentResponse enrollmentResponse = await ksefClient.SendCertificateEnrollmentAsync(sendRequest, accessToken, cancellationToken).ConfigureAwait(false);
@@ -92,11 +94,11 @@ public class NowyCertyfikatCommand : IWithConfigCommand {
 
         Log.Information("6. Pobieranie wystawionego certyfikatu.");
         if (!string.IsNullOrEmpty(statusResponse.CertificateSerialNumber) && !string.IsNullOrEmpty(CertificateOutputPath)) {
-            CertificateListRequest certListRequest = new CertificateListRequest { CertificateSerialNumbers = new[] { statusResponse.CertificateSerialNumber } };
+            CertificateListRequest certListRequest = new CertificateListRequest { CertificateSerialNumbers = new[] { statusResponse.CertificateSerialNumber! } };
             CertificateListResponse certificateListResponse = await ksefClient.GetCertificateListAsync(certListRequest, accessToken, cancellationToken).ConfigureAwait(false);
             CertificateResponse? issuedCert = certificateListResponse.Certificates.FirstOrDefault();
             if (issuedCert != null) {
-                await File.WriteAllTextAsync(CertificateOutputPath, issuedCert.Certificate, cancellationToken).ConfigureAwait(false);
+                File.WriteAllText(CertificateOutputPath!, issuedCert.Certificate);
                 Console.WriteLine($"Issued certificate saved to {CertificateOutputPath}");
             } else {
                 Console.Error.WriteLine($"Error: Issued certificate with serial number {statusResponse.CertificateSerialNumber} not found.");

@@ -8,6 +8,8 @@ using KSeF.Client.Extensions;
 
 using Microsoft.Extensions.DependencyInjection;
 
+using KCKSeFCli;
+
 namespace KCKSeFCli;
 
 [Verb("WystawFaktureOffline", HelpText = "Convert KSeF XML invoice to PDF, adding an offline verification QR code (KOD II).")]
@@ -33,13 +35,13 @@ public class WystawFaktureOfflineCommand : IWithConfigCommand {
                 Console.Error.WriteLine("Error: Input file must have a .xml extension when no output file is specified.");
                 return 1;
             }
-            outputPdfPath = Path.ChangeExtension(InputFile, ".pdf");
+            outputPdfPath = Path.ChangeExtension(InputFile, ".pdf")!;
             if (File.Exists(outputPdfPath)) {
                 Console.Error.WriteLine($"Error: Output file already exists: {outputPdfPath}");
                 return 1;
             }
         } else {
-            outputPdfPath = OutputFile;
+            outputPdfPath = OutputFile!;
         }
 
         ProfileConfigWithName config = Config();
@@ -48,7 +50,7 @@ public class WystawFaktureOfflineCommand : IWithConfigCommand {
         }
 
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
-        string xmlContent = await File.ReadAllTextAsync(InputFile, cancellationToken).ConfigureAwait(false);
+        string xmlContent = File.ReadAllText(InputFile);
 
         Log.Debug("--- Generate KOD I QR Code ---");
         string invoiceUrl = LinkDoFakturyCommand.LinkDoFaktury(xmlContent, linkSvc);
@@ -67,7 +69,7 @@ public class WystawFaktureOfflineCommand : IWithConfigCommand {
         string verificationText = "Link do weryfikacji wystawcy faktury:";
         pdfContent = AddQrToPdf.AddQrCode(pdfContent, verificationUrl, verificationText);
 
-        await File.WriteAllBytesAsync(outputPdfPath, pdfContent, cancellationToken).ConfigureAwait(false);
+        File.WriteAllBytes(outputPdfPath, pdfContent);
 
         Console.WriteLine($"PDF saved to: {outputPdfPath}");
 
