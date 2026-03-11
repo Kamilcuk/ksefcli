@@ -12,7 +12,7 @@ Uwierzytelnia użytkownika na podstawie metody zdefiniowanej w aktywnym profilu 
 
 **Użycie:**
 ```bash
-kcksefcli -a moj_profil TestAuth
+kcksefcli TestAuth -a moj_profil
 ```
 
 ---

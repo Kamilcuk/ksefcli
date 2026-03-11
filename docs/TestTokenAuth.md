@@ -12,7 +12,7 @@ Wymusza uwierzytelnienie za pomocą tokena sesyjnego z aktywnego profilu. Profil
 
 **Użycie:**
 ```bash
-kcksefcli -a profil_z_tokenem TestTokenAuth
+kcksefcli TestTokenAuth -a profil_z_tokenem
 ```
 
 ---

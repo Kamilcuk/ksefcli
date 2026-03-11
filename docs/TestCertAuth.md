@@ -12,7 +12,7 @@ Wymusza uwierzytelnienie za pomocą certyfikatu kwalifikowanego z aktywnego prof
 
 **Użycie:**
 ```bash
-kcksefcli -a profil_z_certyfikatem TestCertAuth
+kcksefcli TestCertAuth -a profil_z_certyfikatem
 ```
 
 ---

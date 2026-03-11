@@ -6,7 +6,7 @@ Odświeża istniejący token sesji.
 
 **Użycie:**
 ```bash
-kcksefcli -a moj_profil TestTokenRefresh
+kcksefcli TestTokenRefresh -a moj_profil
 ```
 
 ---
