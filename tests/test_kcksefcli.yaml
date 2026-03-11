@@ -21,6 +21,13 @@ profiles:
       private_key_file: './my_private_key.pem'
       certificate_file: './my_certificate.pem'
       password_env: 'TEST_PASSWORD_ENV'
+  cert_cmd_password_test:
+    environment: test
+    nip: '5252611332'
+    certificate:
+      private_key_file: './my_private_key.pem'
+      certificate_file: './my_certificate.pem'
+      password_cmd: ['echo', 'cmd_password_output']
   cert_inline_test:
     environment: test
     nip: '5252611332'

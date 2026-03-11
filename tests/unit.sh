@@ -23,11 +23,40 @@ clitest_profile_env_pw() {
 }
 
 clitest_profile_inline() {
-	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
+        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
 }
 
-clitest_help_uniewaznij() {
-	local output
+clitest_profile_cmd_pw() {
+        local output
+        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output cli PrintConfig --active cert_cmd_password_test
+        L_unittest_cmd -I grep -q "cmd_password_output" <<<"$output"
+}
+
+clitest_profile_cmd_pw_conflict() {
+        local output rc=0
+        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pw_conflict.yaml" cli PrintConfig --active cert_cmd_password_conflict_test 2>&1 | tee tmp.log || rc=$?
+        [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting password configurations"
+        L_unittest_cmd -I grep -q "conflicting password configurations" tmp.log
+        rm tmp.log
+}
+
+clitest_profile_pk_conflict() {
+        local output rc=0
+        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pk_conflict.yaml" cli PrintConfig --active cert_pk_conflict_test 2>&1 | tee tmp.log || rc=$?
+        [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting private key configurations"
+        L_unittest_cmd -I grep -q "conflicting private key configurations" tmp.log
+        rm tmp.log
+}
+
+clitest_profile_cert_conflict() {
+        local output rc=0
+        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_cert_conflict.yaml" cli PrintConfig --active cert_cert_conflict_test 2>&1 | tee tmp.log || rc=$?
+        [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting certificate configurations"
+        L_unittest_cmd -I grep -q "conflicting certificate configurations" tmp.log
+        rm tmp.log
+}
+
+clitest_help_uniewaznij() {	local output
 	L_unittest_cmd -v output cli UniewaznijCertyfikat --help
 	L_unittest_cmd -I grep -q "Certificate serial number to revoke" <<<"$output"
 }
@@ -110,14 +139,7 @@ clitest_pobierz_info_o_nip() {
 
 clitest_xml_extract() {
     L_with_cd_tmpdir
-    cat <<EOF > test.xml
-<Root>
-    <Element1>Value1</Element1>
-    <Element2>
-        <NestedElement>NestedValue</NestedElement>
-    </Element2>
-</Root>
-EOF
+    cp "$DIR/test_xml_extract_simple.xml" test.xml
     local output
     L_unittest_cmd -v output cli XMLExtract test.xml "/Root/Element1"
     L_unittest_vareq output "Value1"

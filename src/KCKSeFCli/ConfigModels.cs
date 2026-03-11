@@ -24,6 +24,7 @@ public sealed class CertificateConfig {
     public string? Password { get; init; }
     public string? Password_Env { get; init; }
     public string? Password_File { get; init; }
+    public List<string>? Password_Cmd { get; init; }
 
     public AuthenticationTokenSubjectIdentifierTypeEnum SubjectIdentifierType => AuthenticationTokenSubjectIdentifierTypeEnum.CertificateSubject;
 }

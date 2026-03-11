@@ -1,0 +1,10 @@
+active_profile: cert_cmd_password_conflict_test
+profiles:
+  cert_cmd_password_conflict_test:
+    environment: test
+    nip: '5252611332'
+    certificate:
+      private_key_file: './my_private_key.pem'
+      certificate_file: './my_certificate.pem'
+      password: 'hello'
+      password_cmd: ['echo', 'cmd_password_output']

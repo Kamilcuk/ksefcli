@@ -1,0 +1,6 @@
+<Root>
+    <Element1>Value1</Element1>
+    <Element2>
+        <NestedElement>NestedValue</NestedElement>
+    </Element2>
+</Root>

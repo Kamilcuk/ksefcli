@@ -1,9 +1,12 @@
 # Konfiguracja
 
 
-Przed rozpoczęciem pracy z `kcksefcli`, należy skonfigurować aplikację, tworząc plik `kcksefcli.yaml` w jednym z następujących miejsc:
-- W katalogu bieżącym: `./kcksefcli.yaml`
-- W katalogu konfiguracyjnym użytkownika: `$HOME/.config/kcksefcli/kcksefcli.yaml`
+Przed rozpoczęciem pracy z `kcksefcli`, należy skonfigurować aplikację, tworząc plik `kcksefcli.yaml`. Domyślna lokalizacja tego pliku zależy od systemu operacyjnego:
+- Linux: `$XDG_CONFIG_HOME/kcksefcli/kcksefcli.yaml` lub `~/.config/kcksefcli/kcksefcli.yaml`
+- Windows: `%LOCALAPPDATA%\kcksefcli\kcksefcli.yaml`
+- macOS: `~/Library/Application Support/kcksefcli/kcksefcli.yaml`
+
+Możesz również wskazać inną lokalizację pliku konfiguracyjnego za pomocą globalnej opcji `--config` (lub `-c`) lub ustawiając zmienną środowiskową `KCKSEFCLI_CONFIG`.
 
 Plik ten zawiera profile, które umożliwiają zarządzanie różnymi poświadczeniami i środowiskami KSeF. **Pamiętaj, że wartości konfiguracyjne z pliku mogą być nadpisane przez globalne opcje linii komend lub zmienne środowiskowe, zgodnie z kolejnością priorytetów opisaną w sekcji [Opcje Globalne](#opcje-globalne).**
 
@@ -23,6 +26,8 @@ profiles:
       certificate_file: <sciezka_do_certyfikatu_publicznego>
       password: <haslo_do_klucza_prywatnego>
       password_env: <zmienna_srodowiskowa_z_haslem>
+      password_file: <sciezka_do_pliku_z_haslem>
+      password_cmd: ["<komenda>", "<argument1>", "<argument2>"]
   <nazwa_profilu_2>:
     # ...
 ```
@@ -44,6 +49,7 @@ profiles:
                 *   `password`: Hasło do klucza prywatnego.
                 *   `password_env`: Nazwa zmiennej środowiskowej, która przechowuje hasło do klucza prywatnego.
                 *   `password_file`: Ścieżka do pliku z hasłem do klucza prywatnego.
+                *   `password_cmd`: Tablica ciągów znaków (komenda i argumenty) do wykonania w celu pobrania hasła. Hasło zostanie odczytane ze standardowego wyjścia (stdout) komendy. Opcja ta jest w konflikcie z `password`, `password_env` oraz `password_file`.
 
 ### Przykład Konfiguracji
 
@@ -105,7 +111,7 @@ Możesz sterować konfiguracją używając opcji `--config`/`--active` LUB defin
 
 | Opcja | Zmienna środowiskowa | Opis | Domyślnie | Konfliktuje z |
 | :--- | :--- | :--- | :--- | :--- |
-| `-c`, `--config` | `$KCKSEFCLI_CONFIG` | Wskazuje plik `kcksefcli.yaml` zawierający definicje profili. | `./kcksefcli.yaml` lub `~/.config/kcksefcli/kcksefcli.yaml` | Ad-hoc opcje profilu |
+| `-c`, `--config` | `$KCKSEFCLI_CONFIG` | Wskazuje plik `kcksefcli.yaml` zawierający definicje profili. | `~/.config/kcksefcli/kcksefcli.yaml` (zależnie od systemu) | Ad-hoc opcje profilu |
 | `-a`, `--active` | `$KCKSEFCLI_ACTIVE` | Wybiera z pliku wskazanego w `--config` profil o zadanej nazwie. | `active_profile` z pliku YAML lub pierwszy wylistowany profil | Ad-hoc opcje profilu |
 | `--cache` | | Ścieżka do pliku do zapisu oraz odczytu tokenów sesyjnych (cache). | `~/.cache/kcksefcli/tokenstore.json` (Linux/Mac) | Brak |
 | `--no-tokencache` | | Całkowicie wyłącza odczyt i zapis tokenów z/do pamięci podręcznej na czas trwania bieżącego wywołania komendy. | `false` | Brak |

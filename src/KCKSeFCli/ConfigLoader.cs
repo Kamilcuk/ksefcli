@@ -45,11 +45,33 @@ public static class ConfigLoader {
         foreach ((string? profileName, ProfileConfig? profileConfig) in config.Profiles) {
             if (profileConfig.Certificate is not null && configDir is not null) {
                 CertificateConfig cert = profileConfig.Certificate;
+
+                int pkCount = (cert.Private_Key != null ? 1 : 0) + (cert.Private_Key_File != null ? 1 : 0);
+                if (pkCount > 1) {
+                    throw new InvalidOperationException($"Profile '{profileName}' has conflicting private key configurations. Specify only one of 'private_key' or 'private_key_file'.");
+                }
+
+                int certCount = (cert.Certificate != null ? 1 : 0) + (cert.Certificate_File != null ? 1 : 0);
+                if (certCount > 1) {
+                    throw new InvalidOperationException($"Profile '{profileName}' has conflicting certificate configurations. Specify only one of 'certificate' or 'certificate_file'.");
+                }
+
+                int passCount = (cert.Password != null ? 1 : 0) + (cert.Password_Env != null ? 1 : 0) + (cert.Password_File != null ? 1 : 0) + (cert.Password_Cmd != null ? 1 : 0);
+                if (passCount > 1) {
+                    throw new InvalidOperationException($"Profile '{profileName}' has conflicting password configurations. Specify only one of 'password', 'password_env', 'password_file', or 'password_cmd'.");
+                }
+
                 string? resolvedPrivateKey = ResolveContent(cert.Private_Key, cert.Private_Key_File, configDir);
                 string? resolvedCertificate = ResolveContent(cert.Certificate, cert.Certificate_File, configDir);
+                
                 string? resolvedPassword = cert.Password ??
                                            (cert.Password_Env is not null ? System.Environment.GetEnvironmentVariable(cert.Password_Env) : null) ??
                                            ResolveContent(null, cert.Password_File, configDir);
+                if (resolvedPassword == null && cert.Password_Cmd is not null && cert.Password_Cmd.Count > 0) {
+                    Subprocess subprocess = new Subprocess(cert.Password_Cmd, configDir);
+                    byte[] output = subprocess.CheckOutputAsync().GetAwaiter().GetResult();
+                    resolvedPassword = System.Text.Encoding.UTF8.GetString(output).TrimEnd('\r', '\n');
+                }
 
                 CertificateConfig newCert = new CertificateConfig {
                     Private_Key = resolvedPrivateKey,
@@ -59,6 +81,7 @@ public static class ConfigLoader {
                     Certificate_File = cert.Certificate_File,
                     Password_Env = cert.Password_Env,
                     Password_File = cert.Password_File,
+                    Password_Cmd = cert.Password_Cmd,
                 };
 
                 resolvedProfiles[profileName] = new ProfileConfig {

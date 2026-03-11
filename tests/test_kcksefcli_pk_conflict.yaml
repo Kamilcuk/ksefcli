@@ -1,0 +1,10 @@
+active_profile: cert_pk_conflict_test
+profiles:
+  cert_pk_conflict_test:
+    environment: test
+    nip: '5252611332'
+    certificate:
+      private_key: 'test_key'
+      private_key_file: './my_private_key.pem'
+      certificate_file: './my_certificate.pem'
+      password: 'hello'
