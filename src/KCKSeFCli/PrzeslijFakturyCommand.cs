@@ -9,7 +9,7 @@ using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Invoices;
 using KSeF.Client.Core.Models.Sessions;
 using KSeF.Client.Core.Models.Sessions.BatchSession;
-using KSeF.Client.Tests.Utils;
+using KCKSeFCli.Utils;
 
 using Microsoft.Extensions.DependencyInjection;
 

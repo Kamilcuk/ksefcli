@@ -66,6 +66,7 @@ export PATH="$HOME/.local/bin:$PATH"
 
 - [Linux x64](https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli?job=linux_build_main)
 - [Windows x64](https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli.exe?job=windows_build_main)
+- [Windows x86 (.NET 6.0)](https://gitlab.com/kamcuk/kcksefcli/-/jobs/artifacts/main/raw/kcksefcli.exe?job=win-x86-net6.0_build_main)
 
 
 ## Przykłady użycia

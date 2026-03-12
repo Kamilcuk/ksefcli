@@ -32,6 +32,7 @@ test: format build
 	dotnet test tests/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj
 clean:
 	dotnet clean $(S)
+	rm $(B)/build $(B)/format $(B)/init
 test-format:
 	dotnet format $(S) -v d --verify-no-changes
 

@@ -6,7 +6,7 @@ using CommandLine;
 using KSeF.Client.Core.Interfaces.Clients;
 using KSeF.Client.Core.Interfaces.Services;
 using KSeF.Client.Core.Models.Invoices;
-using KSeF.Client.Tests.Core.Utils.RateLimit;
+using KCKSeFCli.Utils;
 
 using Microsoft.Extensions.DependencyInjection;
 

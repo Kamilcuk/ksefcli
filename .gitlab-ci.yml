@@ -96,7 +96,7 @@ win-x86-net6.0_build_main:
   extends: [.release_main_expire_never, .build]
   dependencies: []
   script:
-    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win7-x86 -f net6.0 -o dist
+    - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r win-x86 -f net6.0 -o dist
     - mv -v dist/kcksefcli.exe .
     - stat ./kcksefcli.exe
   artifacts:
