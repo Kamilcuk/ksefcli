@@ -47,7 +47,7 @@ secret_detection:
   artifacts:
     expire_in: never
 
-linux_build:
+linux_build_and_unit_test:
   extends: .build
   script:
     - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 -f net10.0 -o dist
@@ -64,7 +64,7 @@ linux_build:
 integration_tests:
   stage: test
   image: cgr.dev/chainguard/wolfi-base
-  needs: [linux_build]
+  needs: [linux_build_and_unit_test]
   script:
     - ./tests/setup-wolfie.sh
     - ./kcksefcli --help

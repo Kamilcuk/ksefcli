@@ -68,7 +68,7 @@ extract_value() {
 case "$subcommand" in
     check)
         # Very basic JSON structure check
-        if ! grep -zEq '^\s*\{.*\}\s*' <<<"$json_string"; then
+        if ! grep -q '[{].*[}]' <<<"${json_string//$'\n'}"; then
             echo "Error: Invalid JSON structure: $json_string" >&2
             exit 1
         fi
