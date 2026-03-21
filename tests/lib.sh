@@ -19,21 +19,23 @@ fatal() {
 }
 
 pull_L_lib() {
+	local url=https://github.com/Kamilcuk/L_lib/releases/download/v1.1.0/L_lib.sh
+	local cachef="$DIR"/L_lib.sh
 	if [[ ! -v L_LIB_VERSION ]]; then
 		# Download L_lib.sh library
-		if [[ -r "$DIR"/L_lib.sh ]]; then
+		if [[ -r "$cachef" ]]; then
 			echo "Using preexisting $DIR/L_lib.sh"
-			. "$DIR"/L_lib.sh -s
+			. "$cachef" -s
 		elif hash L_lib.sh 2>/dev/null; then
 			echo "Using L_lib.sh from PATH"
 			. L_lib.sh -s
 		elif hash curl 2>/dev/null; then
 			echo "Downloading L_lib.sh"
-			curl -sS -o "$DIR"/L_lib.sh -z "$DIR"/L_lib.sh https://github.com/Kamilcuk/L_lib/releases/download/v1.0.5/L_lib.sh
-			. "$DIR"/L_lib.sh -s
+			curl -sS -o "$cachef" -z "$cachef" "$url"
+			. "$cachef" -s
 		elif hash wget 2>/dev/null; then
-			wget -O "$DIR"/L_lib.sh https://github.com/Kamilcuk/L_lib/releases/download/v1.0.5/L_lib.sh
-			. "$DIR"/L_lib.sh -s
+			wget -O "$cachef" "$url"
+			. "$cachef" -s
 		else
 			fatal "Could not download or find L_lib.sh"
 		fi
@@ -43,9 +45,13 @@ pull_L_lib() {
 testlib_main() {
 	pull_L_lib
 
+	# Disable core dumps
+	ulimit -c 0
+
 	# Parse command line arguments
 	L_argparse dest_prefix=opt_ \
 		-- -r help="Filter tests with this regex" \
+		-- -k help="Filter tests with this regex" \
 		-- exe nargs=remainder help="Path to the command to test" \
 		---- "$@"
 
@@ -63,7 +69,7 @@ testlib_main() {
 	fi
 	opt_exe=$(readlink -f "${opt_exe[0]}") || exit 234
 
-	local cmd=(L_unittest_main -P clitest_ ${opt_r:+-r"$opt_r"})
+	local cmd=( L_unittest_main -p clitest_ ${opt_r:+-k"$opt_r"} ${opt_k:+-k"$opt_k"} )
 
 	# Create a global temporary directory.
 	L_with_tmpdir_to TMPD
@@ -89,8 +95,11 @@ testlib_setup_integration_config() {
 		for i in \
 			"$GITDIR/.git/KSEF/kcksefcli.yaml" \
 			"$GITDIR/.git/kcksefcli.yaml" \
+			"$GITDIR/.git/secrets/kcksefcli.yaml" \
+			"$GITDIR/.git/secret/kcksefcli.yaml" \
 			"$GITDIR/secrets/kcksefcli.yaml" \
 		; do
+		echo "$i"
 			if [[ -r "$i" ]]; then
 				export KCKSEFCLI_CONFIG="$(readlink -f "$i")"
 				break
