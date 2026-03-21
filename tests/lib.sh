@@ -27,7 +27,8 @@ pull_L_lib() {
 			echo "Using preexisting $DIR/L_lib.sh"
 		elif hash L_lib.sh 2>/dev/null; then
 			echo "Using L_lib.sh from PATH"
-			cachef=L_lib.sh
+			. L_lib.sh -s
+			return
 		elif hash curl 2>/dev/null; then
 			echo "Downloading L_lib.sh from $url with curl"
 			local args=()
