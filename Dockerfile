@@ -10,13 +10,13 @@ COPY ./thirdparty/ksef-client-csharp/Directory.Build.props ./thirdparty/ksef-cli
 ARG RUNTIME=linux-x64
 RUN dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r $RUNTIME -o dist
 
-FROM cgr.dev/chainguard/wolfi-base AS test
+# Smallest docker image with glibc
+FROM cgr.dev/chainguard/wolfi-base@sha256:73de6aadd7e28fb516fa1270fcb411b94ee79949635e7de2a4bdb8705f6c120c AS test
 COPY tests/setup-wolfie.sh tests/setup-wolfie.sh
 RUN ./tests/setup-wolfie.sh
 ARG EXE ./kcksefcli
 COPY ${EXE} ${EXE}
-ENV EXE=${EXE}
-RUN ${EXE} --help
+RUN ./kcksefcli --help
 COPY tests tests
 RUN time ./tests/unit.sh ${EXE}
 
