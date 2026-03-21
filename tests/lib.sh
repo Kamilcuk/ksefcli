@@ -23,7 +23,7 @@ pull_L_lib() {
 	local cachef="$DIR"/L_lib.sh
 	if [[ ! -v L_LIB_VERSION ]]; then
 		# Download L_lib.sh library
-		if [[ -r "$cachef" ]]; then
+		if [[ -s "$cachef" ]]; then
 			echo "Using preexisting $DIR/L_lib.sh"
 		elif hash L_lib.sh 2>/dev/null; then
 			echo "Using L_lib.sh from PATH"
@@ -34,14 +34,18 @@ pull_L_lib() {
 			if [[ -z "$cachef" ]]; then
 				args+=(-z "$cachef")
 			fi
-			curl -sS -o "$cachef" "${args[@]}" "$url"
+			curl -sSL -o "$cachef" "${args[@]}" "$url"
 		elif hash wget 2>/dev/null; then
 			echo "Downloading L_lib.sh from $url with wget"
 			wget -O "$cachef" "$url"
 		else
 			fatal "Could not download or find L_lib.sh"
 		fi
-		. "$cachef" -s
+		if [[ -s "$cachef" ]]; then
+			. "$cachef" -s
+		else
+			fatal "Downloading L_lib.sh has failed"
+		fi
 	fi
 }
 
