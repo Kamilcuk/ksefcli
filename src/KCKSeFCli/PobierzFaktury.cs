@@ -74,7 +74,7 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
 
             if (Pdf) {
                 string qrCodeUrl = LinkDoFakturyCommand.LinkDoFaktury(invoiceXml, linkSvc);
-                byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, cancellationToken).ConfigureAwait(false);
+                byte[] pdfContent = await pdfRunner!.XML2PDF(invoiceXml, Quiet, false, invoiceSummary.KsefNumber, qrCodeUrl, null, cancellationToken).ConfigureAwait(false);
                 string outputPdfPath = Path.ChangeExtension(xmlFilePath, ".pdf");
                 File.WriteAllBytes(outputPdfPath, pdfContent);
                 Log.Information($"Saved PDF for {xmlFilePath} to {outputPdfPath}");

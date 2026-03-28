@@ -63,11 +63,7 @@ public class WystawFaktureOfflineCommand : IWithConfigCommand {
 
         Log.Debug("Converting to PDF");
         XML2PDFCommand.Runner runner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, false, NrKSeF ?? " ", invoiceUrl, cancellationToken).ConfigureAwait(false);
-
-        Log.Debug("--- Add label to KOD II QR Code ---");
-        string verificationText = "Link do weryfikacji wystawcy faktury:";
-        pdfContent = AddQrToPdf.AddQrCode(pdfContent, verificationUrl, verificationText);
+        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, false, NrKSeF ?? " ", invoiceUrl, verificationUrl, cancellationToken).ConfigureAwait(false);
 
         File.WriteAllBytes(outputPdfPath, pdfContent);
 
