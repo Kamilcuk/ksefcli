@@ -3,6 +3,8 @@
 # USE ./run.sh GetFaktura --options...
 set -euo pipefail
 
+. L_lib.sh -s
+
 fatal() { L_fatal "$@"; }
 
 quote_to() {
@@ -34,7 +36,7 @@ resolve_fast() {
 
 build_project() {
   echo "+ dotnet build src/KCKSeFCli" >&2
-  dotnet build src/KCKSeFCli
+  dotnet build src/KCKSeFCli --framework net10.0
 }
 
 if [[ "${1:-}" == "build" ]]; then
@@ -60,7 +62,7 @@ if (( opt_fast )); then
   fi
   resolve_fast
 elif (( ${#opt_cmd[@]} == 0 )); then
-  opt_cmd=(dotnet run --project src/KCKSeFCli --)
+  opt_cmd=(dotnet run --project src/KCKSeFCli --framework net10.0 --)
 fi
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"

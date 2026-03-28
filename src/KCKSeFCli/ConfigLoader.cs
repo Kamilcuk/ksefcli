@@ -91,14 +91,14 @@ public static class ConfigLoader {
                 resolvedProfiles[profileName!] = new ProfileConfig {
                     Certificate = newCert,
                     Environment = profileConfig.Environment,
-                    Nip = profileConfig.Nip,
+                    Nip = !string.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : NipUtils.GetNipFromCertificate(newCert.Certificate) ?? "",
                     Token = profileConfig.Token,
                 };
             } else if (profileConfig != null) {
                 resolvedProfiles[profileName!] = new ProfileConfig {
                     Certificate = null,
                     Environment = profileConfig.Environment,
-                    Nip = !String.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : !String.IsNullOrEmpty(profileConfig.Token) ? CheckNip.ExtractNipFromToken(profileConfig.Token!) : "",
+                    Nip = !string.IsNullOrEmpty(profileConfig.Nip) ? profileConfig.Nip : !string.IsNullOrEmpty(profileConfig.Token) ? NipUtils.ExtractNipFromToken(profileConfig.Token!) : "",
                     Token = profileConfig.Token,
                 };
             }
@@ -136,7 +136,7 @@ public static class ConfigLoader {
         bool hasToken = !string.IsNullOrWhiteSpace(profile.Token);
 
         if (!string.IsNullOrEmpty(profile.Nip)) {
-            CheckNip.AssertNipIsValid(profile.Nip);
+            NipUtils.AssertNipIsValid(profile.Nip);
         }
 
         if (hasCert == hasToken) {

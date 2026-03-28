@@ -107,9 +107,9 @@ testlib_setup_integration_config() {
 			"$GITDIR/.git/secret/kcksefcli.yaml" \
 			"$GITDIR/secrets/kcksefcli.yaml" \
 		; do
-		echo "$i"
 			if [[ -r "$i" ]]; then
 				export KCKSEFCLI_CONFIG="$(readlink -f "$i")"
+				# echo "export KCKSEFCLI_CONFIG=$KCKSEFCLI_CONFIG" >&2
 				break
 			fi
 		done

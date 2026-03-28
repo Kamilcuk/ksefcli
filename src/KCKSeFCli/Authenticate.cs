@@ -87,7 +87,7 @@ public static class Authenticate {
         Log.Information("[2] Pobieranie wyzwania (challenge) z KSeF...");
         AuthenticationChallengeResponse challengeResponse = await ksefClient.GetAuthChallengeAsync().ConfigureAwait(false);
         Log.Information($"    Challenge: {challengeResponse.Challenge}");
-        Log.Information("[3] Budowanie AuthTokenRequest (builder)...");
+        Log.Information($"[3] Budowanie AuthTokenRequest (builder)... nip={config.Nip}");
         AuthenticationTokenRequest authTokenRequest = AuthTokenRequestBuilder
             .Create()
             .WithChallenge(challengeResponse.Challenge)
