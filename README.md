@@ -16,6 +16,7 @@
 - [Polecenia](#polecenia)
   - [`TestAuth`](docs/TestAuth.md)
   - [`TestCertAuth`](docs/TestCertAuth.md)
+  - [`CheckAuthNip`](docs/CheckAuthNip.md)
   - [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md)
   - [`GetFaktura`](docs/GetFaktura.md)
   - [`LinkDoFaktury`](docs/LinkDoFaktury.md)
@@ -110,6 +111,7 @@ Szczegółowy opis konfiguracji profili, globalnych opcji i pamięci podręcznej
 
 ## Polecenia
 
+  - [`CheckAuthNip`](docs/CheckAuthNip.md) - Check if NIP from authentication (token or certificate) matches NIP in configuration.
   - [`DodajPozycjeNaFakturze`](docs/DodajPozycjeNaFakturze.md) - Add a new item to an existing KSeF XML invoice.
   - [`GetFaktura`](docs/GetFaktura.md) - Get a single invoice by KSeF number
   - [`LinkDoFaktury`](docs/LinkDoFaktury.md) - Generate a link to an invoice

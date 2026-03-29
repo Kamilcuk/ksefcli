@@ -38,7 +38,7 @@ profiles:
 *   `profiles`: Mapa profili konfiguracyjnych.
     *   `<nazwa_profilu>`: Dowolna nazwa identyfikująca profil (np. `dyzio`, `firma_xyz_test`).
         *   `environment`: Środowisko KSeF (`test`, `demo`, `prod`).
-        *   `nip`: Numer Identyfikacji Podatkowej (NIP) podmiotu, którego dotyczy profil.
+        *   `nip`: (Opcjonalnie) Numer Identyfikacji Podatkowej (NIP) podmiotu, którego dotyczy profil. Jeśli nie zostanie podany, zostanie automatycznie wyciągnięty z tokenu autoryzacyjnego lub certyfikatu.
         *   Należy zdefiniować **jedną** z poniższych metod uwierzytelniania:
             *   `token`: Token autoryzacyjny sesji.
             *   `certificate`: Dane certyfikatu kwalifikowanego.

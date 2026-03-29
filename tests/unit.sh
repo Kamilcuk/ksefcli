@@ -87,8 +87,34 @@ clitest_cmd_token_test() {
 		cli PrintConfig -a token_no_nip_test
 }
 
+clitest_help_qr_faktura() {
+	local output
+	L_unittest_cmd -v output cli --help
+	L_unittest_cmd -I grep -q "QRDoFaktury                 Generate a QR code for an invoice" <<<"$output"
+}
+
+clitest_help_qr_weryfikacja() {
+	local output
+	L_unittest_cmd -v output cli --help
+	L_unittest_cmd -I grep -q "QRWeryfikacjiFaktury        Generate a verification QR code" <<<"$output"
+}
+
+clitest_qr_weryfikacja_no_auth() {
+	L_with_cd_tmpdir
+	# Should fail because it needs a profile/NIP to generate the link, but we only check if the command exists and basic arg parsing
+	local rc=0
+	cli QRWeryfikacjiFaktury "$DIR/FA_3_Przykład_1.xml" out.png --quiet 2>/dev/null || rc=$?
+	[[ "$rc" -ne 0 ]] || fatal "Expected failure due to missing authentication/profile"
+}
+
 clitest_weryfikuj_xml() {
 	L_unittest_cmd cli WeryfikujXML "$DIR"/FA_3_Przykład_1.xml
+}
+
+clitest_skiasharp() {
+	L_with_cd_tmpdir
+	L_unittest_cmd cli TestSkiaSharp out.png
+	L_unittest_cmd ls -la out.png
 }
 
 clitest_dodaj_pozycje() {

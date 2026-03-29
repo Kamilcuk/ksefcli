@@ -198,7 +198,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand {
                     File.WriteAllText(upoPath, XDocument.Parse(upoContent).ToString() + "\n");
                     if (UpoPdf) {
                         Log.Information($"Generowanie PDF dla zbiorczego UPO: {upo.ReferenceNumber}");
-                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, null, cancellationToken).ConfigureAwait(false);
                         File.WriteAllBytes(Path.ChangeExtension(upoPath, ".pdf"), pdfContent);
                     }
                 }
@@ -223,7 +223,7 @@ public class PrzeslijFakturyCommand : IWithConfigCommand {
                     File.WriteAllText(upoPath, XDocument.Parse(upoContent).ToString() + "\n");
                     if (UpoPdf) {
                         Log.Information($"Generowanie PDF dla indywidualnego UPO: {invoice.KsefNumber}");
-                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, cancellationToken).ConfigureAwait(false);
+                        byte[] pdfContent = await pdfRunner!.XML2PDF(upoContent, Quiet, true, null, null, null, cancellationToken).ConfigureAwait(false);
                         File.WriteAllBytes(Path.ChangeExtension(upoPath, ".pdf"), pdfContent);
                     }
                 }
