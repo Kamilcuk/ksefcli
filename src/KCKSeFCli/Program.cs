@@ -16,6 +16,8 @@ public class Program {
         {
             typeof(TestAuthCommand),
             typeof(TestCertAuthCommand),
+            typeof(TestSkiaSharpCommand),
+            typeof(TestTokenAuthCommand),
             typeof(DodajPozycjeNaFakturzeCommand),
             typeof(GetFakturaCommand),
             typeof(LinkDoFakturyCommand),

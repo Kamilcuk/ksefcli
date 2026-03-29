@@ -28,6 +28,33 @@ profiles:
       private_key_file: './my_private_key.pem'
       certificate_file: './my_certificate.pem'
       password_cmd: ['echo', 'cmd_password_output']
+  cert_valid_test:
+    environment: test
+    nip: '5252611332'
+    certificate:
+      private_key: |-
+        -----BEGIN PRIVATE KEY-----
+        MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEAumYhD7OEov0xNqEM
+        BMUkLcRSFUi2g8JRDE3v3F8n+qKniqNkomB74CJTF0DZdUHvSTPK5FKvEnsQ4r+8
+        cEYzEwIDAQABAkAd6kIoGPGSjvwU/mfFZDZYOgfKbq8MGmWTifaS8Zqi+K238kXL
+        mk+2PUU5q5hVs7GFi+AZUZ3f40E6Lm0GZ4ORAiEA3La9907aV3Uv9Ku/CnuA0iqd
+        UBsMD0tTCtC3NYitT8UCIQDYMvcm/Spy38BKrqnScuoSO+grtA8aBYjd4DHsSB0M
+        9wIgRJ8sgO+rQvXUayXax8+ORcmqD3XZUggBUaOC0soj2GECIQCyUWb0a38lfFM3
+        xdQf1dQl8e9OjJagGcyHZDEI93muhQIhAJmCYgJagDWrZV1na2XNUgt57KUgO/g4
+        2JX9a4ws9CUK
+        -----END PRIVATE KEY-----
+      certificate: |-
+        -----BEGIN CERTIFICATE-----
+        MIIBdTCCAR+gAwIBAgIUGtzZ30aqOTpU11nPK6PV4iqO3uQwDQYJKoZIhvcNAQEL
+        BQAwDzENMAsGA1UEAwwEdGVzdDAeFw0yNjAzMjgyMjI0MTNaFw0yNzAzMjgyMjI0
+        MTNaMA8xDTALBgNVBAMMBHRlc3QwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAumYh
+        D7OEov0xNqEMBMUkLcRSFUi2g8JRDE3v3F8n+qKniqNkomB74CJTF0DZdUHvSTPK
+        5FKvEnsQ4r+8cEYzEwIDAQABo1MwUTAdBgNVHQ4EFgQUyW/TD47WL02/uPGPIvss
+        xKo/nD8wHwYDVR0jBBgwFoAUyW/TD47WL02/uPGPIvssxKo/nD8wDwYDVR0TAQH/
+        BAUwAwEB/zANBgkqhkiG9w0BAQsFAANBABne7pv0wEyYFRgPvOUzMVYRpnKpLiFN
+        Z4qYZwTJXxVvR46E+mVdu22d20wO3FxkdNhrkRohZ9mLbDA3QIfQTi0=
+        -----END CERTIFICATE-----
+      password: 'test'
   cert_inline_test:
     environment: test
     nip: '5252611332'

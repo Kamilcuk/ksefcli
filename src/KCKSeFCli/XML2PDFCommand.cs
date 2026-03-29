@@ -50,11 +50,7 @@ public class XML2PDFCommand : IGlobalCommand {
         string xmlContent = File.ReadAllText(InputFile);
 
         Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, cancellationToken).ConfigureAwait(false);
-
-        if (QrCode2Url is not null) {
-            pdfContent = AddQrToPdf.AddQrCode(pdfContent, QrCode2Url);
-        }
+        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, QrCode2Url, cancellationToken).ConfigureAwait(false);
 
         File.WriteAllBytes(outputPdfPath, pdfContent);
 
@@ -70,7 +66,7 @@ public class XML2PDFCommand : IGlobalCommand {
             _command = command;
         }
 
-        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCodeUrl, CancellationToken cancellationToken) {
+        public async Task<byte[]> XML2PDF(string xmlContent, bool quiet, bool upo, string? nrKSeF, string? qrCodeUrl, string? qr2CodeUrl, CancellationToken cancellationToken) {
             using TemporaryFile tempXml = new TemporaryFile(extension: ".xml");
             File.WriteAllText(tempXml.Path, xmlContent);
             using TemporaryFile tempPdf = new TemporaryFile(extension: ".pdf");
@@ -84,6 +80,9 @@ public class XML2PDFCommand : IGlobalCommand {
             }
             if (!string.IsNullOrEmpty(qrCodeUrl)) {
                 options.Add("qrCode", qrCodeUrl!);
+            }
+            if (!string.IsNullOrEmpty(qr2CodeUrl)) {
+                options.Add("qr2Code", qr2CodeUrl!);
             }
 
             if (options.Count > 0) {
@@ -111,20 +110,34 @@ public class XML2PDFCommand : IGlobalCommand {
         string? fileName = null;
 
         if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)) {
-            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.0.0/ksef-pdf-generator-linux";
-            fileName = "ksef-pdf-generator-linux";
+            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.1.0/ksef-pdf-generator";
+            fileName = "ksef-pdf-generator-linux-1.1.0";
         } else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) {
-            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.0.0/ksef-pdf-generator-win.exe";
-            fileName = "ksef-pdf-generator-win.exe";
+            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.1.0/ksef-pdf-generator.exe";
+            fileName = "ksef-pdf-generator-win-1.1.0.exe";
         }
 
         string[] runnerCommand;
 
         if (url is null || fileName is null) {
             AssertNpxExists();
-            runnerCommand = new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator" };
+            runnerCommand = new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator#v1.1.0" };
         } else {
             Directory.CreateDirectory(IGlobalCommand.CacheDir);
+
+            // Cleanup old versions (1.0.0) from cache
+            string[] oldFiles = { "ksef-pdf-generator-linux", "ksef-pdf-generator-win.exe" };
+            foreach (string oldFile in oldFiles) {
+                string oldPath = Path.Combine(IGlobalCommand.CacheDir, oldFile);
+                if (File.Exists(oldPath)) {
+                    try {
+                        File.Delete(oldPath);
+                    } catch (Exception ex) {
+                        Log.Warning($"Could not delete old cached file {oldPath}: {ex.Message}");
+                    }
+                }
+            }
+
             string destinationPath = Path.Combine(IGlobalCommand.CacheDir, fileName);
 
             await Downloader.DownloadFileWithTimestampCheckAsync(url, destinationPath, cancellationToken).ConfigureAwait(false);

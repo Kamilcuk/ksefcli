@@ -56,10 +56,13 @@ testlib_main() {
 	# Disable core dumps
 	ulimit -c 0
 
+	local args=()
 	# Parse command line arguments
 	L_argparse dest_prefix=opt_ \
-		-- -r help="Filter tests with this regex" \
-		-- -k help="Filter tests with this regex" \
+		-- -r help="Filter tests with this regex" nargs=1 eval='args+=(-k "$1")' \
+		-- -k help="Filter tests with this regex" nargs=1 eval='args+=(-k "$1")' \
+		-- -l nargs=0 eval='args+=(-l)' \
+		-- -s nargs=0 eval='args+=(-s)' \
 		-- exe nargs=remainder help="Path to the command to test" \
 		---- "$@"
 
@@ -77,7 +80,7 @@ testlib_main() {
 	fi
 	opt_exe=$(readlink -f "${opt_exe[0]}") || exit 234
 
-	local cmd=( L_unittest_main -p clitest_ ${opt_r:+-k"$opt_r"} ${opt_k:+-k"$opt_k"} )
+	local cmd=( L_unittest_main -p clitest_ "${args[@]}" )
 
 	# Create a global temporary directory.
 	L_with_tmpdir_to TMPD
@@ -107,9 +110,9 @@ testlib_setup_integration_config() {
 			"$GITDIR/.git/secret/kcksefcli.yaml" \
 			"$GITDIR/secrets/kcksefcli.yaml" \
 		; do
-		echo "$i"
 			if [[ -r "$i" ]]; then
 				export KCKSEFCLI_CONFIG="$(readlink -f "$i")"
+				# echo "export KCKSEFCLI_CONFIG=$KCKSEFCLI_CONFIG" >&2
 				break
 			fi
 		done
