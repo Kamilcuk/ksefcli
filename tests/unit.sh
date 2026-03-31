@@ -1,59 +1,67 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+clitest_check_auth_nip_valid() {
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd cli CheckAuthNip -a cert_valid_nip_test
+}
+
+clitest_check_auth_nip_invalid() {
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd ! cli CheckAuthNip -a cert_invalid_nip_test
+}
+
 clitest_version() {
-	cli --version
+	L_unittest_cmd cli --version
 }
 
 clitest_help() {
-	cli --help
+	L_unittest_cmd cli --help
 }
 
 clitest_profile_cert() {
-	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_test >/dev/null
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd cli PrintConfig --active cert_test
 }
 
 clitest_profile_token() {
-	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active token_test >/dev/null
+	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd cli PrintConfig --active token_test
 }
 
 clitest_profile_env_pw() {
 	TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" \
-		cli PrintConfig --active cert_env_password_test >/dev/null
-}
+	    L_unittest_cmd cli PrintConfig --active cert_env_password_test >/dev/null
+    }
 
 clitest_profile_inline() {
-        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" cli PrintConfig --active cert_inline_test >/dev/null
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd cli PrintConfig --active cert_inline_test >/dev/null
 }
 
 clitest_profile_cmd_pw() {
-        local output
-        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output cli PrintConfig --active cert_cmd_password_test
-        L_unittest_cmd -I grep -q "cmd_password_output" <<<"$output"
+    local output
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output cli PrintConfig --active cert_cmd_password_test
+    L_unittest_cmd -I grep -q "cmd_password_output" <<<"$output"
 }
 
 clitest_profile_cmd_pw_conflict() {
-        local output rc=0
-        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pw_conflict.yaml" cli PrintConfig --active cert_cmd_password_conflict_test 2>&1 | tee tmp.log || rc=$?
-        [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting password configurations"
-        L_unittest_cmd -I grep -q "conflicting password configurations" tmp.log
-        rm tmp.log
+    local output rc=0
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pw_conflict.yaml" cli PrintConfig --active cert_cmd_password_conflict_test 2>&1 | tee tmp.log || rc=$?
+    [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting password configurations"
+    L_unittest_cmd -I grep -q "conflicting password configurations" tmp.log
+    rm tmp.log
 }
 
 clitest_profile_pk_conflict() {
-        local output rc=0
-        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pk_conflict.yaml" cli PrintConfig --active cert_pk_conflict_test 2>&1 | tee tmp.log || rc=$?
-        [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting private key configurations"
-        L_unittest_cmd -I grep -q "conflicting private key configurations" tmp.log
-        rm tmp.log
+    local output rc=0
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pk_conflict.yaml" cli PrintConfig --active cert_pk_conflict_test 2>&1 | tee tmp.log || rc=$?
+    [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting private key configurations"
+    L_unittest_cmd -I grep -q "conflicting private key configurations" tmp.log
+    rm tmp.log
 }
 
 clitest_profile_cert_conflict() {
-        local output rc=0
-        KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_cert_conflict.yaml" cli PrintConfig --active cert_cert_conflict_test 2>&1 | tee tmp.log || rc=$?
-        [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting certificate configurations"
-        L_unittest_cmd -I grep -q "conflicting certificate configurations" tmp.log
-        rm tmp.log
+    local output rc=0
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_cert_conflict.yaml" cli PrintConfig --active cert_cert_conflict_test 2>&1 | tee tmp.log || rc=$?
+    [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting certificate configurations"
+    L_unittest_cmd -I grep -q "conflicting certificate configurations" tmp.log
+    rm tmp.log
 }
 
 clitest_help_uniewaznij() {	local output
@@ -85,7 +93,7 @@ clitest_cmd_token_test() {
 		cli PrintConfig -a token_test
 	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output \
 		cli PrintConfig -a token_no_nip_test
-}
+    }
 
 clitest_help_qr_faktura() {
 	local output
@@ -146,11 +154,11 @@ clitest_nowa_faktura() {
 clitest_nowa_faktura_nip_lookup() {
     L_with_cd_tmpdir
     L_unittest_cmd cli NowaFaktura "$DIR"/test_invoice_nip_only.yaml invoice_nip_lookup.xml
-    
+
     local seller_name
     L_unittest_cmd -v seller_name cli XMLExtract invoice_nip_lookup.xml "/Faktura/Podmiot1/DaneIdentyfikacyjne/Nazwa"
     L_unittest_vareq seller_name "'KAMYK' SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
-    
+
     local seller_address
     L_unittest_cmd -v seller_address cli XMLExtract invoice_nip_lookup.xml "/Faktura/Podmiot1/Adres/AdresL1"
     L_unittest_vareq seller_address "LITERACKA 21/24, 01-864 WARSZAWA"
