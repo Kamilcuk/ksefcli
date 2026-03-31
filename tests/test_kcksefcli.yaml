@@ -55,6 +55,116 @@ profiles:
         Z4qYZwTJXxVvR46E+mVdu22d20wO3FxkdNhrkRohZ9mLbDA3QIfQTi0=
         -----END CERTIFICATE-----
       password: 'test'
+  cert_valid_nip_test:
+    environment: test
+    nip: '5252611332'
+    certificate:
+      private_key: |-
+        -----BEGIN PRIVATE KEY-----
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC3ndLxVHtE/YmD
+        568Ay7qkzgCmWW87+ZN7XjnIy0ShH3U4P+u7cWUMURZFXLmq2fEBgfg/YNIt6BE5
+        cnoz0pcLEdrYl7kBAy/QvY9qRU/dl0kydjzH12BGJN4mTnr91iPggX6qOF6T2WOA
+        0AXALR5uzJrkk0Wb8fQOnM9xMKJcWbqc3Kpla7927B7VRQlaQACs3IqVIErdbU99
+        JlT1S1/CsjntcW8iMssJbSUpM4IDUcfWSNAQYZ3Cg1I5LBqLE1Z1cBV4fvfBYYbK
+        oM4723E03MMm3mw3hRuKKS+epBUfqYVHKNTg0YRC9BVZ8Gl1LogHHbRnE2UyTdeJ
+        pWBpEtn9AgMBAAECggEABI8wsQ64o4qVeDxahhneSpVVmCEvDT2HQfr2/bC+cC8d
+        yVsc+WHkG8gvq2KVYalZE1aCLuCyl1051ZlYG3f73tR/Vf1+ed31uVMw/8yKInsi
+        itQ7ciLmSxeYmeQ8/ZdBpiN7sl0FTC/hCU52YMKTYjZGalfrKed6I0Vq3pP8lBpu
+        LqFsv+NPMDcKa796AdQ9Knm4bvScafv5n6r5EmtUy79m20jJVBiS1ldMkeqVf6io
+        YmaexpZQD9BISC1TXQ1wC0FRvM11OXoTySoDV6BlpiHHiG633tQY5pgH7h6MPOqf
+        GRhTdEGFiSovmE9WONbMtJbGpKmRwujulU/4qEIvqQKBgQDa4+omWKYnyOvvmn/D
+        5uvQAeLPA2f4f7/gaGMQP8AZJWCrDPOepYBPWwYEX5W05SbdKj1oMQegeY+ao+zH
+        fRhMH7z0ijAW6Nfd5QqviNGe8Ui6dsYqb6v3TcouMxXs6I/DSKiBP6S1RepC8Fsn
+        MiZiOdTTSXCxTeESHjJMT7rguwKBgQDWvvyubDLpqXR+6lj5UMlIrT+Kl1Lm4Vbe
+        aOIx7WEHn+jMOcvZk8j9RI/9rEeUwwGxqcn9Bkx2mwPaVElcHoecNjuFEUDSHwTL
+        T2/doO+clvBgb1jqzkAr40peGyVUqWJUPAx1Tsyrv0+Ml6+1YxFX7GjG/EB5FjyA
+        5ds5ZfrApwKBgQCcsL5zCM6YeEn80TpYwDtaQZ9c1XFeAAUY3WDcxuX6mjki+TiD
+        /rFlHSGni80dG1TAyXX/2ek9xQc5idL70t7Lz4RyAWH/ZFry6vzFP0nfX5XSdSfS
+        RPJzK+ppPASb/La88ow9SZPcd9oEZQ67djjn48IoJdBX/An78EXNPt3l9QKBgDt7
+        cXA65itU1cDl1rlQSEDKRER2P+9V0YMPmD/uGadMAua2x6E/zzdgC2ZflwA8t7Zn
+        alycpwdfTsTl/d/3UObTGs90BPluwBw0p67DCjvcjz6W+REpChtd/NZuPHvj4ymj
+        7Gt95TFZb4Zo6bGbfE1XXXpoms8vepjVklCmz7sXAoGAdDGSctpKA6/RY6rkg7w1
+        VVSenhcmNoamcMwyQS0TeehoH2y/XcBVt6murxFVzmqzh0MoCQEwcm4VkBomMA7h
+        1TXbaK7ebrpCVgqV+q2lakrMwYDJLbEOPSXNj3ZQ9SW2GUujmvyb5OjJPprk0AkG
+        udA0Rnz8iJUw+t47KZl+V3o=
+        -----END PRIVATE KEY-----
+      certificate: |-
+        -----BEGIN CERTIFICATE-----
+        MIIDPzCCAiegAwIBAgIUGLgjGFl3uH9InbrcWYBAg+lqDI0wDQYJKoZIhvcNAQEL
+        BQAwLzESMBAGA1UEAwwJVGVzdCBDZXJ0MRkwFwYDVQRhDBBWQVRQTC01MjUyNjEx
+        MzMyMB4XDTI2MDMzMTE4MDY1MVoXDTI3MDMzMTE4MDY1MVowLzESMBAGA1UEAwwJ
+        VGVzdCBDZXJ0MRkwFwYDVQRhDBBWQVRQTC01MjUyNjExMzMyMIIBIjANBgkqhkiG
+        9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt53S8VR7RP2Jg+evAMu6pM4ApllvO/mTe145
+        yMtEoR91OD/ru3FlDFEWRVy5qtnxAYH4P2DSLegROXJ6M9KXCxHa2Je5AQMv0L2P
+        akVP3ZdJMnY8x9dgRiTeJk56/dYj4IF+qjhek9ljgNAFwC0ebsya5JNFm/H0DpzP
+        cTCiXFm6nNyqZWu/duwe1UUJWkAArNyKlSBK3W1PfSZU9UtfwrI57XFvIjLLCW0l
+        KTOCA1HH1kjQEGGdwoNSOSwaixNWdXAVeH73wWGGyqDOO9txNNzDJt5sN4Ubiikv
+        nqQVH6mFRyjU4NGEQvQVWfBpdS6IBx20ZxNlMk3XiaVgaRLZ/QIDAQABo1MwUTAd
+        BgNVHQ4EFgQUPgNWqxZsIhxZCXuqgg9+UAn9hycwHwYDVR0jBBgwFoAUPgNWqxZs
+        IhxZCXuqgg9+UAn9hycwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+        AQEAsNjTBK+x4bQQEzMDnj0APhF2XmHPJI44HMtxq0DbVh3+KtH+uNA9D04Z0m5g
+        fuLJXNF9sBxJdV5gnolQwA36zoGKUPfNYh/SPFXm7bLiPpsorwn3L2Wx+N3xxhM8
+        EeTe6CTxGLUEiqugmsG05g84ug2RBP0eT+0L54n82+b0woZ8F/J6Qmnw0HEzw5aD
+        X4Znyx3q2E1hTsAJB0L6Zqn9UMWWoNwJTa6BJRCnlUEyXyWhxkX9QyRW8vNmlg+g
+        jZKzo7YPRnXkZQBMQEMXtmW1UvgISeAmvqBoUYCP+emyElbZxCqfhJJO1uJgprQq
+        rS2zSjS6IuOGrbMdTOlfHRiR8A==
+        -----END CERTIFICATE-----
+      password: 'test'
+  cert_invalid_nip_test:
+    environment: test
+    nip: '1234567890'
+    certificate:
+      private_key: |-
+        -----BEGIN PRIVATE KEY-----
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC3ndLxVHtE/YmD
+        568Ay7qkzgCmWW87+ZN7XjnIy0ShH3U4P+u7cWUMURZFXLmq2fEBgfg/YNIt6BE5
+        cnoz0pcLEdrYl7kBAy/QvY9qRU/dl0kydjzH12BGJN4mTnr91iPggX6qOF6T2WOA
+        0AXALR5uzJrkk0Wb8fQOnM9xMKJcWbqc3Kpla7927B7VRQlaQACs3IqVIErdbU99
+        JlT1S1/CsjntcW8iMssJbSUpM4IDUcfWSNAQYZ3Cg1I5LBqLE1Z1cBV4fvfBYYbK
+        oM4723E03MMm3mw3hRuKKS+epBUfqYVHKNTg0YRC9BVZ8Gl1LogHHbRnE2UyTdeJ
+        pWBpEtn9AgMBAAECggEABI8wsQ64o4qVeDxahhneSpVVmCEvDT2HQfr2/bC+cC8d
+        yVsc+WHkG8gvq2KVYalZE1aCLuCyl1051ZlYG3f73tR/Vf1+ed31uVMw/8yKInsi
+        itQ7ciLmSxeYmeQ8/ZdBpiN7sl0FTC/hCU52YMKTYjZGalfrKed6I0Vq3pP8lBpu
+        LqFsv+NPMDcKa796AdQ9Knm4bvScafv5n6r5EmtUy79m20jJVBiS1ldMkeqVf6io
+        YmaexpZQD9BISC1TXQ1wC0FRvM11OXoTySoDV6BlpiHHiG633tQY5pgH7h6MPOqf
+        GRhTdEGFiSovmE9WONbMtJbGpKmRwujulU/4qEIvqQKBgQDa4+omWKYnyOvvmn/D
+        5uvQAeLPA2f4f7/gaGMQP8AZJWCrDPOepYBPWwYEX5W05SbdKj1oMQegeY+ao+zH
+        fRhMH7z0ijAW6Nfd5QqviNGe8Ui6dsYqb6v3TcouMxXs6I/DSKiBP6S1RepC8Fsn
+        MiZiOdTTSXCxTeESHjJMT7rguwKBgQDWvvyubDLpqXR+6lj5UMlIrT+Kl1Lm4Vbe
+        aOIx7WEHn+jMOcvZk8j9RI/9rEeUwwGxqcn9Bkx2mwPaVElcHoecNjuFEUDSHwTL
+        T2/doO+clvBgb1jqzkAr40peGyVUqWJUPAx1Tsyrv0+Ml6+1YxFX7GjG/EB5FjyA
+        5ds5ZfrApwKBgQCcsL5zCM6YeEn80TpYwDtaQZ9c1XFeAAUY3WDcxuX6mjki+TiD
+        /rFlHSGni80dG1TAyXX/2ek9xQc5idL70t7Lz4RyAWH/ZFry6vzFP0nfX5XSdSfS
+        RPJzK+ppPASb/La88ow9SZPcd9oEZQ67djjn48IoJdBX/An78EXNPt3l9QKBgDt7
+        cXA65itU1cDl1rlQSEDKRER2P+9V0YMPmD/uGadMAua2x6E/zzdgC2ZflwA8t7Zn
+        alycpwdfTsTl/d/3UObTGs90BPluwBw0p67DCjvcjz6W+REpChtd/NZuPHvj4ymj
+        7Gt95TFZb4Zo6bGbfE1XXXpoms8vepjVklCmz7sXAoGAdDGSctpKA6/RY6rkg7w1
+        VVSenhcmNoamcMwyQS0TeehoH2y/XcBVt6murxFVzmqzh0MoCQEwcm4VkBomMA7h
+        1TXbaK7ebrpCVgqV+q2lakrMwYDJLbEOPSXNj3ZQ9SW2GUujmvyb5OjJPprk0AkG
+        udA0Rnz8iJUw+t47KZl+V3o=
+        -----END PRIVATE KEY-----
+      certificate: |-
+        -----BEGIN CERTIFICATE-----
+        MIIDPzCCAiegAwIBAgIUGLgjGFl3uH9InbrcWYBAg+lqDI0wDQYJKoZIhvcNAQEL
+        BQAwLzESMBAGA1UEAwwJVGVzdCBDZXJ0MRkwFwYDVQRhDBBWQVRQTC01MjUyNjEx
+        MzMyMB4XDTI2MDMzMTE4MDY1MVoXDTI3MDMzMTE4MDY1MVowLzESMBAGA1UEAwwJ
+        VGVzdCBDZXJ0MRkwFwYDVQRhDBBWQVRQTC01MjUyNjExMzMyMIIBIjANBgkqhkiG
+        9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt53S8VR7RP2Jg+evAMu6pM4ApllvO/mTe145
+        yMtEoR91OD/ru3FlDFEWRVy5qtnxAYH4P2DSLegROXJ6M9KXCxHa2Je5AQMv0L2P
+        akVP3ZdJMnY8x9dgRiTeJk56/dYj4IF+qjhek9ljgNAFwC0ebsya5JNFm/H0DpzP
+        cTCiXFm6nNyqZWu/duwe1UUJWkAArNyKlSBK3W1PfSZU9UtfwrI57XFvIjLLCW0l
+        KTOCA1HH1kjQEGGdwoNSOSwaixNWdXAVeH73wWGGyqDOO9txNNzDJt5sN4Ubiikv
+        nqQVH6mFRyjU4NGEQvQVWfBpdS6IBx20ZxNlMk3XiaVgaRLZ/QIDAQABo1MwUTAd
+        BgNVHQ4EFgQUPgNWqxZsIhxZCXuqgg9+UAn9hycwHwYDVR0jBBgwFoAUPgNWqxZs
+        IhxZCXuqgg9+UAn9hycwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+        AQEAsNjTBK+x4bQQEzMDnj0APhF2XmHPJI44HMtxq0DbVh3+KtH+uNA9D04Z0m5g
+        fuLJXNF9sBxJdV5gnolQwA36zoGKUPfNYh/SPFXm7bLiPpsorwn3L2Wx+N3xxhM8
+        EeTe6CTxGLUEiqugmsG05g84ug2RBP0eT+0L54n82+b0woZ8F/J6Qmnw0HEzw5aD
+        X4Znyx3q2E1hTsAJB0L6Zqn9UMWWoNwJTa6BJRCnlUEyXyWhxkX9QyRW8vNmlg+g
+        jZKzo7YPRnXkZQBMQEMXtmW1UvgISeAmvqBoUYCP+emyElbZxCqfhJJO1uJgprQq
+        rS2zSjS6IuOGrbMdTOlfHRiR8A==
+        -----END CERTIFICATE-----
+      password: 'test'
   cert_inline_test:
     environment: test
     nip: '5252611332'
