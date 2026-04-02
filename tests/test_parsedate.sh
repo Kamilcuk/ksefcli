@@ -27,6 +27,7 @@ clitest_ParseDate_simple_seconds() {
 }
 
 clitest_ParseDate_relative_days_seconds() {
+    local -x TZ=UTC
     local output
     L_unittest_cmd -v output cli ParseDate --seconds "-1day"
     local expected
@@ -35,6 +36,7 @@ clitest_ParseDate_relative_days_seconds() {
 }
 
 clitest_ParseDate_relative_weeks_seconds() {
+    local -x TZ=UTC
     local output
     L_unittest_cmd -v output cli ParseDate --seconds "-2weeks"
     local expected
