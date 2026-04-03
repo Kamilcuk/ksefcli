@@ -5,6 +5,19 @@ namespace KCKSeFCli;
 public sealed class KCKSeFCliConfig {
     public string ActiveProfile { get; init; } = "";
     public Dictionary<string, ProfileConfig> Profiles { get; init; } = new();
+    public SmtpConfig? Smtp { get; init; }
+}
+
+public class SmtpConfig {
+    public string Host { get; init; } = "";
+    public int Port { get; init; } = 587;
+    public string User { get; init; } = "";
+    public string Password { get; init; } = "";
+    public string PasswordEnv { get; init; } = "";
+    public string From { get; init; } = "kcksefcli <noreply@example.com>";
+    public bool UseSsl { get; init; } = true;
+
+    public string GetPassword() => !string.IsNullOrEmpty(PasswordEnv) ? (System.Environment.GetEnvironmentVariable(PasswordEnv) ?? "") : Password;
 }
 
 public class ProfileConfig {

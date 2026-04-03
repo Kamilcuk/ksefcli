@@ -25,6 +25,7 @@ public class Program {
             typeof(LinkWeryfikacjiFaktury),
             typeof(NowyCertyfikatCommand),
             typeof(NowaFakturaCommand),
+            typeof(PowiadomONowychFakturachCommand),
             typeof(ParseDateCommand),
             typeof(PobierzCertyfikatCommand),
             typeof(PobierzInfoONipCommand),
