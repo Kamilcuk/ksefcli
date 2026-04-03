@@ -24,8 +24,13 @@ public class SzukajFakturCommand : IWithConfigCommand {
     """)]
     public required string SubjectType { get; set; }
 
-    [Option("from", Required = true, HelpText = "Start date. Can be a specific date (e.g., 2023-01-01) or a relative date (e.g., -2days, 'last monday').")]
-    public required string From { get; set; }
+    /// <summary>
+    /// Start date. 
+    /// Note: Not marked as Required=true because inheriting commands like PowiadomONowychFakturach
+    /// may provide state-based fallbacks. It is manually validated in ExecuteInScopeAsync.
+    /// </summary>
+    [Option("from", HelpText = "Start date. Can be a specific date (e.g., 2023-01-01) or a relative date (e.g., -2days, 'last monday').")]
+    public string? From { get; set; }
 
     [Option("to", HelpText = "End date. Can be a specific date (e.g., 2023-01-31) or a relative date (e.g., today, -1day).")]
     public string? To { get; set; }
@@ -165,7 +170,16 @@ public class SzukajFakturCommand : IWithConfigCommand {
             throw new InvalidEnumArgumentException($"Invalid DateType: {settings.DateType}");
         }
 
-        DateTime parsedFromDate = await ParseDate.Parse(settings.From, cancellationToken).ConfigureAwait(false);
+        if (settings.From is null) {
+            // For PowiadomONowychFakturach settings.From might be null if state exists or "today" is intended
+            if (this is not PowiadomONowychFakturachCommand) {
+                throw new ArgumentException("The --from parameter is required for this command.");
+            }
+        }
+
+        DateTime parsedFromDate = settings.From is not null 
+            ? await ParseDate.Parse(settings.From, cancellationToken).ConfigureAwait(false)
+            : DateTime.UtcNow.Date; // Default fallback for Notify (should be overridden by state)
         DateTime? parsedToDate = null;
         if (settings.To is not null) {
             parsedToDate = await ParseDate.Parse(settings.To, cancellationToken).ConfigureAwait(false);

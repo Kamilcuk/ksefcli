@@ -35,17 +35,28 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
     public bool NoLocalRateLimit { get; set; }
 
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
+        // IMPORTANT: We must initialize the PDF runner before any network operations with KSeF.
+        // If the environment is missing dependencies for SkiaSharp or font resolution,
+        // we should fail fast before potentially consuming KSeF API limits.
         XML2PDFCommand.Runner? pdfRunner = null;
         if (Pdf) {
             pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
         }
 
+        IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
+
+        List<InvoiceSummary> invoices = await base.SzukajFaktury(scope, ksefClient, cancellationToken).ConfigureAwait(false);
+
+        await ProcessInvoices(scope, invoices, pdfRunner, cancellationToken).ConfigureAwait(false);
+
+        return 0;
+    }
+
+    protected async Task ProcessInvoices(IServiceScope scope, List<InvoiceSummary> invoices, XML2PDFCommand.Runner? pdfRunner, CancellationToken cancellationToken) {
         Directory.CreateDirectory(OutputDir);
 
         IVerificationLinkService linkSvc = scope.ServiceProvider.GetRequiredService<IVerificationLinkService>();
         IKSeFClient ksefClient = scope.ServiceProvider.GetRequiredService<IKSeFClient>();
-
-        List<InvoiceSummary> invoices = await base.SzukajFaktury(scope, ksefClient, cancellationToken).ConfigureAwait(false);
 
         foreach (InvoiceSummary invoiceSummary in invoices) {
             string fileName = UseInvoiceNumber ? invoiceSummary.InvoiceNumber : invoiceSummary.KsefNumber;
@@ -80,8 +91,6 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
                 Log.Information($"Saved PDF for {xmlFilePath} to {outputPdfPath}");
             }
         }
-
-        return 0;
     }
 
 }
