@@ -123,9 +123,21 @@ public class PowiadomONowychFakturachCommand : PobierzFakturyCommand {
             if (Pdf) filePaths.Add(Path.Combine(absoluteOutputDir, $"{fileName}.pdf"));
         }
 
+        string shell = "/bin/sh";
+        string shellArg = "-c";
+        if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) {
+            shell = "cmd.exe";
+            shellArg = "/c";
+            string winArgs = string.Join(" ", filePaths.Select(f => $"\"{f}\""));
+            List<string> winCommand = new List<string> { shell, shellArg, $"{Exec} {winArgs}" };
+            Log.Information($"Executing post-process command for {newInvoices.Count} invoices...");
+            await new Subprocess(winCommand).CheckCallAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
         // Run /bin/sh -c "exec_cmd" -- file1 file2 ...
         // The command in exec_cmd should use "$@" to access file paths
-        List<string> commandAndArgs = new List<string> { "/bin/sh", "-c", $"{Exec} \"$@\"", "kcksefcli-postprocess" };
+        List<string> commandAndArgs = new List<string> { shell, shellArg, $"{Exec} \"$@\"", "kcksefcli-postprocess" };
         commandAndArgs.AddRange(filePaths);
 
         Subprocess sub = new Subprocess(commandAndArgs);
@@ -178,6 +190,9 @@ public class PowiadomONowychFakturachCommand : PobierzFakturyCommand {
             Log.Information($"Sending native email notification to {Email} via {smtp.Host}...");
             await SendMail.Send(smtp, Email!, subject, body.ToString(), attachments, cancellationToken).ConfigureAwait(false);
         } else {
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) {
+                throw new InvalidOperationException("SMTP is not configured. Falling back to mailx is not supported on Windows.");
+            }
             Log.Warning("SMTP not configured in kcksefcli.yaml. Falling back to mailx...");
             await SendEmailMailx(Email!, subject, body.ToString(), attachments, cancellationToken).ConfigureAwait(false);
         }
