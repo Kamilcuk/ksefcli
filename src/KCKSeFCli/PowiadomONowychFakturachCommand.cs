@@ -40,6 +40,13 @@ public class PowiadomONowychFakturachCommand : PobierzFakturyCommand {
             throw new ArgumentException("Options --exec and --email are mutually exclusive.");
         }
 
+        if (!string.IsNullOrEmpty(Email)) {
+            SmtpConfig? smtp = FullConfig()?.Smtp;
+            if (smtp == null || string.IsNullOrEmpty(smtp.Host)) {
+                throw new InvalidOperationException("SMTP is not configured in kcksefcli.yaml. Native email notification is required when --email is used.");
+            }
+        }
+
         // IMPORTANT: We must initialize the PDF runner before any network operations with KSeF.
         XML2PDFCommand.Runner? pdfRunner = null;
         if (Pdf) {
@@ -129,7 +136,7 @@ public class PowiadomONowychFakturachCommand : PobierzFakturyCommand {
             shell = "cmd.exe";
             shellArg = "/c";
             string winArgs = string.Join(" ", filePaths.Select(f => $"\"{f}\""));
-            List<string> winCommand = new List<string> { shell, shellArg, $"{Exec} {winArgs}" };
+            List<string> winCommand = new List<string> { shell, shellArg, $"\"{Exec} {winArgs}\"" };
             Log.Information($"Executing post-process command for {newInvoices.Count} invoices...");
             await new Subprocess(winCommand).CheckCallAsync(cancellationToken).ConfigureAwait(false);
             return;
@@ -190,18 +197,7 @@ public class PowiadomONowychFakturachCommand : PobierzFakturyCommand {
             Log.Information($"Sending native email notification to {Email} via {smtp.Host}...");
             await SendMail.Send(smtp, Email!, subject, body.ToString(), attachments, cancellationToken).ConfigureAwait(false);
         } else {
-            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) {
-                throw new InvalidOperationException("SMTP is not configured. Falling back to mailx is not supported on Windows.");
-            }
-            Log.Warning("SMTP not configured in kcksefcli.yaml. Falling back to mailx...");
-            await SendEmailMailx(Email!, subject, body.ToString(), attachments, cancellationToken).ConfigureAwait(false);
+            throw new InvalidOperationException("SMTP is not configured in kcksefcli.yaml. Native email notification failed.");
         }
-    }
-
-    private async Task SendEmailMailx(string to, string subject, string body, List<string> attachments, CancellationToken cancellationToken) {
-        string attachArgs = string.Join(" ", attachments.Select(a => $"-a \"{a}\""));
-        string command = $"echo \"{body.Replace("\"", "\\\"")}\" | mailx -s \"{subject}\" {attachArgs} \"{to}\"";
-        Subprocess sub = new Subprocess(new[] { "/bin/sh", "-c", command });
-        await sub.CheckCallAsync(cancellationToken).ConfigureAwait(false);
     }
 }

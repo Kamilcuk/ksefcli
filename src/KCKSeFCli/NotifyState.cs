@@ -19,7 +19,8 @@ public class NotifyState {
                 lockFile.Fs.ReadExactly(data, 0, data.Length);
                 return JsonSerializer.Deserialize<NotifyState>(data, _jsonOptions) ?? new NotifyState();
             }
-        } catch (Exception) {
+        } catch (Exception ex) {
+            Log.Error($"Failed to load notify state from {path}: {ex.Message}");
             return new NotifyState();
         }
     }
