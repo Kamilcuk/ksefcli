@@ -119,6 +119,30 @@ clitest_weryfikuj_xml() {
 	L_unittest_cmd cli WeryfikujXML "$DIR"/FA_3_Przykład_1.xml
 }
 
+clitest_xml2pdf_simple() {
+	L_with_cd_tmpdir
+	L_unittest_cmd cli XML2PDF "$DIR"/FA_3_Przyklad_1.xml out.pdf
+	L_unittest_cmd ls -la out.pdf
+}
+
+clitest_xml2pdf_full() {
+	L_with_cd_tmpdir
+	L_unittest_cmd cli XML2PDF "$DIR"/FA_3_Przyklad_1.xml out.pdf \
+	    --nrKSeF "1234567890-20260410-1234567890AB" \
+	    --qrCode "https://ksef.mf.gov.pl/web/verify/1" \
+	    --qrCode2 "https://ksef.mf.gov.pl/web/verify/2"
+	L_unittest_cmd ls -la out.pdf
+}
+
+clitest_xml2pdf_offline() {
+	L_with_cd_tmpdir
+	L_unittest_cmd cli XML2PDF "$DIR"/FA_3_Przyklad_1.xml out.pdf \
+	    --nrKSeF "OFFLINE" \
+	    --qrCode "https://ksef.mf.gov.pl/web/verify/offline" \
+	    --qrCode2 "https://ksef.mf.gov.pl/web/verify/offline2"
+	L_unittest_cmd ls -la out.pdf
+}
+
 clitest_skiasharp() {
 	L_with_cd_tmpdir
 	L_unittest_cmd cli TestSkiaSharp out.png
