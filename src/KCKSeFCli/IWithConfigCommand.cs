@@ -32,9 +32,11 @@ public abstract class IWithConfigCommand : IGlobalCommand {
     public string? CmdToken { get; set; }
 
     private readonly Lazy<ProfileConfigWithName> _cachedProfile;
+    private readonly Lazy<KCKSeFCliConfig?> _fullConfig;
     private readonly Lazy<TokenStore> _tokenStore;
 
     public IWithConfigCommand() {
+        KCKSeFCliConfig? fullConfig = null;
         _cachedProfile = new Lazy<ProfileConfigWithName>(() => {
             if (!string.IsNullOrEmpty(CmdEnvironment) || !string.IsNullOrEmpty(CmdToken)) {
                 // Resolve config from command line arguments
@@ -65,9 +67,14 @@ public abstract class IWithConfigCommand : IGlobalCommand {
 
                 Log.Information($"Loading config from {actualConfigFileToLoad} with active={actualActiveProfileToLoad}");
                 KCKSeFCliConfig config = ConfigLoader.Load(actualConfigFileToLoad, actualActiveProfileToLoad);
+                fullConfig = config;
                 ProfileConfig profile = config.Profiles[config.ActiveProfile];
                 return new ProfileConfigWithName(profile, config.ActiveProfile);
             }
+        });
+        _fullConfig = new Lazy<KCKSeFCliConfig?>(() => {
+            var _ = _cachedProfile.Value; // Ensure _cachedProfile is initialized
+            return fullConfig;
         });
         _tokenStore = new Lazy<TokenStore>(() => new TokenStore(TokenCache));
     }
@@ -75,6 +82,8 @@ public abstract class IWithConfigCommand : IGlobalCommand {
     protected TokenStore GetTokenStore() => _tokenStore.Value;
 
     public ProfileConfigWithName Config() => _cachedProfile.Value;
+
+    public KCKSeFCliConfig? FullConfig() => _fullConfig.Value;
 
     public TokenStore.Key GetTokenStoreKey() {
         ProfileConfigWithName config = Config();
