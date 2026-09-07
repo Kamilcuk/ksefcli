@@ -7,6 +7,12 @@ clitest_xml2pdf_qrcodes() {
 	L_unittest_cmd ls -la out.pdf
 }
 
+clitest_xml2pdf_anonymized() {
+	L_with_cd_tmpdir
+	L_unittest_cmd cli XML2PDF "$DIR"/invoice-anonymized.xml out.pdf
+	L_unittest_cmd ls -la out.pdf
+}
+
 clitest_z_integration_SprawdzLimitCertyfikatow() {
 	local output
 	L_unittest_cmd -v output cli SprawdzLimitCertyfikatow -a mytoken

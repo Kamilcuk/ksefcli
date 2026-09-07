@@ -1,0 +1,10 @@
+active_profile: kamil-prod
+profiles:
+  kamil-prod:
+    environment: prod
+    nip: '5252611332'
+    token: 'some_token_value'
+  other-profile:
+    environment: test
+    nip: '5252611332'
+    token: 'other_token'

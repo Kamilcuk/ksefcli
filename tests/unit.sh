@@ -25,6 +25,11 @@ clitest_profile_token() {
 	KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd cli PrintConfig --active token_test
 }
 
+clitest_active_profile_from_config_multi() {
+	# Test that active_profile in config file works when multiple profiles exist and no --active is given
+	KCKSEFCLI_CONFIG="$DIR/test_active_profile_multi.yml" L_unittest_cmd cli PrintConfig
+}
+
 clitest_profile_env_pw() {
 	TEST_PASSWORD_ENV="env_password" KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" \
 	    L_unittest_cmd cli PrintConfig --active cert_env_password_test >/dev/null

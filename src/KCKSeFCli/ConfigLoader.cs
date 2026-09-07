@@ -29,7 +29,7 @@ public static class ConfigLoader {
             throw new Exception($"Exception during deserialization of '{absoluteConfigPath}'", ex);
         }
 
-        string activeProfile = activeProfileNameOverride ?? config.ActiveProfile;
+        string activeProfile = string.IsNullOrWhiteSpace(activeProfileNameOverride) ? config.ActiveProfile : activeProfileNameOverride;
 
         if (string.IsNullOrWhiteSpace(activeProfile)) {
             if (config.Profiles.Count == 1) {
