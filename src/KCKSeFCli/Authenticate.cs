@@ -45,7 +45,7 @@ public static class Authenticate {
                 Value = config.Nip
             },
             EncryptedToken = encryptedTokenB64,
-            AuthorizationPolicy = null
+            AuthorizationPolicy = new AuthenticationTokenAuthorizationPolicy()
         };
         SignatureResponse signature = await ksefClient.SubmitKsefTokenAuthRequestAsync(request, new CancellationToken()).ConfigureAwait(false);
         Log.Information("3. Sprawdzenie statusu uwierzytelniania");
