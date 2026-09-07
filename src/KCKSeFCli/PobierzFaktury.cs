@@ -49,6 +49,8 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
 
         foreach (InvoiceSummary invoiceSummary in invoices) {
             string fileName = UseInvoiceNumber ? invoiceSummary.InvoiceNumber : invoiceSummary.KsefNumber;
+            // Replace path separators to prevent creating subdirectories
+            fileName = fileName.Replace('/', '_').Replace('\\', '_');
             string jsonFilePath = Path.Combine(OutputDir, $"{fileName}.json");
             string xmlFilePath = Path.Combine(OutputDir, $"{fileName}.xml");
 
