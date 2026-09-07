@@ -267,7 +267,7 @@ public class SzukajFakturCommand : IWithConfigCommand {
                 allInvoices.AddRange(pagedInvoicesResponse.Invoices);
             }
 
-            currentPageOffset += settings.PageSize;
+            currentPageOffset += 1;
         } while (pagedInvoicesResponse.HasMore == true);
 
         Log.Information($"Found {allInvoices.Count} invoices.");
