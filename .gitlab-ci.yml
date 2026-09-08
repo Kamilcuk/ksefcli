@@ -50,7 +50,7 @@ secret_detection:
 linux_build_and_unit_test:
   extends: .build
   script:
-    - dotnet test src/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj -c Release -f net10.0 --no-restore
+    - dotnet test src/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj -c Release -f net10.0
     - dotnet publish src/KCKSeFCli/KCKSeFCli.csproj -c Release -r linux-x64 -f net10.0 -o dist
     - mv -v ./dist/kcksefcli .
     - ldd ./kcksefcli
