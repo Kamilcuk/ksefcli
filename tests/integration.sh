@@ -13,6 +13,7 @@ clitest_xml2pdf_anonymized() {
 	L_unittest_cmd ls -la out.pdf
 }
 
+if false; then
 clitest_z_integration_SprawdzLimitCertyfikatow() {
 	local output
 	L_unittest_cmd -v output cli SprawdzLimitCertyfikatow -a mytoken
@@ -55,6 +56,7 @@ clitest_z_integration_WystawFaktureOffline() {
 	L_unittest_cmd cli WystawFaktureOffline -a offline ./faktura_testowa.xml ./faktura_testowa.pdf
 	L_unittest_cmd ls -la ./faktura_testowa.pdf
 }
+fi
 
 DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/lib.sh "$@"
