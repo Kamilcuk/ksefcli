@@ -19,7 +19,7 @@ fatal() {
 }
 
 pull_L_lib() {
-	local url=https://github.com/Kamilcuk/L_lib/releases/download/v1.1.0/L_lib.sh
+	local url=https://github.com/Kamilcuk/L_lib/releases/download/v2.0.4/L_lib.sh
 	local cachef="$DIR"/L_lib.sh
 	if [[ ! -v L_LIB_VERSION ]]; then
 		# Download L_lib.sh library
@@ -80,10 +80,10 @@ testlib_main() {
 	fi
 	opt_exe=$(readlink -f "${opt_exe[0]}") || exit 234
 
-	local cmd=( L_unittest_main -p clitest_ "${args[@]}" )
+	local cmd=( L_unittest_main -p clitest_ "${args[@]}" ${TESTARGS:-} )
 
 	# Create a global temporary directory.
-	L_with_tmpdir_to TMPD
+	L_with_tmpdir_into TMPD
 	export TMPD
 
 	if [[ -v KCLLM ]]; then
