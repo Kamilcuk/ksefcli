@@ -47,7 +47,9 @@ public class Program {
             typeof(WystawPodobnaFaktureCommand),
             typeof(WystawKorekteCommand),
             typeof(XMLExtractCommand),
-            typeof(XML2PDFCommand)
+            typeof(XML2JSONCommand),
+            typeof(XML2PDFCommand),
+            typeof(SortFakturyCommand)
         }.OrderBy(t => ((VerbAttribute)t.GetCustomAttributes(typeof(VerbAttribute), true)[0]).Name).ToArray();
 
         ParserResult<object> result = parser.ParseArguments(args, commandTypes);

@@ -7,5 +7,6 @@
     <EnableNETAnalyzers>false</EnableNETAnalyzers>
     <RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
+    <NoWarn>NU1903</NoWarn>
   </PropertyGroup>
 </Project>
