@@ -302,16 +302,15 @@ public class SortFakturyCommandTests {
         }
     }
 
-    [Fact]
-    public async Task ExecuteAsync_DuplicateNames_AppendsCounter() {
+[Fact]
+    public async Task ExecuteAsync_MultipleFilesSameInvoice_ProcessesAll() {
         string tempDir = CreateTempDir();
         string outputDir = Path.Combine(tempDir, "output");
         try {
             string ksefNum = "123456789-2025-01-15-ABCDEF123456";
-            string xmlFile1 = Path.Combine(tempDir, $"{ksefNum}.xml");
-            string xmlFile2 = Path.Combine(tempDir, $"{ksefNum}_2.xml");
-            string jsonFile1 = Path.Combine(tempDir, $"{ksefNum}_summary.json");
-            string jsonFile2 = Path.Combine(tempDir, $"{ksefNum}_2_summary.json");
+            string xmlFile = Path.Combine(tempDir, $"{ksefNum}.xml");
+            string jsonFile = Path.Combine(tempDir, $"{ksefNum}_summary.json");
+            string pdfFile = Path.Combine(tempDir, $"{ksefNum}.pdf");
 
             string xmlContent = """
                 <Invoice>
@@ -320,8 +319,7 @@ public class SortFakturyCommandTests {
                     <P_13>1230.00</P_13>
                 </Invoice>
                 """;
-            File.WriteAllText(xmlFile1, xmlContent);
-            File.WriteAllText(xmlFile2, xmlContent);
+            File.WriteAllText(xmlFile, xmlContent);
 
             var summary = new {
                 Seller = new { Name = "Jan Kowalski" },
@@ -329,24 +327,29 @@ public class SortFakturyCommandTests {
                 GrossAmount = 1230.00m,
                 KsefNumber = ksefNum
             };
-            File.WriteAllText(jsonFile1, JsonSerializer.Serialize(summary));
-            File.WriteAllText(jsonFile2, JsonSerializer.Serialize(summary));
+            File.WriteAllText(jsonFile, JsonSerializer.Serialize(summary));
+            File.WriteAllText(pdfFile, "PDF content");
 
             var command = new SortFakturyCommand {
                 OutputDir = outputDir,
                 DryRun = false,
                 NoMove = true,
-                InputFiles = [xmlFile1, xmlFile2, jsonFile1, jsonFile2]
+                IncludePdf = true,
+                InputFiles = [xmlFile, jsonFile, pdfFile]
             };
 
             int result = await command.ExecuteAsync(CancellationToken.None);
             result.Should().Be(0);
 
             var files = Directory.GetFiles(outputDir, "*", SearchOption.AllDirectories);
-            files.Should().HaveCount(4);
+            files.Should().HaveCount(3);
 
-            var fileNames = files.Select(Path.GetFileName).ToList();
-            fileNames.Should().Contain(f => f.Contains("_1"));
+            foreach (var f in files) {
+                Path.GetFileName(f).Should().StartWith(ksefNum);
+                Path.GetFileName(f).Should().Contain("Jan");
+                Path.GetFileName(f).Should().Contain("Anna");
+                Path.GetFileName(f).Should().Contain("1230.00");
+            }
         } finally {
             CleanupDir(tempDir);
         }

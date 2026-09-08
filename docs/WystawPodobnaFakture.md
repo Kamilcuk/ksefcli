@@ -24,3 +24,16 @@ kcksefcli WystawPodobnaFakture <plik-wejsciowy-xml> <plik-wyjsciowy-xml> [--data
 |------------------------|-----------------------------------------------------------------------------------------------|--------------|
 | `--data-wystawienia`   | Nowa data wystawienia faktury (pole P_1). Format `yyyy-MM-dd`. Jeśli nie podano, użyje dzisiejszej daty. | Dziś         |
 | `--data-wykonania`     | Nowa data wykonania usługi/dostawy (pole P_6). Format `yyyy-MM-dd`. Jeśli nie podano, użyje dzisiejszej daty. | Dziś         |
+
+**Przykłady:**
+
+Zapis do pliku:
+```bash
+kcksefcli WystawPodobnaFakture stara_faktura.xml nowa_faktura.xml --data-wystawienia 2026-09-30
+```
+
+Potokowanie do innego polecenia (wymaga zapisu do pliku, potem odczytu):
+```bash
+kcksefcli WystawPodobnaFakture stara_faktura.xml nowa_faktura.xml --data-wykonania 2026-09-30
+kcksefcli PrzeslijFaktury -u upo/ --upopdf --uposesji nowa_faktura.xml
+```

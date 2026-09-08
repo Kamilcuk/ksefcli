@@ -26,7 +26,7 @@ public class WystawPodobnaFaktureCommand : IGlobalCommand {
         ConfigureLogging();
 
         if (!File.Exists(InputFile)) {
-            Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
+            Log.Error($"Error: Input file not found: {InputFile}");
             return 1;
         }
 
@@ -72,9 +72,9 @@ public class WystawPodobnaFaktureCommand : IGlobalCommand {
             doc.Save(writer);
         }
         string newXml = Encoding.UTF8.GetString(ms.ToArray());
-        File.WriteAllText(OutputFile, newXml);
 
-        Console.WriteLine($"Successfully created similar invoice: {OutputFile}");
+        File.WriteAllText(OutputFile, newXml);
+        Log.Information($"Successfully created similar invoice: {OutputFile}");
         return 0;
     }
 }

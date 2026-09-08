@@ -25,6 +25,9 @@ public class SortFakturyCommand : IGlobalCommand {
     [Option("no-move", HelpText = "Copy files instead of moving (default is move).")]
     public bool NoMove { get; set; }
 
+    [Option("nip", HelpText = "Your NIP to determine role (sprzedawca/nabywca). If not provided, defaults to sprzedawca.")]
+    public string? Nip { get; set; }
+
     [Value(0, HelpText = "XML files to sort. If omitted, scans current directory for invoice files.")]
     public IEnumerable<string> InputFiles { get; set; } = [];
 
@@ -42,16 +45,14 @@ public class SortFakturyCommand : IGlobalCommand {
         if (!DryRun) {
             Directory.CreateDirectory(outputDir);
         }
-        if (!filesToProcess.Any()) {
-            Log.Warning("No invoice files found to process.");
-            return Task.FromResult(0);
-        }
 
         var groups = GroupFilesByBaseName(filesToProcess);
         int processed = 0;
 
+        string myNip = Nip?.Replace("-", "").Replace(" ", "") ?? "";
+
         foreach (var group in groups) {
-            var invoiceData = ExtractInvoiceData(group);
+            var invoiceData = ExtractInvoiceData(group, myNip);
             if (invoiceData == null) {
                 Log.Warning($"Could not extract invoice data for {group.Key}, skipping.");
                 continue;
@@ -150,12 +151,14 @@ public class SortFakturyCommand : IGlobalCommand {
         return Path.GetFileNameWithoutExtension(fileName);
     }
 
-    private InvoiceData? ExtractInvoiceData(KeyValuePair<string, List<string>> group) {
+    private InvoiceData? ExtractInvoiceData(KeyValuePair<string, List<string>> group, string myNip) {
         string? xmlFile = group.Value.FirstOrDefault(f => f.EndsWith(".xml", StringComparison.OrdinalIgnoreCase));
         string? jsonFile = group.Value.FirstOrDefault(f => f.EndsWith("_summary.json", StringComparison.OrdinalIgnoreCase));
 
         string? sellerName = null;
         string? buyerName = null;
+        string? sellerNip = null;
+        string? buyerNip = null;
         decimal grossAmount = 0;
         string ksefNumber = group.Key;
 
@@ -167,9 +170,15 @@ public class SortFakturyCommand : IGlobalCommand {
 
                 if (root.TryGetProperty("Seller", out JsonElement seller)) {
                     sellerName = seller.GetProperty("Name").GetString();
+                    sellerNip = seller.GetProperty("Nip").GetString();
                 }
                 if (root.TryGetProperty("Buyer", out JsonElement buyer)) {
                     buyerName = buyer.GetProperty("Name").GetString();
+                    if (buyer.TryGetProperty("Identifier", out JsonElement identifier)) {
+                        if (identifier.TryGetProperty("Nip", out JsonElement nip)) {
+                            buyerNip = nip.GetString();
+                        }
+                    }
                 }
                 if (root.TryGetProperty("GrossAmount", out JsonElement gross)) {
                     grossAmount = gross.GetDecimal();
@@ -193,9 +202,18 @@ public class SortFakturyCommand : IGlobalCommand {
                 sellerName ??= podmiot1?.Element(ns + "DaneIdentyfikacyjne")?.Element(ns + "Nazwa")?.Value;
                 buyerName ??= podmiot2?.Element(ns + "DaneIdentyfikacyjne")?.Element(ns + "Nazwa")?.Value;
 
-                var p13 = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "P_13");
-                if (p13 != null && decimal.TryParse(p13.Value, out decimal gross)) {
-                    grossAmount = gross;
+                sellerNip ??= podmiot1?.Element(ns + "DaneIdentyfikacyjne")?.Element(ns + "NIP")?.Value?.Replace("-", "").Replace(" ", "");
+                buyerNip ??= podmiot2?.Element(ns + "DaneIdentyfikacyjne")?.Element(ns + "NIP")?.Value?.Replace("-", "").Replace(" ", "");
+
+                var p13_1 = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "P_13_1");
+                if (p13_1 != null && decimal.TryParse(p13_1.Value, out decimal gross1)) {
+                    grossAmount = gross1;
+                } else {
+                    // Fallback for test XML or older format
+                    var p13 = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "P_13");
+                    if (p13 != null && decimal.TryParse(p13.Value, out decimal gross2)) {
+                        grossAmount = gross2;
+                    }
                 }
 
                 var p1 = doc.Descendants().FirstOrDefault(e => e.Name.LocalName == "P_1");
@@ -209,12 +227,14 @@ public class SortFakturyCommand : IGlobalCommand {
 
         if (string.IsNullOrEmpty(sellerName)) sellerName = "BRAK";
         if (string.IsNullOrEmpty(buyerName)) buyerName = "BRAK";
+        if (string.IsNullOrEmpty(sellerNip)) sellerNip = "";
+        if (string.IsNullOrEmpty(buyerNip)) buyerNip = "";
 
         string sellerFirst = GetFirstWord(sellerName);
         string buyerFirst = GetFirstWord(buyerName);
 
         string dateDir = ExtractDateDir(ksefNumber);
-        string role = DetermineRole(sellerName, buyerName);
+        string role = DetermineRole(sellerNip, buyerNip, myNip);
 
         return new InvoiceData {
             KsefNumber = ksefNumber,
@@ -243,7 +263,11 @@ public class SortFakturyCommand : IGlobalCommand {
         return DateTime.Now.ToString("yyyyMM");
     }
 
-    private string DetermineRole(string sellerName, string buyerName) {
+    private string DetermineRole(string sellerNip, string buyerNip, string myNip) {
+        if (!string.IsNullOrEmpty(myNip)) {
+            if (sellerNip == myNip) return "sprzedawca";
+            if (buyerNip == myNip) return "nabywca";
+        }
         return "sprzedawca";
     }
 

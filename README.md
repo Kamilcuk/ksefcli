@@ -143,6 +143,8 @@ Szczegółowy opis konfiguracji profili, globalnych opcji i pamięci podręcznej
   - [`XML2PDF`](docs/XML2PDF.md) - Convert KSeF XML invoice to PDF.
   - [`XMLExtract`](docs/XMLExtract.md) - Extracts a value from an XML file using an XPath expression.
   - [`XMLRemoveNamespace`](docs/XMLRemoveNamespace.md) - Removes namespaces from an XML invoice and sets a default namespace.
+  - [`XML2JSON`](docs/XML2JSON.md) - Convert KSeF XML invoice to JSON.
+  - [`SortFaktury`](docs/SortFaktury.md) - Organize invoice files into structured directories by role/date.
 
 ## Rozwój
 

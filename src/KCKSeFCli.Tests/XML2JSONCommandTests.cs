@@ -49,8 +49,7 @@ public class XML2JSONCommandTests {
             File.WriteAllText(xmlFile, "<Invoice><Number>123</Number><Amount>100.50</Amount></Invoice>");
 
             var command = new XML2JSONCommand {
-                InputFile = xmlFile,
-                OutputFile = jsonFile,
+                Args = [xmlFile, jsonFile],
                 Indent = true
             };
 
@@ -69,7 +68,7 @@ public class XML2JSONCommandTests {
     [Fact]
     public void ExecuteAsync_NonExistentFile_ReturnsError() {
         var command = new XML2JSONCommand {
-            InputFile = "/nonexistent/file.xml"
+            Args = ["/nonexistent/file.xml", "/tmp/out.json"]
         };
         var result = command.ExecuteAsync(CancellationToken.None).GetAwaiter().GetResult();
         result.Should().Be(1);

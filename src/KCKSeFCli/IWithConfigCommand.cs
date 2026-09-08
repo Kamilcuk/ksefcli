@@ -144,7 +144,7 @@ public abstract class IWithConfigCommand : IGlobalCommand {
         };
     }
 
-    private IServiceScope GetScope() {
+    protected IServiceScope GetScope() {
         ProfileConfigWithName config = Config();
         IServiceCollection services = new ServiceCollection();
         KSeF.Client.ClientFactory.Environment environment = config.Environment.ToUpper() switch {

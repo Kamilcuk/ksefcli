@@ -5,37 +5,40 @@ using CommandLine;
 
 namespace KCKSeFCli;
 
-[Verb("XML2JSON", HelpText = "Convert invoice XML to JSON.")]
-public class XML2JSONCommand : IGlobalCommand {
-    [Value(0, Required = true, HelpText = "Input XML file path.")]
-    public required string InputFile { get; set; }
-
-    [Option('o', "output", HelpText = "Output JSON file path. If not specified, writes to stdout.")]
-    public string? OutputFile { get; set; }
-
+[Verb("XML2JSON", HelpText = "Convert invoice XML file(s) to JSON. Usage: xml2json input.xml [output.json]  or  xml2json input1.xml input2.xml outputdir/")]
+public class XML2JSONCommand : ConversionCommandBase {
     [Option("indent", HelpText = "Indent JSON output.")]
     public bool Indent { get; set; } = true;
 
     public override Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         ConfigureLogging();
-        if (!File.Exists(InputFile)) {
-            Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
-            return Task.FromResult(1);
-        }
 
-        XDocument doc = XDocument.Load(InputFile);
+        var (inputFiles, outputFile, outputDir) = ParseArgs();
+        if (inputFiles == null) return Task.FromResult(1);
+
         var jsonOptions = new JsonSerializerOptions {
             WriteIndented = Indent
         };
 
-        object jsonObj = XElementToObject(doc.Root!);
-        string json = JsonSerializer.Serialize(jsonObj, jsonOptions);
+        foreach (var inputFile in inputFiles) {
+            if (!ValidateInputFile(inputFile)) return Task.FromResult(1);
 
-        if (OutputFile != null) {
-            File.WriteAllText(OutputFile, json);
-            Log.Information($"Saved JSON to {OutputFile}");
-        } else {
-            Console.WriteLine(json);
+            XDocument doc = XDocument.Load(inputFile);
+            object jsonObj = XElementToObject(doc.Root!);
+            string json = JsonSerializer.Serialize(jsonObj, jsonOptions);
+
+            string? outputJsonPath = GetOutputPath(inputFile, outputFile, outputDir, ".json", allowStdout: true);
+            if (outputJsonPath == null) return Task.FromResult(1);
+
+            if (outputJsonPath == "-") {
+                Console.WriteLine(json);
+                continue;
+            }
+
+            if (CheckOutputExists(outputJsonPath)) return Task.FromResult(1);
+
+            File.WriteAllText(outputJsonPath, json);
+            Log.Information($"Saved JSON to {outputJsonPath}");
         }
 
         return Task.FromResult(0);

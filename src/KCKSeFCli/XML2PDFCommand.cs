@@ -1,17 +1,12 @@
 using System.Diagnostics;
+using System.IO;
 
 using CommandLine;
 
 namespace KCKSeFCli;
 
-[Verb("XML2PDF", HelpText = "Convert KSeF XML invoice to PDF.")]
-public class XML2PDFCommand : IGlobalCommand {
-    [Value(0, Required = true, HelpText = "Input XML file path.")]
-    public required string InputFile { get; set; }
-
-    [Value(1, HelpText = "Output PDF file path.")]
-    public string? OutputFile { get; set; }
-
+[Verb("XML2PDF", HelpText = "Convert KSeF XML invoice(s) to PDF. Usage: xml2pdf input.xml [output.pdf]  or  xml2pdf input1.xml input2.xml outputdir/")]
+public class XML2PDFCommand : ConversionCommandBase {
     [Option("upo", Required = false, HelpText = "use UPO template")]
     public bool Upo { get; set; }
 
@@ -27,34 +22,30 @@ public class XML2PDFCommand : IGlobalCommand {
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         ConfigureLogging();
 
-        if (!File.Exists(InputFile)) {
-            Console.Error.WriteLine($"Error: Input file not found: {InputFile}");
-            return 1;
-        }
-
-        string outputPdfPath;
-        if (string.IsNullOrEmpty(OutputFile)) {
-            if (!InputFile.EndsWith(".xml", StringComparison.OrdinalIgnoreCase)) {
-                Console.Error.WriteLine("Error: Input file must have a .xml extension when no output file is specified.");
-                return 1;
-            }
-            outputPdfPath = Path.ChangeExtension(InputFile, ".pdf")!;
-            if (File.Exists(outputPdfPath)) {
-                Console.Error.WriteLine($"Error: Output file already exists: {outputPdfPath}");
-                return 1;
-            }
-        } else {
-            outputPdfPath = OutputFile!;
-        }
-
-        string xmlContent = File.ReadAllText(InputFile);
+        var (inputFiles, outputFile, outputDir) = ParseArgs();
+        if (inputFiles == null) return 1;
 
         Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
-        byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, QrCode2Url, cancellationToken).ConfigureAwait(false);
 
-        File.WriteAllBytes(outputPdfPath, pdfContent);
+        foreach (var inputFile in inputFiles) {
+            if (!ValidateInputFile(inputFile)) return 1;
 
-        Console.WriteLine($"PDF saved to: {outputPdfPath}");
+            string? outputPdfPath = GetOutputPath(inputFile, outputFile, outputDir, ".pdf");
+            if (outputPdfPath == null) return 1;
+
+            if (CheckOutputExists(outputPdfPath)) return 1;
+
+            string xmlContent = File.ReadAllText(inputFile);
+
+            try {
+                byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, QrCode2Url, cancellationToken).ConfigureAwait(false);
+                File.WriteAllBytes(outputPdfPath, pdfContent);
+                Log.Information($"PDF saved to: {outputPdfPath}");
+            } catch (Exception ex) {
+                Log.Error($"Error converting {inputFile}: {ex.Message}");
+                return 1;
+            }
+        }
 
         return 0;
     }
@@ -125,7 +116,6 @@ public class XML2PDFCommand : IGlobalCommand {
         } else {
             Directory.CreateDirectory(IGlobalCommand.CacheDir);
 
-            // Cleanup old versions (1.0.0) from cache
             string[] oldFiles = {
                 "ksef-pdf-generator-linux",
                 "ksef-pdf-generator-win.exe",
