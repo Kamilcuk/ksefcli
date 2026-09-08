@@ -78,9 +78,14 @@ $ kcksefcli SzukajFaktur -q -c kcksefcli.yaml --from "-1week" --to "now" --invoi
 12312312312-20260117-XXXXXXXXXXXX-5C
 ```
 
-Pobieranie wszystkich faktur zakupowych z ostatniego miesiąca do wskazanego katalogu w formacie XML i PDF:
+Pobieranie wszystkich faktur zakupowych z ostatniego miesiąca do wskazanego katalogu w formacie XML:
 ```bash
-$ kcksefcli PobierzFaktury --from "-1month" --subjectType Subject2 --outputdir ./faktury_zakupowe --pdf
+$ kcksefcli PobierzFaktury --from "-1month" --subjectType Subject2 --outputdir ./faktury_zakupowe
+```
+
+Konwersja wszystkich faktur XML do PDF:
+```bash
+$ kcksefcli XML2PDF ./faktury_zakupowe/*.xml ./faktury_zakupowe/
 ```
 
 Przesyłanie faktury z użyciem konkretnego profilu:
