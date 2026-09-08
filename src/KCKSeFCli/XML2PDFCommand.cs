@@ -110,23 +110,28 @@ public class XML2PDFCommand : IGlobalCommand {
         string? fileName = null;
 
         if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux)) {
-            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.1.0/ksef-pdf-generator";
-            fileName = "ksef-pdf-generator-linux-1.1.0";
+            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.1.39/ksef-pdf-generator-linuxstatic-x64";
+            fileName = "ksef-pdf-generator-linuxstatic-x64-1.1.39";
         } else if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows)) {
-            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.1.0/ksef-pdf-generator.exe";
-            fileName = "ksef-pdf-generator-win-1.1.0.exe";
+            url = "https://github.com/Kamilcuk/ksef-pdf-generator/releases/download/1.1.39/ksef-pdf-generator-win-x64.exe";
+            fileName = "ksef-pdf-generator-win-x64-1.1.39.exe";
         }
 
         string[] runnerCommand;
 
         if (url is null || fileName is null) {
             AssertNpxExists();
-            runnerCommand = new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator#v1.1.0" };
+            runnerCommand = new[] { "npx", "--yes", "github:kamilcuk/ksef-pdf-generator#v1.1.39" };
         } else {
             Directory.CreateDirectory(IGlobalCommand.CacheDir);
 
             // Cleanup old versions (1.0.0) from cache
-            string[] oldFiles = { "ksef-pdf-generator-linux", "ksef-pdf-generator-win.exe" };
+            string[] oldFiles = {
+                "ksef-pdf-generator-linux",
+                "ksef-pdf-generator-win.exe",
+                "ksef-pdf-generator-linux-1.1.0",
+                "ksef-pdf-generator-win-1.1.0.exe",
+            };
             foreach (string oldFile in oldFiles) {
                 string oldPath = Path.Combine(IGlobalCommand.CacheDir, oldFile);
                 if (File.Exists(oldPath)) {
