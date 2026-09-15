@@ -40,56 +40,43 @@ clitest_profile_inline() {
 }
 
 clitest_profile_cmd_pw() {
-    local output
-    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" L_unittest_cmd -v output cli PrintConfig --active cert_cmd_password_test
-    L_unittest_cmd -I grep -q "cmd_password_output" <<<"$output"
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli.yaml" \
+        L_unittest_cmd -j -r "cmd_password_output" \
+        cli PrintConfig --active cert_cmd_password_test
 }
 
 clitest_profile_cmd_pw_conflict() {
-    local output rc=0
-    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pw_conflict.yaml" cli PrintConfig --active cert_cmd_password_conflict_test 2>&1 | tee tmp.log || rc=$?
-    [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting password configurations"
-    L_unittest_cmd -I grep -q "conflicting password configurations" tmp.log
-    rm tmp.log
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pw_conflict.yaml" \
+        L_unittest_cmd -j -r "conflicting password configurations" \
+        ! cli PrintConfig --active cert_cmd_password_conflict_test
 }
 
 clitest_profile_pk_conflict() {
-    local output rc=0
-    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pk_conflict.yaml" cli PrintConfig --active cert_pk_conflict_test 2>&1 | tee tmp.log || rc=$?
-    [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting private key configurations"
-    L_unittest_cmd -I grep -q "conflicting private key configurations" tmp.log
-    rm tmp.log
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_pk_conflict.yaml" \
+        L_unittest_cmd -j -r "conflicting private key configurations" \
+        ! cli PrintConfig --active cert_pk_conflict_test
 }
 
 clitest_profile_cert_conflict() {
-    local output rc=0
-    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_cert_conflict.yaml" cli PrintConfig --active cert_cert_conflict_test 2>&1 | tee tmp.log || rc=$?
-    [[ "$rc" -ne 0 ]] || fatal "Expected failure due to conflicting certificate configurations"
-    L_unittest_cmd -I grep -q "conflicting certificate configurations" tmp.log
-    rm tmp.log
+    KCKSEFCLI_CONFIG="$DIR/test_kcksefcli_cert_conflict.yaml" \
+        L_unittest_cmd -j -r "conflicting certificate configurations" \
+        ! cli PrintConfig --active cert_cert_conflict_test
 }
 
-clitest_help_uniewaznij() {	local output
-	L_unittest_cmd -v output cli UniewaznijCertyfikat --help
-	L_unittest_cmd -I grep -q "Certificate serial number to revoke" <<<"$output"
+clitest_help_uniewaznij() {
+	L_unittest_cmd -j -r "Certificate serial number to revoke" cli UniewaznijCertyfikat --help
 }
 
 clitest_help_wylistuj() {
-	local output
-	L_unittest_cmd -v output cli WylistujCertyfikaty --help
-	L_unittest_cmd -I grep -q "Filter by certificate name" <<<"$output"
+  L_unittest_cmd -j -r "Filter by certificate name" cli WylistujCertyfikaty --help
 }
 
 clitest_help_pobierz() {
-	local output
-	L_unittest_cmd -v output cli PobierzCertyfikat --help
-	L_unittest_cmd -I grep -q "Certificate serial number to retrieve" <<<"$output"
+  L_unittest_cmd -j -r "Certificate serial number to retrieve" cli PobierzCertyfikat --help
 }
 
 clitest_help_nowy() {
-	local output
-	L_unittest_cmd -v output cli NowyCertyfikat --help
-	L_unittest_cmd -I grep -q "Name for the new certificate" <<<"$output"
+  L_unittest_cmd -j -r "Name for the new certificate" cli NowyCertyfikat --help
 }
 
 clitest_cmd_token_test() {
@@ -101,15 +88,11 @@ clitest_cmd_token_test() {
     }
 
 clitest_help_qr_faktura() {
-	local output
-	L_unittest_cmd -v output cli --help
-	L_unittest_cmd -I grep -q "QRDoFaktury                 Generate a QR code for an invoice" <<<"$output"
+  L_unittest_cmd -j -r "QRDoFaktury                 Generate a QR code for an invoice" cli --help
 }
 
 clitest_help_qr_weryfikacja() {
-	local output
-	L_unittest_cmd -v output cli --help
-	L_unittest_cmd -I grep -q "QRWeryfikacjiFaktury        Generate a verification QR code" <<<"$output"
+  L_unittest_cmd -j -r "QRWeryfikacjiFaktury        Generate a verification QR code" cli --help
 }
 
 clitest_qr_weryfikacja_no_auth() {
@@ -160,13 +143,8 @@ clitest_nowa_faktura_nip_lookup() {
     L_with_cd_tmpdir
     L_unittest_cmd cli NowaFaktura "$DIR"/test_invoice_nip_only.yaml invoice_nip_lookup.xml
 
-    local seller_name
-    L_unittest_cmd -v seller_name cli XMLExtract invoice_nip_lookup.xml "/Faktura/Podmiot1/DaneIdentyfikacyjne/Nazwa"
-    L_unittest_vareq seller_name "'KAMYK' SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
-
-    local seller_address
-    L_unittest_cmd -v seller_address cli XMLExtract invoice_nip_lookup.xml "/Faktura/Podmiot1/Adres/AdresL1"
-    L_unittest_vareq seller_address "LITERACKA 21/24, 01-864 WARSZAWA"
+    L_unittest_cmd -o "'KAMYK' SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ" cli XMLExtract invoice_nip_lookup.xml "/Faktura/Podmiot1/DaneIdentyfikacyjne/Nazwa"
+    L_unittest_cmd -o "LITERACKA 21/24, 01-864 WARSZAWA" cli XMLExtract invoice_nip_lookup.xml "/Faktura/Podmiot1/Adres/AdresL1"
 }
 
 
@@ -179,23 +157,15 @@ clitest_pobierz_info_o_nip() {
 clitest_xml_extract() {
     L_with_cd_tmpdir
     cp "$DIR/test_xml_extract_simple.xml" test.xml
-    local output
-    L_unittest_cmd -v output cli XMLExtract test.xml "/Root/Element1"
-    L_unittest_vareq output "Value1"
-
-    L_unittest_cmd -v output cli XMLExtract test.xml "/Root/Element2/NestedElement"
-    L_unittest_vareq output "NestedValue"
+    L_unittest_cmd -o "Value1" cli XMLExtract test.xml "/Root/Element1"
+    L_unittest_cmd -o "NestedValue" cli XMLExtract test.xml "/Root/Element2/NestedElement"
 }
 
 clitest_xml_extract_namespace() {
     # With namespace stripping (default): plain XPath, no prefixes needed
-    local output
-    L_unittest_cmd -v output cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Element1"
-    L_unittest_vareq output "Value1"
-    L_unittest_cmd -v output cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Element2/NestedElement"
-    L_unittest_vareq output "NestedValue"
-    L_unittest_cmd -v output cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Info"
-    L_unittest_vareq output "MetaValue"
+    L_unittest_cmd -o "Value1" cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Element1"
+    L_unittest_cmd -o "NestedValue" cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Element2/NestedElement"
+    L_unittest_cmd -o "MetaValue" cli XMLExtract "$DIR/test_xml_extract.xml" "/Root/Info"
 }
 
 clitest_xml_remove_namespace() {

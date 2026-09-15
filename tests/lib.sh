@@ -63,6 +63,7 @@ testlib_main() {
 		-- -k help="Filter tests with this regex" nargs=1 eval='args+=(-k "$1")' \
 		-- -l nargs=0 eval='args+=(-l)' \
 		-- -s nargs=0 eval='args+=(-s)' \
+		-- -P \
 		-- exe nargs=remainder help="Path to the command to test" \
 		---- "$@"
 
@@ -80,7 +81,7 @@ testlib_main() {
 	fi
 	opt_exe=$(readlink -f "${opt_exe[0]}") || exit 234
 
-	local cmd=( L_unittest_main -p clitest_ "${args[@]}" ${TESTARGS:-} )
+	local cmd=( L_unittest_main -P "${opt_P:-n}" -p clitest_ "${args[@]}" ${TESTARGS:-} )
 
 	# Create a global temporary directory.
 	L_with_tmpdir_into TMPD
