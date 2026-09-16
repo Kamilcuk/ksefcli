@@ -31,6 +31,12 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
     [Option("no-local-rate-limit", HelpText = "Disable local rate limiting.")]
     public bool NoLocalRateLimit { get; set; }
 
+    [Option("pdf", HelpText = "Convert downloaded XML invoices to PDF format.")]
+    public bool GeneratePdf { get; set; }
+
+    [Option("no-json", HelpText = "Alias for --no-summary")]
+    public bool NoJson { get; set; }
+
     public override async Task<int> ExecuteInScopeAsync(IServiceScope scope, CancellationToken cancellationToken) {
         string outputDir = OutputDir ?? Directory.GetCurrentDirectory();
         Directory.CreateDirectory(outputDir);
@@ -46,6 +52,11 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
             fileName = fileName.Replace('/', '_').Replace('\\', '_');
             string summaryJsonFilePath = Path.Combine(outputDir, $"{fileName}_summary.json");
             string xmlFilePath = Path.Combine(outputDir, $"{fileName}.xml");
+            string pdfFilePath = Path.Combine(outputDir, $"{fileName}.pdf");
+
+            if (NoJson) {
+                NoSummary = true;
+            }
 
             if (!NoSummary) {
                 File.WriteAllText(summaryJsonFilePath, JsonSerializer.Serialize(invoiceSummary));
@@ -66,9 +77,35 @@ public class PobierzFakturyCommand : SzukajFakturCommand {
             File.WriteAllText(xmlFilePath, XDocument.Parse(invoiceXml).ToString() + "\n");
 
             Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {xmlFilePath}");
+
+            if (GeneratePdf) {
+                // Get the PDF runner using the shared method from XML2PDFCommand
+                var pdfRunner = await XML2PDFCommand.GetRunner(cancellationToken).ConfigureAwait(false);
+                
+                // Generate PDF with invoice-specific parameters
+                string? nrKSeF = invoiceSummary.KsefNumber;
+                string? qrCodeUrl = null;
+                try {
+                    qrCodeUrl = KsefUtils.BuildInvoiceVerificationUrl(invoiceXml);
+                } catch (Exception ex) {
+                    Log.Warning($"Could not generate QR code URL from invoice: {ex.Message}");
+                }
+
+                byte[] pdfBytes = await pdfRunner.XML2PDF(
+                    invoiceXml, 
+                    quiet: false, 
+                    upo: false, 
+                    nrKSeF: nrKSeF, 
+                    qrCodeUrl: qrCodeUrl, 
+                    qr2CodeUrl: null, 
+                    cancellationToken: cancellationToken
+                ).ConfigureAwait(false);
+                
+                File.WriteAllBytes(pdfFilePath, pdfBytes);
+                Log.Information($"Saved invoice {invoiceSummary.KsefNumber} to {pdfFilePath}");
+            }
         }
 
         return 0;
     }
-
 }
