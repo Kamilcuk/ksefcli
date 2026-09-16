@@ -22,32 +22,39 @@ public class XML2PDFCommand : ConversionCommandBase {
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         ConfigureLogging();
 
-        var (inputFiles, outputFile, outputDir) = ParseArgs();
-        if (inputFiles == null) return 1;
+        var parsedArgs = ParseArgs();
+        if (parsedArgs == null) return 1;
 
         Runner runner = await GetRunner(cancellationToken).ConfigureAwait(false);
 
-        foreach (var inputFile in inputFiles) {
-            if (!ValidateInputFile(inputFile)) return 1;
+        return await ProcessListOfFiles(
+            parsedArgs,
+            ".pdf",
+            this,
+            async (inputFile, self, ct) => {
+                string xmlContent = File.ReadAllText(inputFile);
 
-            string? outputPdfPath = GetOutputPath(inputFile, outputFile, outputDir, ".pdf");
-            if (outputPdfPath == null) return 1;
+                string? nrKSeF = self.NrKSeF ?? KsefUtils.ExtractNrKSeFFromFileName(inputFile);
+                
+                if (!string.IsNullOrEmpty(nrKSeF) && !KsefUtils.ValidateNrKSeF(nrKSeF)) {
+                    Log.Warning($"Invalid KSeF number format: {nrKSeF}");
+                    nrKSeF = null;
+                }
 
-            if (CheckOutputExists(outputPdfPath)) return 1;
+                string? qrCodeUrl = self.QrCodeUrl;
+                if (string.IsNullOrEmpty(qrCodeUrl)) {
+                    try {
+                        qrCodeUrl = KsefUtils.BuildInvoiceVerificationUrl(xmlContent);
+                    } catch (Exception ex) {
+                        Log.Warning($"Could not generate QR code URL from invoice: {ex.Message}");
+                    }
+                }
+                string? qrCode2Url = self.QrCode2Url;
 
-            string xmlContent = File.ReadAllText(inputFile);
-
-            try {
-                byte[] pdfContent = await runner.XML2PDF(xmlContent, Quiet, Upo, NrKSeF, QrCodeUrl, QrCode2Url, cancellationToken).ConfigureAwait(false);
-                File.WriteAllBytes(outputPdfPath, pdfContent);
-                Log.Information($"PDF saved to: {outputPdfPath}");
-            } catch (Exception ex) {
-                Log.Error($"Error converting {inputFile}: {ex.Message}");
-                return 1;
-            }
-        }
-
-        return 0;
+                return await runner.XML2PDF(xmlContent, self.Quiet, self.Upo, nrKSeF, qrCodeUrl, qrCode2Url, ct).ConfigureAwait(false);
+            },
+            cancellationToken
+        ).ConfigureAwait(false);
     }
 
     public class Runner {

@@ -201,3 +201,7 @@ DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
 . "$DIR"/lib.sh "$@"
 . "$DIR"/test_parsedate.sh
 testlib_main "$@"
+
+clitest_xml2json() {
+    L_unittest_cmd -r '{"Root":{"Element1":"Value1","Element2":{"NestedElement":"NestedValue"}}}' cli XML2JSON "$DIR/test_xml_extract_simple.xml"
+}

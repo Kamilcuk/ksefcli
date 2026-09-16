@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
 
@@ -10,38 +11,33 @@ public class XML2JSONCommand : ConversionCommandBase {
     [Option("indent", HelpText = "Indent JSON output.")]
     public bool Indent { get; set; } = true;
 
-    public override Task<int> ExecuteAsync(CancellationToken cancellationToken) {
+    public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
         ConfigureLogging();
 
-        var (inputFiles, outputFile, outputDir) = ParseArgs();
-        if (inputFiles == null) return Task.FromResult(1);
+        var parsedArgs = ParseArgs();
+        if (parsedArgs == null) return 1;
 
-        var jsonOptions = new JsonSerializerOptions {
-            WriteIndented = Indent
-        };
-
-        foreach (var inputFile in inputFiles) {
-            if (!ValidateInputFile(inputFile)) return Task.FromResult(1);
-
-            XDocument doc = XDocument.Load(inputFile);
-            object jsonObj = XElementToObject(doc.Root!);
-            string json = JsonSerializer.Serialize(jsonObj, jsonOptions);
-
-            string? outputJsonPath = GetOutputPath(inputFile, outputFile, outputDir, ".json", allowStdout: true);
-            if (outputJsonPath == null) return Task.FromResult(1);
-
-            if (outputJsonPath == "-") {
-                Console.WriteLine(json);
-                continue;
-            }
-
-            if (CheckOutputExists(outputJsonPath)) return Task.FromResult(1);
-
-            File.WriteAllText(outputJsonPath, json);
-            Log.Information($"Saved JSON to {outputJsonPath}");
+        // If no output file or directory is specified and we have exactly one input file, then use stdout
+        if (parsedArgs.OutputFile == null && parsedArgs.OutputDir == null && parsedArgs.InputFiles.Count() == 1) {
+            parsedArgs = parsedArgs with { OutputFile = "-" };
         }
 
-        return Task.FromResult(0);
+        return await ProcessListOfFiles(
+            parsedArgs,
+            ".json",
+            this,
+            async (inputFile, self, ct) => {
+                XDocument doc = XDocument.Load(inputFile);
+                object jsonObj = XElementToObject(doc.Root!);
+                var jsonOptions = new JsonSerializerOptions {
+                    WriteIndented = self.Indent
+                };
+                string json = JsonSerializer.Serialize(jsonObj, jsonOptions);
+                return Encoding.UTF8.GetBytes(json);
+            },
+            cancellationToken,
+            allowStdout: true
+        ).ConfigureAwait(false);
     }
 
     internal static object XElementToObject(XElement element) {
