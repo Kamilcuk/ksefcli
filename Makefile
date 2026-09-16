@@ -28,8 +28,9 @@ sources:
 	@echo $(SOURCES)
 run: build
 	dotnet run --project $(S) --
-test: format build
-	dotnet test tests/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj
+test: build
+	dotnet test src/KCKSeFCli.Tests/KCKSeFCli.Tests.csproj
+	./tests/unit.sh
 clean:
 	dotnet clean $(S)
 	rm $(B)/build $(B)/format $(B)/init
