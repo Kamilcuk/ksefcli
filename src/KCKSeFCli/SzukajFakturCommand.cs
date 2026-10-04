@@ -151,12 +151,18 @@ public class SzukajFakturCommand : IWithConfigCommand {
         CancellationToken cancellationToken) {
         SzukajFakturCommand settings = this;
 
-        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType)) {
+        // Parse SubjectType: first try named enum values (Subject1, Subject2, etc.), then numeric strings (1-based per help text), then Polish names
+        if (!Enum.TryParse(settings.SubjectType, true, out InvoiceSubjectType subjectType) ||
+            // If parsing succeeded but input was a numeric string, it was interpreted as 0-based enum value
+            // We need to handle 1-based numeric input per help text
+            (int.TryParse(settings.SubjectType, out int numericSubject) && numericSubject >= 1 && numericSubject <= 4)) {
             subjectType = settings.SubjectType.ToLowerInvariant() switch {
                 "1" or "sprzedawca" => InvoiceSubjectType.Subject1,
                 "2" or "nabywca" => InvoiceSubjectType.Subject2,
                 "3" => InvoiceSubjectType.Subject3,
                 "4" => InvoiceSubjectType.SubjectAuthorized,
+                // Also accept 0-based for backward compatibility
+                "0" => InvoiceSubjectType.Subject1,
                 _ => throw new FormatException($"Invalid SubjectType: {settings.SubjectType}")
             };
         }
