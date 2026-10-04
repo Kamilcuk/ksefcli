@@ -12,8 +12,19 @@ public class ParseDateCommand : IGlobalCommand {
     [Option("seconds", HelpText = "Output floating point number of seconds since linux epoch.")]
     public bool Seconds { get; set; }
 
+    [Option("now", HelpText = "Specify the current date/time to calculate relative dates from (ISO 8601 format). Defaults to current system time.")]
+    public string? Now { get; set; }
+
     public override async Task<int> ExecuteAsync(CancellationToken cancellationToken) {
-        DateTime result = await ParseDate.Parse(DateString, cancellationToken).ConfigureAwait(false);
+        DateTime? now = null;
+        if (!string.IsNullOrEmpty(Now)) {
+            if (!DateTime.TryParse(Now, out DateTime parsedNow)) {
+                Console.Error.WriteLine($"Error: Could not parse --now value: {Now}");
+                return 1;
+            }
+            now = parsedNow;
+        }
+        DateTime result = await ParseDate.Parse(DateString, cancellationToken, now).ConfigureAwait(false);
         if (Seconds) {
             TimeSpan diff = result.ToUniversalTime() - Compatibility.UnixEpoch;
             double seconds = diff.TotalSeconds;
